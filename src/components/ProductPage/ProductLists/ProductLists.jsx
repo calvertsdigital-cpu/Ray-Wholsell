@@ -882,7 +882,8 @@ export const ProductLists = () => {
                   borderBottom: "1px solid rgba(255,255,255,0.2)",
                 }}
               >
-                Product ID/UPC
+                <div>Product ID</div>
+                <div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>UPC</div>
               </th>
               <th
                 style={{
@@ -892,7 +893,8 @@ export const ProductLists = () => {
                   borderBottom: "1px solid rgba(255,255,255,0.2)",
                 }}
               >
-                Product Title - Bin Location
+                <div>Product Title</div>
+                <div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>Bin Location</div>
               </th>
               <th
                 style={{
@@ -1453,8 +1455,8 @@ export const ProductLists = () => {
                         color: "white",
                       }}
                     >
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product ID/UPC</th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product Title - Bin Location</th>
+                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}><div>Product ID</div><div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>UPC</div></th>
+                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}><div>Product Title</div><div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>Bin Location</div></th>
                       <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Price</th>
                       <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Quantity</th>
                       <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Subtotal</th>
@@ -2605,8 +2607,8 @@ export const ProductLists = () => {
               padding-bottom: 0.25rem;
             }
 
-            td:nth-child(1)::before { content: "Product ID/UPC"; }
-            td:nth-child(2)::before { content: "Product Title - Bin Location"; }
+            td:nth-child(1)::before { content: "Product ID / UPC"; }
+            td:nth-child(2)::before { content: "Product Title / Bin Location"; }
             td:nth-child(3) { display: none !important; }
             td:nth-child(4)::before { content: ""; display: none; }
             td:nth-child(5) { display: none !important; }
