@@ -882,8 +882,7 @@ export const ProductLists = () => {
                   borderBottom: "1px solid rgba(255,255,255,0.2)",
                 }}
               >
-                <div>Product ID</div>
-                <div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>UPC</div>
+                Product ID
               </th>
               <th
                 style={{
@@ -893,8 +892,27 @@ export const ProductLists = () => {
                   borderBottom: "1px solid rgba(255,255,255,0.2)",
                 }}
               >
-                <div>Product Title</div>
-                <div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>Bin Location</div>
+                UPC
+              </th>
+              <th
+                style={{
+                  padding: "16px",
+                  textAlign: "left",
+                  fontWeight: "600",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                Product Title
+              </th>
+              <th
+                style={{
+                  padding: "16px",
+                  textAlign: "left",
+                  fontWeight: "600",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                Bin Location
               </th>
               <th
                 style={{
@@ -980,6 +998,16 @@ export const ProductLists = () => {
                       fontSize: "12px",
                     }}
                   >
+                    {product.product_id || "N/A"}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      color: "#6b7280",
+                      fontFamily: "monospace",
+                      fontSize: "12px",
+                    }}
+                  >
                     {product.sku || "N/A"}
                   </td>
                   <td
@@ -998,7 +1026,6 @@ export const ProductLists = () => {
                       }}
                     >
                       {product.name}
-
                     </div>
                     <div
                       style={{
@@ -1010,18 +1037,6 @@ export const ProductLists = () => {
                     >
                       {product.category?.name || "Unknown"} / {product.subcategory?.name || "Unknown"}
                     </div>
-                    {product.bin_location && (
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          color: "#6b7280",
-                          marginTop: "2px",
-                          fontStyle: "italic",
-                        }}
-                      >
-                        Bin Location: {product.bin_location}
-                      </div>
-                    )}
                     <div
                       className="mobile-price-display"
                       style={{
@@ -1036,6 +1051,16 @@ export const ProductLists = () => {
                     >
                       Price: ${product.buyPrice.toFixed(2)}
                     </div>
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      color: "#6b7280",
+                      fontSize: "12px",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {product.bin_location || "N/A"}
                   </td>
                   <td
                     style={{
@@ -1455,8 +1480,10 @@ export const ProductLists = () => {
                         color: "white",
                       }}
                     >
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}><div>Product ID</div><div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>UPC</div></th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}><div>Product Title</div><div style={{ fontWeight: "400", fontSize: "12px", opacity: "0.85" }}>Bin Location</div></th>
+                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product ID</th>
+                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>UPC</th>
+                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product Title</th>
+                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Bin Location</th>
                       <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Price</th>
                       <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Quantity</th>
                       <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Subtotal</th>
@@ -1480,6 +1507,9 @@ export const ProductLists = () => {
                           }}
                         >
                           <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
+                            {product.product_id || "N/A"}
+                          </td>
+                          <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
                             {product.sku || "N/A"}
                           </td>
                           <td style={{ padding: "16px", fontWeight: "500", color: "#1f2937", maxWidth: "200px" }}>
@@ -1489,11 +1519,9 @@ export const ProductLists = () => {
                             <div style={{ fontSize: "12px", color: "#77a13d", marginTop: "4px", fontWeight: "600" }}>
                               {product.category?.name || "Unknown"} / {product.subcategory?.name || "Unknown"}
                             </div>
-                            {product.bin_location && (
-                              <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px", fontStyle: "italic" }}>
-                                Bin: {product.bin_location}
-                              </div>
-                            )}
+                          </td>
+                          <td style={{ padding: "16px", color: "#6b7280", fontSize: "12px", fontStyle: "italic" }}>
+                            {product.bin_location || "N/A"}
                           </td>
                           <td style={{ padding: "16px", fontWeight: "700", fontSize: "16px", background: "linear-gradient(135deg, #e97717, #77a13d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                             ${product.buyPrice.toFixed(2)}
@@ -2607,8 +2635,10 @@ export const ProductLists = () => {
               padding-bottom: 0.25rem;
             }
 
-            td:nth-child(1)::before { content: "Product ID / UPC"; }
-            td:nth-child(2)::before { content: "Product Title / Bin Location"; }
+            td:nth-child(1)::before { content: "Product ID"; }
+            td:nth-child(2)::before { content: "UPC"; }
+            td:nth-child(3)::before { content: "Product Title"; }
+            td:nth-child(4)::before { content: "Bin Location"; }
             td:nth-child(3) { display: none !important; }
             td:nth-child(4)::before { content: ""; display: none; }
             td:nth-child(5) { display: none !important; }
