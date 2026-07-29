@@ -1000,9 +1000,9 @@ export const ProductLists = () => {
                 >
                   <td style={{ padding: "8px", textAlign: "center", width: "80px" }}>
                     <img
-                      src={getImageUrl(product.images?.[0])}
+                      src={product.images?.[0] ? getImageUrl(product.images[0]) : `/${((index % 7) + 1)}.png`}
                       alt={product.name}
-                      onError={(e) => { e.target.src = "https://via.placeholder.com/60x60?text=No+Image"; }}
+                      onError={(e) => { e.target.src = `/${((index % 7) + 1)}.png`; }}
                       style={{
                         width: "60px",
                         height: "60px",
@@ -1499,9 +1499,9 @@ export const ProductLists = () => {
                         >
                           <td style={{ padding: "8px", textAlign: "center", width: "80px" }}>
                             <img
-                              src={getImageUrl(product.images?.[0])}
+                              src={product.images?.[0] ? getImageUrl(product.images[0]) : `/${((index % 7) + 1)}.png`}
                               alt={product.name}
-                              onError={(e) => { e.target.src = "https://via.placeholder.com/60x60?text=No+Image"; }}
+                              onError={(e) => { e.target.src = `/${((index % 7) + 1)}.png`; }}
                               style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", border: "1px solid #e5e7eb" }}
                             />
                           </td>
