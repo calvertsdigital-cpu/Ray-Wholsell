@@ -874,6 +874,17 @@ export const ProductLists = () => {
               <th
                 style={{
                   padding: "16px",
+                  textAlign: "center",
+                  fontWeight: "600",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                  width: "80px",
+                }}
+              >
+                Image
+              </th>
+              <th
+                style={{
+                  padding: "16px",
                   textAlign: "left",
                   fontWeight: "600",
                   borderBottom: "1px solid rgba(255,255,255,0.2)",
@@ -987,6 +998,20 @@ export const ProductLists = () => {
                     e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#fafafa" : "white";
                   }}
                 >
+                  <td style={{ padding: "8px", textAlign: "center", width: "80px" }}>
+                    <img
+                      src={getImageUrl(product.images?.[0])}
+                      alt={product.name}
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/60x60?text=No+Image"; }}
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                        border: "1px solid #e5e7eb",
+                      }}
+                    />
+                  </td>
                   <td
                     style={{
                       padding: "16px",
@@ -1445,6 +1470,7 @@ export const ProductLists = () => {
                         color: "white",
                       }}
                     >
+                      <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)", width: "80px" }}>Image</th>
                       <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product ID</th>
                       <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>UPC</th>
                       <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product Title</th>
@@ -1471,6 +1497,14 @@ export const ProductLists = () => {
                             backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
                           }}
                         >
+                          <td style={{ padding: "8px", textAlign: "center", width: "80px" }}>
+                            <img
+                              src={getImageUrl(product.images?.[0])}
+                              alt={product.name}
+                              onError={(e) => { e.target.src = "https://via.placeholder.com/60x60?text=No+Image"; }}
+                              style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", border: "1px solid #e5e7eb" }}
+                            />
+                          </td>
                           <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
                             {product.item_number || product.product_id || "N/A"}
                           </td>
