@@ -204,6 +204,8 @@ export const ProductLists = () => {
       role: "wholesaler",
       page: page.toString(),
       limit: limit.toString(),
+      sortBy: "item_number",
+      sortOrder: "asc",
     });
 
     if (filters.categories.length > 0) {
@@ -280,6 +282,8 @@ export const ProductLists = () => {
           role: "wholesaler",
           page: page.toString(),
           limit: limit.toString(),
+          sortBy: "item_number",
+          sortOrder: "asc",
         });
 
         const apiUrl = `${BASE_URL}/api/wholesaler/get-tirtho-wholesaler?${queryParams.toString()}`;
