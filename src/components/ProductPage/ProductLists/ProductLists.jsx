@@ -301,7 +301,10 @@ export const ProductLists = () => {
           totalProducts,
         });
 
-        setProducts(Array.isArray(products) ? products : []);
+        const sorted = Array.isArray(products)
+          ? [...products].sort((a, b) => Number(a.item_number || 0) - Number(b.item_number || 0))
+          : [];
+        setProducts(sorted);
         setPagination({
           currentPage: currentPage || 1,
           totalPages: totalPages || 1,
@@ -309,7 +312,7 @@ export const ProductLists = () => {
           itemsPerPage: limit,
         });
 
-        if (Array.isArray(products) && products.length === 0) {
+        if (sorted.length === 0) {
           setError("No products available");
         }
       } catch (err) {
@@ -362,7 +365,10 @@ export const ProductLists = () => {
           totalProducts,
         });
 
-        setProducts(Array.isArray(products) ? products : []);
+        const sorted = Array.isArray(products)
+          ? [...products].sort((a, b) => Number(a.item_number || 0) - Number(b.item_number || 0))
+          : [];
+        setProducts(sorted);
         setPagination({
           currentPage: currentPage || 1,
           totalPages: totalPages || 1,
@@ -370,7 +376,7 @@ export const ProductLists = () => {
           itemsPerPage: limit,
         });
 
-        if (Array.isArray(products) && products.length === 0) {
+        if (sorted.length === 0) {
           const hasActiveFilters =
             currentFilters.categories.length > 0 || currentFilters.subcategories.length > 0 ||
             currentFilters.minPrice || currentFilters.maxPrice;
