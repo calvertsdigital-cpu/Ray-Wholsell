@@ -418,11 +418,7 @@ export const ProductLists = () => {
         setSubcategoryCounts({});
       }
 
-      // Set MOQ from bulk order API
-      if (moqResponse && moqResponse.data && moqResponse.data.bulkOrderNumber) {
-        setMoq(moqResponse.data.bulkOrderNumber);
-        console.log('MOQ set to:', moqResponse.data.bulkOrderNumber);
-      }
+      // MOQ is fixed at 12 for wholesale — do not override from API
 
       setIsInitialized(true);
     } catch (err) {
