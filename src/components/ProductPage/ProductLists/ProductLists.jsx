@@ -140,7 +140,7 @@ export const ProductLists = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [wishlistItems, setWishlistItems] = useState([]);
   const [addingToWishlist, setAddingToWishlist] = useState({});
-  const [moq, setMoq] = useState(1); // Minimum Order Quantity
+  const [moq, setMoq] = useState(12); // Minimum Order Quantity — wholesale minimum is 12
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -644,18 +644,19 @@ export const ProductLists = () => {
   const incrementQuantity = useCallback(
     (productId, maxStock) => {
       const currentQty = getQuantity(productId);
-      if (currentQty < maxStock) {
-        updateQuantity(productId, currentQty + 1);
+      const nextQty = currentQty + moq;
+      if (nextQty <= maxStock) {
+        updateQuantity(productId, nextQty);
       }
     },
-    [getQuantity, updateQuantity]
+    [getQuantity, updateQuantity, moq]
   );
 
   const decrementQuantity = useCallback(
     (productId) => {
       const currentQty = getQuantity(productId);
       if (currentQty > moq) {
-        updateQuantity(productId, currentQty - 1);
+        updateQuantity(productId, currentQty - moq);
       }
     },
     [getQuantity, updateQuantity, moq]
