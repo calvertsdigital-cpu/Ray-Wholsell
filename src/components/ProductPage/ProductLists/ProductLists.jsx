@@ -998,7 +998,7 @@ export const ProductLists = () => {
                       fontSize: "12px",
                     }}
                   >
-                    {product.product_id || "N/A"}
+                    {product.item_number || product.product_id || "N/A"}
                   </td>
                   <td
                     style={{
@@ -1008,7 +1008,7 @@ export const ProductLists = () => {
                       fontSize: "12px",
                     }}
                   >
-                    {product.sku || "N/A"}
+                    {product.lookup_code || product.sku || "N/A"}
                   </td>
                   <td
                     style={{
@@ -1507,10 +1507,10 @@ export const ProductLists = () => {
                           }}
                         >
                           <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
-                            {product.product_id || "N/A"}
+                            {product.item_number || product.product_id || "N/A"}
                           </td>
                           <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
-                            {product.sku || "N/A"}
+                            {product.lookup_code || product.sku || "N/A"}
                           </td>
                           <td style={{ padding: "16px", fontWeight: "500", color: "#1f2937", maxWidth: "200px" }}>
                             <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
