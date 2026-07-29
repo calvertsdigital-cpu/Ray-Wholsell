@@ -1018,39 +1018,7 @@ export const ProductLists = () => {
                       maxWidth: "200px",
                     }}
                   >
-                    <div
-                      style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {product.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#77a13d",
-                        marginTop: "4px",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {product.category?.name || "Unknown"} / {product.subcategory?.name || "Unknown"}
-                    </div>
-                    <div
-                      className="mobile-price-display"
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "700",
-                        marginTop: "8px",
-                        background: "linear-gradient(135deg, #e97717, #77a13d)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      Price: ${product.buyPrice.toFixed(2)}
-                    </div>
+                    {product.name}
                   </td>
                   <td
                     style={{
@@ -1513,12 +1481,7 @@ export const ProductLists = () => {
                             {product.lookup_code || product.sku || "N/A"}
                           </td>
                           <td style={{ padding: "16px", fontWeight: "500", color: "#1f2937", maxWidth: "200px" }}>
-                            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {product.name}
-                            </div>
-                            <div style={{ fontSize: "12px", color: "#77a13d", marginTop: "4px", fontWeight: "600" }}>
-                              {product.category?.name || "Unknown"} / {product.subcategory?.name || "Unknown"}
-                            </div>
+                            {product.name}
                           </td>
                           <td style={{ padding: "16px", color: "#6b7280", fontSize: "12px", fontStyle: "italic" }}>
                             {product.bin_location || "N/A"}
