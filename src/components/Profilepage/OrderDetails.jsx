@@ -164,7 +164,7 @@ const OrderDetails = () => {
                   </div>
                   <div className="bg-orange-50 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-                    <p className="font-semibold text-gray-900">₹{order.total.toFixed(2)}</p>
+                    <p className="font-semibold text-gray-900">${order.total.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -193,9 +193,33 @@ const OrderDetails = () => {
                           />
                         </div>
                         <div className="flex-grow">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
                             {product?.name || "Product Name Not Available"}
                           </h3>
+                          {/* Product ID + Bin Location pills */}
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
+                            {(product?.item_number || product?.product_id) && (
+                              <span style={{ background:'#f3f4f6', border:'1px solid #e5e7eb',
+                                borderRadius:5, padding:'2px 8px', fontSize:11,
+                                fontFamily:'monospace', color:'#374151', fontWeight:600 }}>
+                                ID: {product.item_number || product.product_id}
+                              </span>
+                            )}
+                            {(product?.lookup_code || product?.sku) && (
+                              <span style={{ background:'#f3f4f6', border:'1px solid #e5e7eb',
+                                borderRadius:5, padding:'2px 8px', fontSize:11,
+                                fontFamily:'monospace', color:'#6b7280' }}>
+                                UPC: {product.lookup_code || product.sku}
+                              </span>
+                            )}
+                            {(product?.bin_location || item.bin_location) && (
+                              <span style={{ background:'#e8f3d6', border:'1px solid #bbf7d0',
+                                borderRadius:5, padding:'2px 8px', fontSize:11,
+                                color:'#3d6b0f', fontWeight:600 }}>
+                                📍 Bin: {product?.bin_location || item.bin_location}
+                              </span>
+                            )}
+                          </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
                               <p className="text-gray-500">Quantity</p>
@@ -203,11 +227,11 @@ const OrderDetails = () => {
                             </div>
                             <div>
                               <p className="text-gray-500">Unit Price</p>
-                              <p className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</p>
+                              <p className="font-semibold text-gray-900">${item.price.toFixed(2)}</p>
                             </div>
                             <div>
                               <p className="text-gray-500">Subtotal</p>
-                              <p className="font-semibold text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</p>
+                              <p className="font-semibold text-gray-900">${(item.price * item.quantity).toFixed(2)}</p>
                             </div>
                             <div>
                               <p className="text-gray-500">Status</p>
@@ -225,7 +249,7 @@ const OrderDetails = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal</span>
-                      <span>₹{order.total.toFixed(2)}</span>
+                      <span>${order.total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Shipping</span>
@@ -233,7 +257,7 @@ const OrderDetails = () => {
                     </div>
                     <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
                       <span>Total Amount</span>
-                      <span className="text-2xl">₹{order.total.toFixed(2)}</span>
+                      <span className="text-2xl">${order.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

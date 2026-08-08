@@ -197,8 +197,18 @@ export const Profilepage = () => {
               {modalOrderData.items?.map((item, idx) => (
                 <div key={item._id} className="border p-2 rounded mb-2">
                   <p><strong>Name:</strong> {item.product?.name}</p>
+                  {(item.product?.item_number || item.product?.product_id) && (
+                    <p style={{ fontSize:11, fontFamily:'monospace', color:'#374151' }}>
+                      <strong>Product ID:</strong> {item.product.item_number || item.product.product_id}
+                    </p>
+                  )}
+                  {(item.product?.bin_location || item.bin_location) && (
+                    <p style={{ fontSize:11, color:'#3d6b0f', fontWeight:600 }}>
+                      📍 <strong>Bin:</strong> {item.product?.bin_location || item.bin_location}
+                    </p>
+                  )}
                   <p><strong>Quantity:</strong> {item.quantity}</p>
-                  <p><strong>Price:</strong> ₹{item.price}</p>
+                  <p><strong>Price:</strong> ${item.price}</p>
                   <img
                     src={item.product?.images?.[0] ? `${import.meta.env.VITE_BASE_URL}/${item.product.images[0].replace(/\\/g, '/')}` : prodImg}
                     alt={item.product?.name || "Product"}

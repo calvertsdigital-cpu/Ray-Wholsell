@@ -315,9 +315,7 @@ const PurchaseSummary = () => {
                 <img
                   src={getImageUrl(item.product.images[0])}
                   alt={item.product.name}
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/80";
-                  }}
+                  onError={(e) => { e.target.src = "https://via.placeholder.com/80"; }}
                 />
               ) : (
                 <div className="no-image">No Image</div>
@@ -325,6 +323,18 @@ const PurchaseSummary = () => {
             </div>
             <div className="item-info">
               <h4>{item.product.name}</h4>
+              {/* Product ID badge */}
+              {(item.product.item_number || item.product.product_id) && (
+                <p style={{ fontSize:'11px', color:'#6b7280', fontFamily:'monospace', margin:'2px 0' }}>
+                  ID: {item.product.item_number || item.product.product_id}
+                </p>
+              )}
+              {/* Bin Location badge */}
+              {(item.product.bin_location || item.bin_location) && (
+                <p style={{ fontSize:'11px', color:'#77a13d', fontWeight:600, margin:'2px 0', display:'flex', alignItems:'center', gap:3 }}>
+                  📍 Bin: {item.product.bin_location || item.bin_location}
+                </p>
+              )}
               <p>Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
             </div>
             <div className="item-total">

@@ -399,6 +399,29 @@ export const Productoverview = () => {
               <h4 className="category">{product.category?.name || "Uncategorized"}</h4>
               <h1 className="title">{product.name}</h1>
 
+              {/* Product ID + UPC row */}
+              {(product.item_number || product.product_id || product.lookup_code || product.sku) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+                  {(product.item_number || product.product_id) && (
+                    <span style={{
+                      background: '#f3f4f6', border: '1px solid #e5e7eb',
+                      borderRadius: '6px', padding: '4px 10px',
+                      fontSize: '12px', color: '#374151', fontFamily: 'monospace', fontWeight: 600
+                    }}>
+                      ID: {product.item_number || product.product_id}
+                    </span>
+                  )}
+                  {(product.lookup_code || product.sku) && (
+                    <span style={{
+                      background: '#f3f4f6', border: '1px solid #e5e7eb',
+                      borderRadius: '6px', padding: '4px 10px',
+                      fontSize: '12px', color: '#6b7280', fontFamily: 'monospace'
+                    }}>
+                      UPC: {product.lookup_code || product.sku}
+                    </span>
+                  )}
+                </div>
+              )}
 
               <div className="price-section">
                 <span className="buy-price">Price: ${product.buyPrice.toFixed(2)}</span>

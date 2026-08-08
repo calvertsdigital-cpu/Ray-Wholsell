@@ -1844,7 +1844,7 @@ export const ProductLists = () => {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                     gap: "16px",
                     padding: "16px",
                     background: "#f9fafb",
@@ -1852,16 +1852,43 @@ export const ProductLists = () => {
                     border: "1px solid #e5e7eb",
                   }}
                 >
+                  {/* Product ID */}
+                  {(selectedProduct.item_number || selectedProduct.product_id) && (
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
+                        Product ID
+                      </span>
+                      <span style={{ fontSize: "15px", fontWeight: "700", color: "#1f2937", fontFamily: "monospace" }}>
+                        {selectedProduct.item_number || selectedProduct.product_id}
+                      </span>
+                    </div>
+                  )}
+                  {/* UPC */}
+                  {(selectedProduct.lookup_code || selectedProduct.sku) && (
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
+                        UPC
+                      </span>
+                      <span style={{ fontSize: "15px", fontWeight: "600", color: "#374151", fontFamily: "monospace" }}>
+                        {selectedProduct.lookup_code || selectedProduct.sku}
+                      </span>
+                    </div>
+                  )}
+                  {/* Bin Location */}
+                  {selectedProduct.bin_location && (
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
+                        Bin Location
+                      </span>
+                      <span style={{ fontSize: "15px", fontWeight: "700", color: "#77a13d", display: "flex", alignItems: "center", gap: 4 }}>
+                        📍 {selectedProduct.bin_location}
+                      </span>
+                    </div>
+                  )}
+                  {/* Price */}
                   <div>
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#6b7280",
-                        display: "block",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      Price
+                    <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
+                      Wholesale Price
                     </span>
                     <span
                       style={{
@@ -1876,15 +1903,9 @@ export const ProductLists = () => {
                       ${selectedProduct.buyPrice.toFixed(2)}
                     </span>
                   </div>
+                  {/* Stock */}
                   <div>
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#6b7280",
-                        display: "block",
-                        marginBottom: "4px",
-                      }}
-                    >
+                    <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
                       Stock
                     </span>
                     <span
@@ -1894,30 +1915,30 @@ export const ProductLists = () => {
                         color: selectedProduct.stock > 0 ? "#10b981" : "#ef4444",
                       }}
                     >
-                      {selectedProduct.stock} units
+                      {selectedProduct.stock > 0 ? `${selectedProduct.stock} units` : "Out of Stock"}
                     </span>
                   </div>
+                  {/* Department */}
                   <div>
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#6b7280",
-                        display: "block",
-                        marginBottom: "4px",
-                      }}
-                    >
+                    <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
                       Department
                     </span>
-                    <span
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        color: "#77a13d",
-                      }}
-                    >
-                      {selectedProduct.category?.name || "Unknown"} / {selectedProduct.subcategory?.name || "Unknown"}
+                    <span style={{ fontSize: "14px", fontWeight: "600", color: "#77a13d", lineHeight: 1.4 }}>
+                      {selectedProduct.category?.name || "Unknown"}
+                      {selectedProduct.subcategory?.name && ` / ${selectedProduct.subcategory.name}`}
                     </span>
                   </div>
+                  {/* Brand */}
+                  {selectedProduct.brand?.name && (
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
+                        Brand
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
+                        {selectedProduct.brand.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2639,17 +2660,19 @@ export const ProductLists = () => {
               padding-bottom: 0.25rem;
             }
 
-            td:nth-child(1)::before { content: "Product ID"; }
-            td:nth-child(2)::before { content: "UPC"; }
-            td:nth-child(3)::before { content: "Product Title"; }
-            td:nth-child(4)::before { content: "Bin Location"; }
+            td:nth-child(1) { display: none !important; }
+            td:nth-child(2)::before { content: "Product ID"; }
             td:nth-child(3) { display: none !important; }
-            td:nth-child(4)::before { content: ""; display: none; }
-            td:nth-child(5) { display: none !important; }
-            td:nth-child(6)::before { content: ""; display: none; }
-            td:nth-child(7)::before { content: ""; display: none; }
+            td:nth-child(4)::before { content: "Product"; }
+            td:nth-child(5)::before { content: "Bin Location"; }
+            td:nth-child(6)::before { content: "Price"; }
+            td:nth-child(7)::before { content: "Quantity"; }
+            td:nth-child(8)::before { content: "Subtotal"; }
+            td:nth-child(9)::before { content: ""; display: none; }
+            td:nth-child(10)::before { content: ""; display: none; }
 
-            td:nth-child(1) {
+            /* td:nth-child(1) = Image — hidden on mobile */
+            td:nth-child(2) {
               background: #f9fafb !important;
               font-family: 'Courier New', monospace !important;
               font-size: 0.875rem !important;
@@ -2658,64 +2681,32 @@ export const ProductLists = () => {
               letter-spacing: 0.5px;
               word-break: break-all !important;
               overflow-wrap: break-word !important;
-              line-height: 4 !important;
               padding: 1.25rem 1rem !important;
             }
 
-            td:nth-child(2) {
+            /* td:nth-child(3) = UPC — hidden on mobile */
+
+            td:nth-child(4) {
               padding: 1.25rem 1rem !important;
-            }
-
-            td:nth-child(2) * {
-              max-width: 100% !important;
-              box-sizing: border-box !important;
-            }
-
-            td:nth-child(2) > div:first-child {
               font-size: 1.0625rem !important;
               font-weight: 600 !important;
               color: #111827 !important;
-              line-height: 4 !important;
-              margin: 0 0 0.875rem 0 !important;
-              padding: 0 !important;
-              word-wrap: break-word !important;
-              overflow-wrap: break-word !important;
-              white-space: normal !important;
-              overflow: visible !important;
-              display: block !important;
             }
 
-            td:nth-child(2) > div:nth-child(2) {
+            td:nth-child(5) {
+              padding: 1rem !important;
+              background: #f0f9ff !important;
               font-size: 0.875rem !important;
-              color: #77a13d !important;
-              font-weight: 600 !important;
-              margin: 0 0 0.5rem 0 !important;
-              padding: 0 !important;
-              line-height: 1.5 !important;
-            }
-
-            td:nth-child(2) > div:nth-child(3) {
-              font-size: 0.8125rem !important;
-              color: #9ca3af !important;
+              color: #6b7280 !important;
               font-style: italic !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              line-height: 1.5 !important;
             }
 
-            td:nth-child(2) .mobile-price-display {
-              display: block !important;
-              font-size: 1rem !important;
-              font-weight: 700 !important;
-              margin-top: 0.75rem !important;
-            }
-
-            td:nth-child(3) {
+            td:nth-child(6) {
               padding: 1rem !important;
               background: #f9fafb !important;
             }
 
-            td:nth-child(3) * {
+            td:nth-child(6) * {
               font-size: 1.25rem !important;
               font-weight: 700 !important;
               background: linear-gradient(135deg, #e97717, #77a13d) !important;
@@ -2724,12 +2715,12 @@ export const ProductLists = () => {
               background-clip: text !important;
             }
 
-            td:nth-child(4) {
+            td:nth-child(7) {
               padding: 1rem !important;
               background: white !important;
             }
 
-            td:nth-child(4) > div:first-of-type {
+            td:nth-child(7) > div:first-of-type {
               display: flex !important;
               align-items: center !important;
               justify-content: center !important;
@@ -2737,7 +2728,7 @@ export const ProductLists = () => {
               margin-bottom: 0.5rem !important;
             }
 
-            td:nth-child(4) button {
+            td:nth-child(7) button {
               width: 40px !important;
               height: 40px !important;
               min-width: 40px !important;
@@ -2745,20 +2736,20 @@ export const ProductLists = () => {
               font-size: 1.125rem !important;
             }
 
-            td:nth-child(4) span {
+            td:nth-child(7) span {
               font-size: 1rem !important;
               font-weight: 600 !important;
               min-width: 45px !important;
               text-align: center !important;
             }
 
-            td:nth-child(4) > div:last-child {
+            td:nth-child(7) > div:last-child {
               font-size: 0.6875rem !important;
               color: #6b7280 !important;
               text-align: center !important;
             }
 
-            td:nth-child(4) .mobile-subtotal-display {
+            td:nth-child(7) .mobile-subtotal-display {
               display: block !important;
               font-size: 1rem !important;
               font-weight: 700 !important;
@@ -2766,12 +2757,12 @@ export const ProductLists = () => {
               text-align: center !important;
             }
 
-            td:nth-child(5) {
+            td:nth-child(8) {
               padding: 1rem !important;
               background: #f0fdf4 !important;
             }
 
-            td:nth-child(5) * {
+            td:nth-child(8) * {
               font-size: 1.25rem !important;
               font-weight: 700 !important;
               background: linear-gradient(135deg, #e97717, #77a13d) !important;
@@ -2780,25 +2771,25 @@ export const ProductLists = () => {
               background-clip: text !important;
             }
 
-            td:nth-child(6) {
+            td:nth-child(9) {
               padding: 1rem !important;
               background: white !important;
             }
 
-            td:nth-child(6) > div {
+            td:nth-child(9) > div {
               display: flex !important;
               flex-direction: row !important;
               gap: 0.5rem !important;
               align-items: center !important;
             }
 
-            td:nth-child(6) button:first-child {
+            td:nth-child(9) button:first-child {
               flex: 1 !important;
               padding: 0.75rem !important;
               font-size: 0.875rem !important;
             }
 
-            td:nth-child(6) button:nth-child(2) {
+            td:nth-child(9) button:nth-child(2) {
               width: 48px !important;
               height: 48px !important;
               padding: 0 !important;
@@ -2809,7 +2800,7 @@ export const ProductLists = () => {
               flex-shrink: 0 !important;
             }
 
-            td:nth-child(7) {
+            td:nth-child(10) {
               padding: 1rem !important;
               border-bottom: none !important;
               background: #f9fafb !important;
@@ -2819,22 +2810,12 @@ export const ProductLists = () => {
               align-items: center !important;
             }
 
-            td:nth-child(7)::before {
-              text-align: center !important;
-              font-weight: 900 !important;
-              margin-bottom: 0 !important;
-              margin-top: 0.25rem !important;
-              display: block !important;
-              font-size: 0.75rem !important;
-            }
-
-            td:nth-child(7) button {
+            td:nth-child(10) button {
               width: 48px !important;
               height: 48px !important;
               padding: 0 !important;
               font-size: 1.5rem !important;
               border-radius: 8px !important;
-              transition: all 0.2s ease !important;
               display: flex !important;
               align-items: center !important;
               justify-content: center !important;
