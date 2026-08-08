@@ -118,6 +118,8 @@ const useProductsAPI = (BASE_URL) => {
 export const ProductLists = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [departments, setDepartments] = useState([]);   // [{department, categories:[{_id,name,subcategories}]}]
+  const [expandedDepts, setExpandedDepts] = useState({});
   const [categoryCounts, setCategoryCounts] = useState({});
   const [subcategoryCounts, setSubcategoryCounts] = useState({});
   const [error, setError] = useState("");
@@ -408,32 +410,29 @@ export const ProductLists = () => {
   const fetchInitialData = useCallback(async () => {
     try {
       setLoading(true);
-      const [categoriesResponse, countsResponse, moqResponse] = await Promise.all([
+      const [deptsResponse, categoriesResponse, countsResponse] = await Promise.all([
+        axios.get(`${BASE_URL}/api/user/departments`),
         axios.get(`${BASE_URL}/api/user/categories`),
         axios.get(`${BASE_URL}/api/user/product-count`),
-        axios.get(`${BASE_URL}/api/bulk/get-bulk-order`),
       ]);
-
+      // Departments tree — for the filter sidebar
+      const deptsData = deptsResponse.data?.departments || [];
+      setDepartments(deptsData);
+      // Flat categories — still needed for filter-product logic
       const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-      // Sort categories alphabetically by name (A-Z)
-      const sortedCategories = categoriesData.sort((a, b) => a.name.localeCompare(b.name));
-      setCategories(sortedCategories);
-      if (countsResponse && countsResponse.data.success) {
+      setCategories(categoriesData.sort((a, b) => a.name.localeCompare(b.name)));
+      if (countsResponse?.data?.success) {
         setCategoryCounts(countsResponse.data.categoryCounts || {});
         setSubcategoryCounts(countsResponse.data.subcategoryCounts || {});
-        console.log('Product counts:', countsResponse.data);
       } else {
-        console.warn('No valid counts response:', countsResponse?.data);
         setCategoryCounts({});
         setSubcategoryCounts({});
       }
-
-      // MOQ is fixed at 12 for wholesale — do not override from API
-
       setIsInitialized(true);
     } catch (err) {
       console.error('Error fetching initial data:', err.message, err.response?.data);
       setCategories([]);
+      setDepartments([]);
       setCategoryCounts({});
       setSubcategoryCounts({});
       setError("Failed to load initial data");
@@ -622,6 +621,11 @@ export const ProductLists = () => {
       ...prev,
       [categoryId]: !prev[categoryId],
     }));
+  }, []);
+
+  // Toggle a whole department open/closed in the sidebar
+  const toggleDeptExpand = useCallback((deptName) => {
+    setExpandedDepts((prev) => ({ ...prev, [deptName]: !prev[deptName] }));
   }, []);
 
   const getImageUrl = useCallback(

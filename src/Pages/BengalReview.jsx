@@ -6,10 +6,82 @@ import { Footer } from "../components/common/Footer/Footer";
 
 const reviews = [
   {
+    name: "Jason Reed",
+    date: "Jul 2026",
+    text: "Changed my life",
+    meta: "on Google",
+    rating: 5,
+  },
+  {
+    name: "Dion Gary",
+    date: "Jul 2026",
+    text: "Do not go in here!! Ray does not hold a health/medical license to be advising anyone about health and wellness. Also I went in here a few days ago to buy incense, as a woman my face was breaking out and Ray asked me \"Why was my face breaking out\".",
+    meta: "on Google",
+    rating: 1,
+    ownerReply: "Hello Dion,\n\nThank you for taking the time to leave a review.\n\nRay's Healthy Living has served thousands of customers over the years by providing education about nutrition, supplements, and wellness products. We do not diagnose, treat, or prescribe medical treatment, and we always encourage customers to consult licensed healthcare professionals regarding medical concerns.\n\nRegarding the comment referenced in your review, I take this allegation very seriously. I do not recall making the statement you described, and it certainly does not reflect the standards of professionalism and respect that I strive to maintain with every customer.\n\nIf there has been a misunderstanding or if you believe your experience was not handled appropriately, I would welcome the opportunity to discuss it directly and better understand your concerns.\n\nI wish you the very best and appreciate your feedback.\n\n— Ray\nRay's Healthy Living",
+  },
+  {
+    name: "Kenesha Davis",
+    date: "Mar 2026",
+    text: "Love this store! Ray is very knowledgeable and also has educational material on health products available.",
+    meta: "on Google",
+    rating: 5,
+    badge: "Local Guide · 19 reviews",
+  },
+  {
+    name: "Scott Fegan",
+    date: "Sep 2025",
+    text: "I stopped by Ray's recently and was really impressed! Ray knows his stuff. The store is well-organized with a great selection of vitamins and natural remedies. Good spot for anyone looking to support their health.",
+    meta: "on Google",
+    rating: 5,
+  },
+  {
+    name: "Ida Gross",
+    date: "Aug 2025",
+    text: "Omg, where do I start? I am a cancer patient who is currently in remission! I stumbled across Mr. Ray and his health store and I'd like to think he is playing a major part in my recovery. He's knowledgeable, patient, and very compassionate, I'm thankful for him being a part of my journey.",
+    meta: "on Google",
+    rating: 5,
+    badge: "Local Guide · 8 reviews",
+    ownerReply: "Hello Ida, thank you for the great review. We loved having you in the store and getting to know your story. We hope to see you again. - Rayman Khan",
+  },
+  {
+    name: "Jennifer Schaefer",
+    date: "Aug 2025",
+    text: "Disappointed with my experience. I purchased supplements from this shop and later discovered they were past their expiration date. This raises serious concerns about product safety and quality control. I wouldn't recommend buying from here unless they make clear improvements.",
+    meta: "on Google",
+    rating: 1,
+  },
+  {
+    name: "Robert Gillett",
+    date: "Jul 2025",
+    text: "You can go to a grocery or drug store and take your chances, or you can visit Ray's and quickly upgrade your health. You always come out with something, including an education in healthy living.",
+    meta: "on Google",
+    rating: 5,
+    ownerReply: "Hi Robert, you're the best. Thank you for the great review. I'm looking forward to see you soon.",
+  },
+  {
     name: "Holly Grimes",
     date: "Nov 11th, 2023",
-    text: "Ray is the best and so are his products!",
+    text: "Highest quality supplements hands down. Ray is helpful in every way. Been coming here for many years!",
     meta: "on Google",
+    rating: 5,
+    badge: "Local Guide · 33 reviews · 8 photos",
+    ownerReply: "Hi Holly! Thank you for the pleasant review, and we hope to see you again soon. - Rayman Khan",
+  },
+  {
+    name: "Lillie Mattingly",
+    date: "Oct 2023",
+    text: "Great knowledge",
+    meta: "on Google",
+    rating: 5,
+    ownerReply: "Hi Lillie, thank you for the review! I hope we sufficiently helped you, and let us know if you need anything else! - Rayman Khan",
+  },
+  {
+    name: "piggy and sans yeet",
+    date: "Nov 7th, 2023",
+    text: "Ray is so kind and helpful! He knows just what I need. He actually takes time to understand what you are actually looking for!",
+    meta: "on Google",
+    rating: 5,
   },
   {
     name: "piggy and sans yeet",
@@ -168,7 +240,7 @@ export default function BengalReview() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-slate-900">
-            Chamber of Commerce - All Reviews
+            Google Reviews — Ray's Healthy Living
           </h1>
           <button
             onClick={() => navigate(-1)}
@@ -185,33 +257,53 @@ export default function BengalReview() {
               className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"
             >
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center text-xl font-bold text-white">
-                  {r.name.charAt(0)}
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold text-white flex-shrink-0 ${r.rating >= 4 ? 'bg-green-600' : 'bg-red-500'}`}>
+                  {r.name.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between flex-wrap gap-2">
                     <div>
                       <div className="font-semibold text-slate-900">
                         {r.name}{" "}
-                        <span className="text-sm text-gray-500">{r.meta}</span>
+                        <span className="text-sm text-gray-400 font-normal">{r.meta}</span>
                       </div>
-                      <div className="text-xs text-gray-500">{r.date}</div>
+                      {r.badge && (
+                        <div className="text-xs text-blue-600 font-medium mt-0.5">{r.badge}</div>
+                      )}
+                      <div className="text-xs text-gray-500 mt-0.5">{r.date}</div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className="w-4 h-4 text-yellow-400 fill-yellow-400"
+                          className={`w-4 h-4 ${i < (r.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
                         />
                       ))}
                     </div>
                   </div>
 
                   {r.text && (
-                    <p className="text-gray-700 mt-3 whitespace-pre-line">
+                    <p className="text-gray-700 mt-3 leading-relaxed whitespace-pre-line">
                       {r.text}
                     </p>
+                  )}
+
+                  {/* Owner reply */}
+                  {r.ownerReply && (
+                    <div className="mt-4 ml-4 pl-4 border-l-2 border-green-300 bg-green-50 rounded-r-xl p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">R</span>
+                        </div>
+                        <span className="text-xs font-bold text-green-800">
+                          Ray's Healthy Living (owner)
+                        </span>
+                      </div>
+                      <p className="text-xs text-green-900 leading-relaxed whitespace-pre-line">
+                        {r.ownerReply}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
