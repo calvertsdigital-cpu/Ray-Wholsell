@@ -407,20 +407,85 @@ export const ProductLists = () => {
     [BASE_URL, categories, validatePriceRange, buildQueryParams, generateNoProductsMessage, fetchWithCancel]
   );
 
+  // ── Exact Department → Category mapping sourced from RHL 1 Items July 21 26 CSV ──
+  const DEPT_MAP = {
+    "AROMA THERAPY":              ["CARRIER OIL", "ESSENTIAL OILS"],
+    "BLOOD SUGAR SUPPORT":        ["INSULIN SUPPORT"],
+    "BODY OIL":                   ["CARRIER OIL"],
+    "CARDIOVASCULAR SUPPORT":     ["CHOLESTEROL", "CIRCULARTORY SUPPORT", "GINSENG ENERGRY", "HEART SUPPORT"],
+    "CHILDREN'S HEALTH":          ["CHILDRENS VITAMINS", "KIDE ANXIETY"],
+    "DIGESTION - DETOX":          ["CLEANSING - COLON SUPPORT", "DETOX", "DETOX - LIVER CLENSES", "DIGESTIVE AID - ENZYMES", "INTESTINAL SUPPORT", "KIDNNEY - URINARY - LYMPH SUPP", "YEAST - BACTERIA - FUNGAL DETO"],
+    "HERBAL SUPPLEMENTS A - Z":   ["BRAIN AND NERVE SUPPORT", "HERBAL SUPPLEMENT", "LIQUID HERBS"],
+    "HORMONAL HEALTH":            ["WOMENS HEALTH"],
+    "HYGIENE":                    ["MOUTHWASH", "SANITIZER"],
+    "IMMUNE SYSTEM SUPPORT":      ["BLACK SEED", "IMMUNE ANTIOXIDANT SUPPORT", "IMMUNE SUPPORT", "MUSHROOM", "RESPIRATORY HERBS/BRONCHIAL SU", "SINUS SUPPORT -   ALLERGIES SU"],
+    "JOINT SUPPORT":              ["INFLAMMATION", "JOINT AND ARTHRITIS", "JOINT HEALTH", "PAIN MANAGMENT"],
+    "LIQUID HERBS A - Z":         ["LIQUID SUPPLEMENT"],
+    "MEN -  WOMAN HEALTH":        ["ADRENAL SUPPORT", "GLANDULAR SUPPORT", "HORMONAL HEALTH", "MEN & WOMEN hEALTH", "MEN AND WOMEN GLANDULAR SUPPOR", "MEN'S HEALTH", "THYROID SUPPORT", "WEIGHT MANAGEMENT", "WOMEN HEALTH"],
+    "MINERALS":                   ["IRON", "ZINC"],
+    "NERVOUS SYSTEM":             ["ALCOHOLISM", "ANXIETY SUPPORT", "BRAIN -  NERVE SUPPORT -  MENT", "EYE CARE", "HEAD - AID", "SLEEP", "STRESS ANXIETY SUPPORT", "STRESS SUPPORT"],
+    "PANTRY":                     ["IRISH SEA MOSS", "SWEETENER"],
+    "PERSONAL SUPPORT":           ["EAR", "FIRST AID", "HAIR", "HAIR - SKIN - NAILS", "SKIN"],
+    "SUPERFOOD":                  ["CAPSULES", "JUICE", "LOOSE HERBS", "SEA MOSS"],
+    "VITAMINS A - Z":             ["B VITAMINS", "C VITAMINS", "D VITAMINS", "VITAMIN A-Z"],
+  };
+
   const fetchInitialData = useCallback(async () => {
     try {
       setLoading(true);
-      const [deptsResponse, categoriesResponse, countsResponse] = await Promise.all([
-        axios.get(`${BASE_URL}/api/user/departments`),
+      const [categoriesResponse, countsResponse] = await Promise.all([
         axios.get(`${BASE_URL}/api/user/categories`),
         axios.get(`${BASE_URL}/api/user/product-count`),
       ]);
-      // Departments tree — for the filter sidebar
-      const deptsData = deptsResponse.data?.departments || [];
-      setDepartments(deptsData);
-      // Flat categories — still needed for filter-product logic
+
+      // Flat categories from API
       const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
       setCategories(categoriesData.sort((a, b) => a.name.localeCompare(b.name)));
+
+      // Build departments tree:
+      // 1. Try grouping by the `department` field from DB
+      // 2. Fall back to matching by name against the CSV DEPT_MAP
+      // 3. Always ensure all 19 CSV departments appear (even if DB has no dept field yet)
+      const deptGroups = {};
+
+      // Seed all 19 departments from CSV map first (so the structure always exists)
+      Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
+
+      categoriesData.forEach(cat => {
+        const catNameUpper = cat.name?.toUpperCase()?.trim() || '';
+        // Check if the DB record has a department field
+        let deptKey = cat.department?.toUpperCase()?.trim();
+
+        // If no dept in DB, look it up from CSV map by category name
+        if (!deptKey) {
+          for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
+            if (catNames.some(n => n.toUpperCase() === catNameUpper)) {
+              deptKey = dept;
+              break;
+            }
+          }
+        }
+
+        if (!deptKey) deptKey = 'OTHER';
+        if (!deptGroups[deptKey]) deptGroups[deptKey] = [];
+
+        // Avoid duplicates (CARRIER OIL appears in 2 depts)
+        if (!deptGroups[deptKey].find(c => c._id === cat._id)) {
+          deptGroups[deptKey].push(cat);
+        }
+      });
+
+      // Remove empty OTHER bucket, sort depts A-Z, sort categories within each dept A-Z
+      const deptTree = Object.entries(deptGroups)
+        .filter(([dept, cats]) => dept !== 'OTHER' || cats.length > 0)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([dept, cats]) => ({
+          department: dept,
+          categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
+        }));
+
+      setDepartments(deptTree);
+
       if (countsResponse?.data?.success) {
         setCategoryCounts(countsResponse.data.categoryCounts || {});
         setSubcategoryCounts(countsResponse.data.subcategoryCounts || {});
@@ -581,6 +646,7 @@ export const ProductLists = () => {
     console.log("Clearing filters");
     resetFilters();
     setExpandedCategories({});
+    setExpandedDepts({});
     setError("");
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   }, [resetFilters]);
@@ -1313,59 +1379,167 @@ export const ProductLists = () => {
               </button>
             )}
           </div>
-          <h4 style={{ color: "#fff", marginBottom: "12px", letterSpacing: ".9px" }}>Departments</h4>
-          <div className="filter-section">
+          {/* ─── Department → Category → Subcategory filter sidebar ─────── */}
+          <div className="filter-section dept-filter-section">
+            {/* Fallback: flat category list shown when no departments seeded yet */}
+            {departments.length === 0 && !loading && categories.length > 0 && (
+              <>
+                <h4 style={{ color: "#fff", marginBottom: "8px", fontSize: "13px", letterSpacing: ".8px" }}>
+                  Categories
+                </h4>
+                {categories.map((category) => {
+                  const cid   = String(category._id);
+                  const count = categoryCounts[cid];
+                  if (count !== undefined && count === 0) return null;
+                  return (
+                    <div key={cid} className="dept-category-item">
+                      <label className="filter-option">
+                        <input
+                          type="checkbox"
+                          checked={filters.categories.includes(cid)}
+                          onChange={() => handleCategoryChange(cid)}
+                          disabled={isFiltering}
+                        />
+                        <span className="cat-label">
+                          {category.name}
+                          {count > 0 && <span className="cat-count">{count}</span>}
+                        </span>
+                      </label>
+                    </div>
+                  );
+                })}
+              </>
+            )}
 
-            {categories
-              .filter((category) => categoryCounts[category._id] > 0)
-              .sort((a, b) => a.name.localeCompare(b.name)) // Sort categories A-Z
-              .map((category) => (
-                <div key={category._id}>
-                  <div className="category-item">
-                    <label className="filter-option">
-                      <input
-                        type="checkbox"
-                        checked={filters.categories.includes(category._id)}
-                        onChange={() => handleCategoryChange(category._id)}
-                        disabled={isFiltering}
-                      />
-                      <span>{category.name} ({categoryCounts[category._id] || 0})</span>
-                    </label>
-                    {category.subcategories?.length > 0 && (
+            {/* Primary: department accordion */}
+            {departments.map((deptObj) => {
+              const deptName    = deptObj.department;
+              const isOpen      = !!expandedDepts[deptName];
+              const allCats     = deptObj.categories;
+
+              // Show categories that either have products OR are selected (for UX consistency)
+              // Also show them when counts haven't loaded yet (undefined means loading)
+              const countsLoaded = Object.keys(categoryCounts).length > 0;
+              const visibleCats = allCats.filter((cat) => {
+                if (!cat._id) return false;
+                const count = categoryCounts[String(cat._id)];
+                // If counts not loaded yet, show all; once loaded, only show cats with products
+                return !countsLoaded || count > 0 || filters.categories.includes(String(cat._id));
+              });
+
+              // Hide dept only if NO categories exist in DB for it at all
+              if (allCats.length === 0) return null;
+              // If counts loaded and nothing in this dept has products, still show greyed
+              const deptTotal = allCats.reduce((s, cat) => s + (categoryCounts[String(cat._id)] || 0), 0);
+              const isActive  = allCats.some(cat => filters.categories.includes(String(cat._id)));
+              // Render: show all depts, but grey out empty ones
+              const catsToShow = visibleCats.length > 0 ? visibleCats : allCats.slice(0, 3);
+
+              return (
+                <div key={deptName} className="dept-group">
+                  <button
+                    className={"dept-header" + (isOpen ? " dept-header--open" : "") + (isActive ? " dept-header--active" : "")}
+                    onClick={() => toggleDeptExpand(deptName)}
+                    aria-expanded={isOpen}
+                    type="button"
+                    style={{ opacity: deptTotal === 0 && !isActive ? 0.5 : 1 }}
+                  >
+                    <span className="dept-name">{deptName}</span>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+                      {deptTotal > 0 && (
+                        <span style={{
+                          fontSize:'10px', background:'rgba(0,0,0,0.25)', color:'white',
+                          borderRadius:'10px', padding:'1px 7px', fontWeight:600,
+                        }}>{deptTotal}</span>
+                      )}
                       <svg
-                        onClick={() => toggleCategoryExpand(category._id)}
-                        className="plus-icon"
-                        fill="none"
-                        stroke="#ffffff"
-                        viewBox="0 0 24 24"
-                        strokeWidth="2"
-                        style={{ transform: expandedCategories[category._id] ? 'rotate(45deg)' : 'rotate(0deg)' }}
+                        className="dept-chevron"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                        style={{ width:14, height:14, transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition:"transform 0.2s ease" }}
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
-                    )}
-                  </div>
-                  {category.subcategories?.length > 0 && expandedCategories[category._id] && (
-                    <div className="subcategory-list">
-                      {category.subcategories
-                        .filter((subcategory) => subcategoryCounts[subcategory._id] > 0)
-                        .sort((a, b) => a.name.localeCompare(b.name)) // Sort subcategories A-Z
-                        .map((subcategory) => (
-                          <label key={subcategory._id} className="filter-option">
-                            <input
-                              type="checkbox"
-                              checked={filters.subcategories.includes(subcategory._id)}
-                              onChange={() => handleSubcategoryChange(subcategory._id)}
-                              disabled={!filters.categories.includes(category._id) || isFiltering}
-                            />
-                            <span>{subcategory.name} ({subcategoryCounts[subcategory._id] || 0})</span>
-                          </label>
-                        ))}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="dept-cats">
+                      {catsToShow.map((cat) => {
+                        const catId   = String(cat._id);
+                        const count   = categoryCounts[catId] || 0;
+                        const checked = filters.categories.includes(catId);
+                        const hasSubs = cat.subcategories && cat.subcategories.length > 0;
+                        const subOpen = !!expandedCategories[catId];
+
+                        return (
+                          <div key={catId} className="dept-category-item">
+                            <div className="cat-row">
+                              <label className="filter-option">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => handleCategoryChange(catId)}
+                                  disabled={isFiltering}
+                                />
+                                <span className="cat-label">
+                                  {cat.name}
+                                  {count > 0 && <span className="cat-count">{count}</span>}
+                                </span>
+                              </label>
+                              {hasSubs && (
+                                <svg
+                                  onClick={() => toggleCategoryExpand(catId)}
+                                  className="plus-icon"
+                                  fill="none"
+                                  stroke="#ffffff"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="2"
+                                  style={{
+                                    transform: subOpen ? "rotate(45deg)" : "rotate(0deg)",
+                                    transition: "transform 0.2s",
+                                    cursor: "pointer",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                              )}
+                            </div>
+                            {hasSubs && subOpen && (
+                              <div className="subcategory-list">
+                                {cat.subcategories
+                                  .sort((a, b) => a.name.localeCompare(b.name))
+                                  .map((sub) => {
+                                    const subId    = String(sub._id);
+                                    const subCount = subcategoryCounts[subId] || 0;
+                                    if (subCount === 0 && Object.keys(subcategoryCounts).length > 0) return null;
+                                    return (
+                                      <label key={subId} className="filter-option">
+                                        <input
+                                          type="checkbox"
+                                          checked={filters.subcategories.includes(subId)}
+                                          onChange={() => handleSubcategoryChange(subId)}
+                                          disabled={!checked || isFiltering}
+                                        />
+                                        <span>
+                                          {sub.name}
+                                          {subCount > 0 && <span className="cat-count">{subCount}</span>}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-              ))}
+              );
+            })}
           </div>
+
           <div className="filter-section">
             <h4>Price Range</h4>
             <div className="price-inputs">
@@ -1407,8 +1581,6 @@ export const ProductLists = () => {
               <option value="buyPrice-desc">Price: High to Low</option>
             </select>
           </div>
-        </div>
-      </div>
       <div ref={scope} className="main-content">
         <div className="search-container">
           <div className="search-bar">
@@ -1954,6 +2126,81 @@ export const ProductLists = () => {
           .container {
             display: flex;
             min-height: 100vh;
+
+          /* ── Department accordion styles ── */
+          .dept-group {
+            margin-bottom: 2px;
+          }
+          .dept-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 8px;
+            background: transparent;
+            border: none;
+            border-left: 3px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s, border-color 0.2s;
+            gap: 6px;
+          }
+          .dept-header:hover {
+            background: rgba(255,255,255,0.12);
+          }
+          .dept-header--open {
+            background: rgba(255,255,255,0.1);
+          }
+          .dept-header--active {
+            background: rgba(255,255,255,0.2) !important;
+            border-left-color: white !important;
+          }
+          .dept-name {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: white;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            text-transform: uppercase;
+          }
+          .dept-cats {
+            padding-left: 10px;
+            padding-top: 2px;
+            padding-bottom: 4px;
+          }
+          .dept-category-item {
+            margin-bottom: 1px;
+          }
+          .cat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1px 0;
+          }
+          .cat-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: white;
+          }
+          .cat-count {
+            font-size: 10px;
+            opacity: 0.65;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 0 5px;
+            line-height: 1.6;
+          }
+
+          .container {
+            display: flex;
+            min-height: 100vh;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
             flex-direction: row;
             width: 100%;
@@ -2074,6 +2321,34 @@ export const ProductLists = () => {
             height: 1rem;
             cursor: pointer;
             transition: transform 0.2s ease;
+          }
+
+          /* ── Department accordion ─────────────────────────── */
+          .dept-filter-section { padding-bottom: 4px; }
+          .dept-group { margin-bottom: 3px; }
+          .dept-header {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; background: rgba(255,255,255,0.12); border: none;
+            border-radius: 6px; padding: 8px 10px; color: #fff;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.7px;
+            text-transform: uppercase; cursor: pointer; text-align: left;
+            transition: background 0.15s ease; margin-bottom: 2px;
+          }
+          .dept-header:hover, .dept-header--open { background: rgba(255,255,255,0.24); }
+          .dept-name { flex: 1; line-height: 1.35; }
+          .dept-chevron { width: 14px; height: 14px; flex-shrink: 0; }
+          .dept-cats {
+            padding: 4px 0 6px 10px;
+            border-left: 2px solid rgba(255,255,255,0.2);
+            margin-left: 8px; margin-bottom: 4px;
+          }
+          .dept-category-item { margin-bottom: 2px; }
+          .cat-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+          .cat-label { display: flex; align-items: center; gap: 5px; flex: 1; font-size: 13px; }
+          .cat-count {
+            background: rgba(255,255,255,0.22); border-radius: 10px;
+            padding: 1px 6px; font-size: 10px; font-weight: 700;
+            color: #fff; min-width: 20px; text-align: center;
           }
 
           .subcategory-list {
