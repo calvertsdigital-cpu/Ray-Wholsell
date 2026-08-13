@@ -452,14 +452,25 @@ export const ProductLists = () => {
       Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
 
       categoriesData.forEach(cat => {
-        const catNameUpper = cat.name?.toUpperCase()?.trim() || '';
+        const catNameUpper = (cat.name || '').toUpperCase().trim().replace(/\s+/g, ' ');
         // Check if the DB record has a department field
-        let deptKey = cat.department?.toUpperCase()?.trim();
+        let deptKey = cat.department?.toUpperCase()?.trim().replace(/\s+/g, ' ');
 
         // If no dept in DB, look it up from CSV map by category name
         if (!deptKey) {
           for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
-            if (catNames.some(n => n.toUpperCase() === catNameUpper)) {
+            if (catNames.some(n => n.toUpperCase().trim().replace(/\s+/g, ' ') === catNameUpper)) {
+              deptKey = dept;
+              break;
+            }
+          }
+        }
+
+        // Still no match — try partial match (first 10 chars)
+        if (!deptKey) {
+          const short = catNameUpper.slice(0, 10);
+          for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
+            if (catNames.some(n => n.toUpperCase().slice(0, 10) === short)) {
               deptKey = dept;
               break;
             }
@@ -469,16 +480,22 @@ export const ProductLists = () => {
         if (!deptKey) deptKey = 'OTHER';
         if (!deptGroups[deptKey]) deptGroups[deptKey] = [];
 
-        // Avoid duplicates (CARRIER OIL appears in 2 depts)
+        // Avoid duplicates
         if (!deptGroups[deptKey].find(c => c._id === cat._id)) {
           deptGroups[deptKey].push(cat);
         }
       });
 
-      // Remove empty OTHER bucket, sort depts A-Z, sort categories within each dept A-Z
+      // Sort depts A-Z, sort categories within each dept A-Z
+      // Keep 'OTHER' only if it has categories
       const deptTree = Object.entries(deptGroups)
         .filter(([dept, cats]) => dept !== 'OTHER' || cats.length > 0)
-        .sort(([a], [b]) => a.localeCompare(b))
+        .sort(([a], [b]) => {
+          // Put OTHER at the end
+          if (a === 'OTHER') return 1;
+          if (b === 'OTHER') return -1;
+          return a.localeCompare(b);
+        })
         .map(([dept, cats]) => ({
           department: dept,
           categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
@@ -1412,28 +1429,27 @@ export const ProductLists = () => {
             )}
 
             {/* Primary: department accordion */}
+            {departments.length === 0 && !loading && (
+              <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'12px', padding:'8px 0' }}>
+                Loading departments…
+              </p>
+            )}
             {departments.map((deptObj) => {
-              const deptName    = deptObj.department;
-              const isOpen      = !!expandedDepts[deptName];
-              const allCats     = deptObj.categories;
+              const deptName = deptObj.department;
+              const isOpen   = !!expandedDepts[deptName];
+              const cats     = deptObj.categories || [];
 
-              // Show categories that either have products OR are selected (for UX consistency)
-              // Also show them when counts haven't loaded yet (undefined means loading)
-              const countsLoaded = Object.keys(categoryCounts).length > 0;
-              const visibleCats = allCats.filter((cat) => {
-                if (!cat._id) return false;
-                const count = categoryCounts[String(cat._id)];
-                // If counts not loaded yet, show all; once loaded, only show cats with products
-                return !countsLoaded || count > 0 || filters.categories.includes(String(cat._id));
-              });
+              // Always show the department header — even if cats is empty
+              // (clicking will still expand, just show empty state)
+              const deptTotal = cats.reduce((s, cat) =>
+                s + (categoryCounts[String(cat._id)] || 0), 0);
+              const isActive = cats.some(cat =>
+                filters.categories.includes(String(cat._id)));
 
-              // Hide dept only if NO categories exist in DB for it at all
-              if (allCats.length === 0) return null;
-              // If counts loaded and nothing in this dept has products, still show greyed
-              const deptTotal = allCats.reduce((s, cat) => s + (categoryCounts[String(cat._id)] || 0), 0);
-              const isActive  = allCats.some(cat => filters.categories.includes(String(cat._id)));
-              // Render: show all depts, but grey out empty ones
-              const catsToShow = visibleCats.length > 0 ? visibleCats : allCats.slice(0, 3);
+              // Show ALL categories — don't hide based on count
+              // (products may exist but counts API may not match)
+              const catsToShow = [...cats].sort((a, b) =>
+                a.name.localeCompare(b.name));
 
               return (
                 <div key={deptName} className="dept-group">
@@ -1538,6 +1554,38 @@ export const ProductLists = () => {
                 </div>
               );
             })}
+
+            {/* Fallback: if departments have no categories (API mismatch), show flat list */}
+            {departments.length > 0 &&
+              departments.every(d => d.categories.length === 0) &&
+              categories.length > 0 && (
+                <div>
+                  <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'10px', textTransform:'uppercase',
+                    letterSpacing:'.6px', marginBottom:8, marginTop:4 }}>All Categories</p>
+                  {categories
+                    .filter(cat => (categoryCounts[cat._id] || 0) > 0 || true)
+                    .map(cat => (
+                      <div key={cat._id} style={{ padding:'2px 0' }}>
+                        <label className="filter-option">
+                          <input
+                            type="checkbox"
+                            checked={filters.categories.includes(cat._id)}
+                            onChange={() => handleCategoryChange(cat._id)}
+                            disabled={isFiltering}
+                          />
+                          <span style={{ fontSize:'12px' }}>
+                            {cat.name}
+                            {categoryCounts[cat._id] > 0 && (
+                              <span className="cat-count">{categoryCounts[cat._id]}</span>
+                            )}
+                          </span>
+                        </label>
+                      </div>
+                    ))
+                  }
+                </div>
+              )
+            }
           </div>
 
           <div className="filter-section">
@@ -2126,6 +2174,7 @@ export const ProductLists = () => {
           .container {
             display: flex;
             min-height: 100vh;
+          }
 
           /* ── Department accordion styles ── */
           .dept-group {
