@@ -623,21 +623,25 @@ export const ProductLists = () => {
   }, [searchQuery, searchResults.length, isSearching, hasActiveFilters, filters, pagination.currentPage, pagination.itemsPerPage, fetchFilteredProducts, fetchAllProducts]);
 
   const handleCategoryChange = useCallback((categoryId) => {
+    console.log("Category selected:", categoryId);
     setProducts([]);
     setLoading(true);
     updateFilter('categories', categoryId, true);
+    
+    // When selecting a category, clear its subcategory filters
     if (!filters.categories.includes(categoryId)) {
       const category = categories.find((cat) => cat._id === categoryId);
       if (category && category.subcategories && category.subcategories.length > 0) {
         const subcategoryIds = category.subcategories.map((sub) => sub._id);
         const newSubcategories = filters.subcategories.filter((subId) => !subcategoryIds.includes(subId));
-        updateFilter('subcategories', newSubcategories, true);
+        updateFilter('subcategories', newSubcategories, false);
       }
     } else {
+      // If deselecting, expand the category to show subcategories
       setExpandedCategories((prev) => ({ ...prev, [categoryId]: true }));
     }
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  }, [updateFilter, filters.categories, categories]);
+  }, [updateFilter, filters.categories, filters.subcategories, categories]);
 
   const handleSubcategoryChange = useCallback((subcategoryId) => {
     if (!subcategoryId || typeof subcategoryId !== 'string' || subcategoryId.length !== 24) {
@@ -1117,7 +1121,7 @@ export const ProductLists = () => {
                       fontSize: "12px",
                     }}
                   >
-                    {product.item_number || product.product_id || "N/A"}
+                    {(product.item_number !== undefined && product.item_number !== null) ? product.item_number : (product.product_id || "N/A")}
                   </td>
                   <td
                     style={{
@@ -1396,6 +1400,113 @@ export const ProductLists = () => {
               </button>
             )}
           </div>
+
+          {/* Active Filters Display */}
+          {(filters.categories.length > 0 || filters.subcategories.length > 0 || filters.minPrice || filters.maxPrice) && (
+            <div style={{
+              background: "rgba(255,255,255,0.1)",
+              borderRadius: "8px",
+              padding: "12px",
+              marginBottom: "1rem",
+              border: "1px solid rgba(255,255,255,0.2)"
+            }}>
+              <div style={{
+                fontSize: "12px",
+                color: "rgba(255,255,255,0.8)",
+                marginBottom: "8px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                fontWeight: "600"
+              }}>
+                Active Filters ({filters.categories.length + filters.subcategories.length + (filters.minPrice ? 1 : 0) + (filters.maxPrice ? 1 : 0)})
+              </div>
+              
+              {/* Selected Categories */}
+              {filters.categories.length > 0 && (
+                <div style={{ marginBottom: "6px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "4px" }}>Categories:</div>
+                  {departments.flatMap(dept => 
+                    dept.categories
+                      .filter(cat => filters.categories.includes(cat._id))
+                      .map(cat => (
+                        <span
+                          key={cat._id}
+                          style={{
+                            display: "inline-block",
+                            background: "#77a13d",
+                            color: "white",
+                            fontSize: "10px",
+                            padding: "2px 6px",
+                            borderRadius: "10px",
+                            marginRight: "4px",
+                            marginBottom: "2px",
+                            cursor: "pointer"
+                          }}
+                          onClick={() => handleCategoryChange(cat._id)}
+                          title={`Click to remove • Department: ${dept.department}`}
+                        >
+                          {cat.name} ×
+                        </span>
+                      ))
+                  )}
+                </div>
+              )}
+
+              {/* Selected Subcategories */}
+              {filters.subcategories.length > 0 && (
+                <div style={{ marginBottom: "6px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "4px" }}>Subcategories:</div>
+                  {categories
+                    .flatMap(cat => cat.subcategories || [])
+                    .filter(sub => filters.subcategories.includes(sub._id))
+                    .map(sub => (
+                      <span
+                        key={sub._id}
+                        style={{
+                          display: "inline-block",
+                          background: "#9fc965",
+                          color: "white",
+                          fontSize: "10px",
+                          padding: "2px 6px",
+                          borderRadius: "10px",
+                          marginRight: "4px",
+                          marginBottom: "2px",
+                          cursor: "pointer"
+                        }}
+                        onClick={() => handleSubcategoryChange(sub._id)}
+                        title="Click to remove"
+                      >
+                        {sub.name} ×
+                      </span>
+                    ))
+                  }
+                </div>
+              )}
+
+              {/* Price Range */}
+              {(filters.minPrice || filters.maxPrice) && (
+                <div style={{ marginBottom: "4px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "4px" }}>Price:</div>
+                  <span style={{
+                    display: "inline-block",
+                    background: "rgba(255,255,255,0.2)",
+                    color: "white",
+                    fontSize: "10px",
+                    padding: "2px 6px",
+                    borderRadius: "10px"
+                  }}>
+                    {filters.minPrice && filters.maxPrice 
+                      ? `$${filters.minPrice} - $${filters.maxPrice}`
+                      : filters.minPrice 
+                      ? `> $${filters.minPrice}`
+                      : `< $${filters.maxPrice}`
+                    }
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ─── Department → Category → Subcategory filter sidebar ─────── */}
           <div className="filter-section dept-filter-section">
             {/* Fallback: flat category list shown when no departments seeded yet */}
@@ -1629,6 +1740,9 @@ export const ProductLists = () => {
               <option value="buyPrice-desc">Price: High to Low</option>
             </select>
           </div>
+        </div> {/* Close sidebar-content */}
+      </div> {/* Close sidebar */}
+      
       <div ref={scope} className="main-content">
         <div className="search-container">
           <div className="search-bar">
@@ -1678,6 +1792,11 @@ export const ProductLists = () => {
                   ? `Found ${searchResults.length} products for "${searchQuery}"`
                   : `Showing ${products.length} of ${pagination.totalItems} Products`
                 }
+                {!searchQuery && filters.categories.length > 0 && (
+                  <span style={{ marginLeft: '8px', color: '#77a13d', fontWeight: '600' }}>
+                    • {filters.categories.length} {filters.categories.length === 1 ? 'category' : 'categories'} selected
+                  </span>
+                )}
               </p>
             </div>
             {searchQuery ? (
@@ -1740,7 +1859,7 @@ export const ProductLists = () => {
                             />
                           </td>
                           <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
-                            {product.item_number || product.product_id || "N/A"}
+                            {(product.item_number !== undefined && product.item_number !== null) ? product.item_number : (product.product_id || "N/A")}
                           </td>
                           <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
                             {product.lookup_code || product.sku || "N/A"}
@@ -1911,7 +2030,8 @@ export const ProductLists = () => {
             )}
           </>
         )}
-      </div>
+      </div> {/* Close main-content */}
+      
       {showModal && selectedProduct && (
         <div
           style={{
@@ -2169,6 +2289,7 @@ export const ProductLists = () => {
           </div>
         </div>
       )}
+
       <style>
         {`
           .container {

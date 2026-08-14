@@ -324,9 +324,9 @@ const PurchaseSummary = () => {
             <div className="item-info">
               <h4>{item.product.name}</h4>
               {/* Product ID badge */}
-              {(item.product.item_number || item.product.product_id) && (
+              {((item.product.item_number !== undefined && item.product.item_number !== null) || item.product.product_id) && (
                 <p style={{ fontSize:'11px', color:'#6b7280', fontFamily:'monospace', margin:'2px 0' }}>
-                  ID: {item.product.item_number || item.product.product_id}
+                  ID: {(item.product.item_number !== undefined && item.product.item_number !== null) ? item.product.item_number : item.product.product_id}
                 </p>
               )}
               {/* Bin Location badge */}
