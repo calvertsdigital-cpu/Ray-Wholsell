@@ -211,10 +211,29 @@ export const ProductLists = () => {
     });
 
     if (filters.categories.length > 0) {
-      filters.categories.forEach((cat) => queryParams.append("category", cat));
+      filters.categories.forEach((catId) => {
+        // Find the category and send its name (which should match CSV data)
+        const category = categories.find(cat => cat._id === catId);
+        if (category) {
+          // Send the exact category name from the database
+          queryParams.append("category", category.name);
+          console.log("Sending category filter:", category.name);
+        }
+      });
     }
     if (filters.subcategories.length > 0) {
-      filters.subcategories.forEach((sub) => queryParams.append("subcategory", sub));
+      filters.subcategories.forEach((subId) => {
+        // Similar approach for subcategories
+        const subcategory = categories
+          .flatMap(cat => cat.subcategories || [])
+          .find(sub => sub._id === subId);
+        if (subcategory) {
+          queryParams.append("subcategory", subcategory.name);
+          queryParams.append("subcategoryId", subId);
+        } else {
+          queryParams.append("subcategory", subId);
+        }
+      });
     }
     if (filters.minPrice && parseFloat(filters.minPrice) >= 0) {
       queryParams.append("minPrice", filters.minPrice);
@@ -226,8 +245,9 @@ export const ProductLists = () => {
       queryParams.append("sortBy", filters.sortBy);
     }
 
+    console.log("Final query params:", queryParams.toString());
     return queryParams;
-  }, []);
+  }, [categories]);
 
   const generateNoProductsMessage = useCallback(
     (filters, categories) => {
@@ -305,6 +325,14 @@ export const ProductLists = () => {
           currentPage,
           totalPages,
           totalProducts,
+          sampleProduct: products.length > 0 ? {
+            id: products[0]._id,
+            name: products[0].name,
+            category: products[0].category,
+            categoryName: products[0].categoryName,
+            department: products[0].department,
+            allFields: Object.keys(products[0])
+          } : null
         });
 
         const sorted = Array.isArray(products)
@@ -352,8 +380,25 @@ export const ProductLists = () => {
         setError("");
 
         const queryParams = buildQueryParams(currentFilters, page, limit);
-        const apiUrl = `${BASE_URL}/api/user/filter-products?${queryParams.toString()}`;
+        
+        let apiUrl;
+        if (currentFilters.categories.length > 0 || currentFilters.subcategories.length > 0) {
+          // For category filtering, get all products first then filter client-side for better reliability
+          const allProductsParams = new URLSearchParams({
+            role: "wholesaler",
+            page: "1",
+            limit: "1000", // Get more products to filter from
+            sortBy: "item_number",
+            sortOrder: "asc",
+          });
+          apiUrl = `${BASE_URL}/api/wholesaler/get-tirtho-wholesaler?${allProductsParams.toString()}`;
+        } else {
+          // For other filters, use the filter API
+          apiUrl = `${BASE_URL}/api/user/filter-products?${queryParams.toString()}`;
+        }
+        
         console.log("Filtered Products API URL:", apiUrl);
+        console.log("Full URL being called:", apiUrl);
 
         const response = await fetchWithCancel(apiUrl, {
           headers: {
@@ -363,12 +408,65 @@ export const ProductLists = () => {
 
         if (!response) return; // Request was cancelled
 
-        const { products, currentPage, totalPages, totalProducts } = response.data;
+        let { products, currentPage, totalPages, totalProducts } = response.data;
+        
+        // If we have category filters, always use client-side filtering to ensure accuracy
+        if (currentFilters.categories.length > 0 && products && products.length > 0) {
+          console.log("Applying client-side category filtering...");
+          const selectedCategoryNames = currentFilters.categories.map(catId => {
+            const cat = categories.find(c => c._id === catId);
+            return cat ? cat.name.toUpperCase().trim() : catId.toUpperCase().trim();
+          });
+          console.log("Filtering by categories:", selectedCategoryNames);
+          
+          // Filter products by matching category names
+          const filteredProducts = products.filter(product => {
+            // Check multiple possible category fields in the product object
+            const categoryFields = [
+              product.category?.name,
+              product.category,
+              product.categoryName,
+              product.Categories,
+              product.category_name
+            ].filter(Boolean);
+            
+            // Check if any category field matches our selected categories
+            return categoryFields.some(categoryField => {
+              const productCategoryName = String(categoryField).toUpperCase().trim();
+              return selectedCategoryNames.includes(productCategoryName);
+            });
+          });
+          
+          console.log(`Client-side filtering: ${products.length} -> ${filteredProducts.length} products`);
+          console.log("Sample filtered products:", filteredProducts.slice(0, 2).map(p => ({
+            name: p.name,
+            category: p.category,
+            categoryName: p.categoryName
+          })));
+          
+          if (filteredProducts.length > 0) {
+            products = filteredProducts;
+            totalProducts = filteredProducts.length;
+            totalPages = Math.ceil(filteredProducts.length / limit);
+            
+            // Apply pagination to filtered results
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            products = filteredProducts.slice(startIndex, endIndex);
+          } else {
+            // If no products match, set empty results
+            products = [];
+            totalProducts = 0;
+            totalPages = 0;
+          }
+        }
+
         console.log("Filtered Products API Response:", {
           products: products.length,
           currentPage,
           totalPages,
           totalProducts,
+          actualProducts: products.slice(0, 3) // Show first 3 products for debugging
         });
 
         const sorted = Array.isArray(products)
@@ -387,13 +485,22 @@ export const ProductLists = () => {
             currentFilters.categories.length > 0 || currentFilters.subcategories.length > 0 ||
             currentFilters.minPrice || currentFilters.maxPrice;
           if (hasActiveFilters) {
-            setError(generateNoProductsMessage(currentFilters, categories));
+            if (currentFilters.categories.length > 0) {
+              const selectedCategoryNames = currentFilters.categories.map(catId => {
+                const cat = categories.find(c => c._id === catId);
+                return cat ? cat.name : "Unknown Category";
+              });
+              setError(`No products found in category: ${selectedCategoryNames.join(", ")}`);
+            } else {
+              setError(generateNoProductsMessage(currentFilters, categories));
+            }
           } else {
             setError("No products found");
           }
         }
       } catch (err) {
         console.error("Error fetching filtered products:", err.response?.data, "Status:", err.response?.status);
+        console.error("Full error object:", err);
         setError(err.response?.data?.message || "Failed to load products. Please try again.");
         setProducts([]);
       } finally {
@@ -440,6 +547,7 @@ export const ProductLists = () => {
 
       // Flat categories from API
       const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      console.log("Categories loaded from API:", categoriesData.length, categoriesData.slice(0, 3));
       setCategories(categoriesData.sort((a, b) => a.name.localeCompare(b.name)));
 
       // Build departments tree:
@@ -624,6 +732,11 @@ export const ProductLists = () => {
 
   const handleCategoryChange = useCallback((categoryId) => {
     console.log("Category selected:", categoryId);
+    
+    // Find the category details
+    const category = categories.find(cat => cat._id === categoryId);
+    console.log("Selected category details:", category);
+    
     setProducts([]);
     setLoading(true);
     updateFilter('categories', categoryId, true);
@@ -1391,14 +1504,37 @@ export const ProductLists = () => {
         <div className="sidebar-content">
           <div className="filters-header">
             <h3>Filters</h3>
-            {hasActiveFilters && (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="clear-filters"
+                >
+                  Clear All
+                </button>
+              )}
               <button
-                onClick={clearFilters}
-                className="clear-filters"
+                onClick={() => {
+                  clearFilters();
+                  fetchAllProducts(1, 7);
+                }}
+                style={{
+                  background: "rgba(255,255,255,0.15)",
+                  color: "white",
+                  padding: "0.375rem 0.625rem",
+                  borderRadius: "0.375rem",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontWeight: "600",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseOver={(e) => e.target.style.background = "rgba(255,255,255,0.25)"}
+                onMouseOut={(e) => e.target.style.background = "rgba(255,255,255,0.15)"}
               >
-                Clear All
+                Show All
               </button>
-            )}
+            </div>
           </div>
 
           {/* Active Filters Display */}
@@ -1569,7 +1705,11 @@ export const ProductLists = () => {
                     onClick={() => toggleDeptExpand(deptName)}
                     aria-expanded={isOpen}
                     type="button"
-                    style={{ opacity: deptTotal === 0 && !isActive ? 0.5 : 1 }}
+                    style={{ 
+                      opacity: deptTotal === 0 && !isActive ? 0.5 : 1,
+                      background: isActive ? "rgba(119, 161, 61, 0.3)" : undefined,
+                      borderLeft: isActive ? "4px solid #77a13d" : undefined
+                    }}
                   >
                     <span className="dept-name">{deptName}</span>
                     <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
@@ -1608,9 +1748,13 @@ export const ProductLists = () => {
                                   onChange={() => handleCategoryChange(catId)}
                                   disabled={isFiltering}
                                 />
-                                <span className="cat-label">
+                                <span className="cat-label" style={{
+                                  fontWeight: checked ? "700" : "400",
+                                  color: checked ? "#fff" : "rgba(255,255,255,0.9)"
+                                }}>
                                   {cat.name}
                                   {count > 0 && <span className="cat-count">{count}</span>}
+                                  {checked && <span style={{marginLeft: "4px", fontSize: "10px"}}>✓</span>}
                                 </span>
                               </label>
                               {hasSubs && (
@@ -1632,6 +1776,14 @@ export const ProductLists = () => {
                                 </svg>
                               )}
                             </div>
+                            
+                            {/* Debug info for categories */}
+                            {process.env.NODE_ENV === 'development' && (
+                              <div style={{fontSize: '8px', color: '#ccc', marginLeft: '20px'}}>
+                                ID: {catId} | Name: {cat.name}
+                              </div>
+                            )}
+                            
                             {hasSubs && subOpen && (
                               <div className="subcategory-list">
                                 {cat.subcategories
@@ -1763,9 +1915,11 @@ export const ProductLists = () => {
         {(loading || isFiltering || isSearching) && (
           <div className="loader">
             <div className="spinner" />
-            <span style={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden" }}>
-              {isSearching ? "Searching..." : "Loading products..."}
-            </span>
+            <div style={{marginTop: "12px", color: "#77a13d", fontWeight: "600", fontSize: "14px"}}>
+              {isFiltering ? "Filtering products by category..." : 
+               isSearching ? "Searching products..." : 
+               "Loading products..."}
+            </div>
           </div>
         )}
         {!loading && !isFiltering && error && (
@@ -1793,8 +1947,19 @@ export const ProductLists = () => {
                   : `Showing ${products.length} of ${pagination.totalItems} Products`
                 }
                 {!searchQuery && filters.categories.length > 0 && (
-                  <span style={{ marginLeft: '8px', color: '#77a13d', fontWeight: '600' }}>
-                    • {filters.categories.length} {filters.categories.length === 1 ? 'category' : 'categories'} selected
+                  <span style={{ 
+                    marginLeft: '12px', 
+                    color: '#77a13d', 
+                    fontWeight: '700',
+                    background: 'rgba(119, 161, 61, 0.1)',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px'
+                  }}>
+                    FILTERED BY: {filters.categories.map(catId => {
+                      const cat = categories.find(c => c._id === catId);
+                      return cat ? cat.name : 'Unknown';
+                    }).join(', ')}
                   </span>
                 )}
               </p>
