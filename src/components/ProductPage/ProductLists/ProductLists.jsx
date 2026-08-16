@@ -351,7 +351,21 @@ export const ProductLists = () => {
         }
       } catch (err) {
         console.error("Error fetching all products:", err.response?.data, "Status:", err.response?.status);
-        setError(err.response?.data?.message || "Failed to load products. Please try again.");
+        
+        // Handle different error types
+        if (err.response?.status === 429) {
+          setError("⚠️ Server is busy (rate limited). Please try again in a few minutes, or contact support if this continues.");
+        } else if (err.response?.status === 401) {
+          setError("Authentication required. Please log in again.");
+          localStorage.removeItem("userToken");
+          navigate("/auth/login");
+        } else if (err.response?.status === 403) {
+          setError("Access denied. Please check your permissions.");
+        } else if (err.response?.status === 404) {
+          setError("API endpoint not found. Please contact support.");
+        } else {
+          setError(err.response?.data?.message || "Failed to load products. Please try again.");
+        }
         setProducts([]);
       } finally {
         setLoading(false);
@@ -621,11 +635,25 @@ export const ProductLists = () => {
       setIsInitialized(true);
     } catch (err) {
       console.error('Error fetching initial data:', err.message, err.response?.data);
-      setCategories([]);
+      
+      if (err.response?.status === 429) {
+        setError("⚠️ Server is busy. Category filtering may be limited.");
+        // Still try to set some basic categories for the UI
+        const basicCategories = [
+          { _id: "temp1", name: "B VITAMINS" },
+          { _id: "temp2", name: "C VITAMINS" },
+          { _id: "temp3", name: "JOINT SUPPORT" },
+        ];
+        setCategories(basicCategories);
+      } else {
+        setCategories([]);
+        setError("Failed to load categories");
+      }
+      
       setDepartments([]);
       setCategoryCounts({});
       setSubcategoryCounts({});
-      setError("Failed to load initial data");
+      setIsInitialized(true);
     } finally {
       setLoading(false);
     }
