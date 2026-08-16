@@ -205,8 +205,10 @@ export const Register = () => {
                   <div className="inputWrapper">
                     <label>Role</label>
                     <select name="role" value={formData.role} onChange={handleChange} required>
+                      <option value="wholesaler">Wholesaler</option>
+                      <option value="retailer">Retailer</option>
                       <option value="user">User</option>
-
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
                 </div>

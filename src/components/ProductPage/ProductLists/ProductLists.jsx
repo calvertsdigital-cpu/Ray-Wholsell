@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { stagger, useAnimate, useInView } from "framer-motion";
 import axios from "axios";
+import axiosInstance from "../../../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { debounce } from "lodash";
 import { CheckCircle, AlertCircle, X } from "lucide-react";
@@ -298,6 +299,330 @@ export const ProductLists = () => {
     []
   );
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Sample data fallback helpers — MUST be declared before fetch callbacks
+  // that reference them to avoid JavaScript Temporal Dead Zone (TDZ) errors.
+  // ──────────────────────────────────────────────────────────────────────────
+  const loadSampleData = useCallback(() => {
+    console.log("📦 Loading comprehensive sample data for demonstration...");
+    
+    const sampleProducts = [
+      {
+        _id: "sample1",
+        name: "B COMPLEX (RASP) 1 OZ",
+        item_number: 1,
+        product_id: "4013021",
+        lookup_code: "810078423539",
+        sku: "810078423539",
+        bin_location: "1/2 >*",
+        buyPrice: 13.99,
+        stock: 5,
+        category: { name: "B VITAMINS" },
+        categoryName: "B VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample2",
+        name: "B12 (RASP) 1000 MCG 1 OZ",
+        item_number: 2,
+        product_id: "4013011",
+        lookup_code: "810078423553",
+        sku: "810078423553",
+        bin_location: "1/2 >*",
+        buyPrice: 13.99,
+        stock: 3,
+        category: { name: "B VITAMINS" },
+        categoryName: "B VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample3",
+        name: "VIT C 500 MG ORNG 4 OZ",
+        item_number: 3,
+        product_id: "4017614",
+        lookup_code: "810078423690",
+        sku: "810078423690",
+        bin_location: "1/3 >*",
+        buyPrice: 13.99,
+        stock: 1,
+        category: { name: "C VITAMINS" },
+        categoryName: "C VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample4",
+        name: "VITAMIN C 1000MG TABLETS",
+        item_number: 4,
+        product_id: "4017615",
+        lookup_code: "810078423691",
+        sku: "810078423691",
+        bin_location: "1/3 >*",
+        buyPrice: 19.99,
+        stock: 8,
+        category: { name: "C VITAMINS" },
+        categoryName: "C VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample5",
+        name: "JOINT SUPPORT FORMULA",
+        item_number: 5,
+        product_id: "4020001",
+        lookup_code: "810078425001",
+        sku: "810078425001",
+        bin_location: "2/1 >*",
+        buyPrice: 24.99,
+        stock: 8,
+        category: { name: "PAIN MANAGEMENT" },
+        categoryName: "PAIN MANAGEMENT",
+        department: "JOINT SUPPORT",
+        images: []
+      },
+      {
+        _id: "sample6",
+        name: "GLUCOSAMINE CHONDROITIN",
+        item_number: 6,
+        product_id: "4020002",
+        lookup_code: "810078425002",
+        sku: "810078425002",
+        bin_location: "2/1 >*",
+        buyPrice: 29.99,
+        stock: 12,
+        category: { name: "JOINT HEALTH" },
+        categoryName: "JOINT HEALTH",
+        department: "JOINT SUPPORT",
+        images: []
+      },
+      {
+        _id: "sample7",
+        name: "LAVENDER ESSENTIAL OIL",
+        item_number: 7,
+        product_id: "4030001",
+        lookup_code: "810078430001",
+        sku: "810078430001",
+        bin_location: "3/1 >*",
+        buyPrice: 19.99,
+        stock: 15,
+        category: { name: "ESSENTIAL OILS" },
+        categoryName: "ESSENTIAL OILS",
+        department: "AROMA THERAPY",
+        images: []
+      },
+      {
+        _id: "sample8",
+        name: "EUCALYPTUS ESSENTIAL OIL",
+        item_number: 8,
+        product_id: "4030002",
+        lookup_code: "810078430002",
+        sku: "810078430002",
+        bin_location: "3/1 >*",
+        buyPrice: 17.99,
+        stock: 10,
+        category: { name: "ESSENTIAL OILS" },
+        categoryName: "ESSENTIAL OILS",
+        department: "AROMA THERAPY",
+        images: []
+      }
+    ];
+    
+    console.log("✅ Comprehensive sample products loaded:", sampleProducts.length);
+    setProducts(sampleProducts);
+    setPagination({
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: sampleProducts.length,
+      itemsPerPage: 7,
+    });
+    
+    setLoading(false);
+    setError("✅ Demo mode active: Showing sample products with full functionality! (API temporarily unavailable)");
+  }, []);
+
+  const loadSampleDataWithFilters = useCallback(() => {
+    console.log("🔍 Loading filtered sample data...");
+    
+    const allSampleProducts = [
+      {
+        _id: "sample1",
+        name: "B COMPLEX (RASP) 1 OZ",
+        item_number: 1,
+        product_id: "4013021",
+        lookup_code: "810078423539",
+        sku: "810078423539",
+        bin_location: "1/2 >*",
+        buyPrice: 13.99,
+        stock: 5,
+        category: { name: "B VITAMINS" },
+        categoryName: "B VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample2",
+        name: "B12 (RASP) 1000 MCG 1 OZ",
+        item_number: 2,
+        product_id: "4013011",
+        lookup_code: "810078423553",
+        sku: "810078423553",
+        bin_location: "1/2 >*",
+        buyPrice: 13.99,
+        stock: 3,
+        category: { name: "B VITAMINS" },
+        categoryName: "B VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample3",
+        name: "VIT C 500 MG ORNG 4 OZ",
+        item_number: 3,
+        product_id: "4017614",
+        lookup_code: "810078423690",
+        sku: "810078423690",
+        bin_location: "1/3 >*",
+        buyPrice: 13.99,
+        stock: 1,
+        category: { name: "C VITAMINS" },
+        categoryName: "C VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample4",
+        name: "VITAMIN C 1000MG TABLETS",
+        item_number: 4,
+        product_id: "4017615",
+        lookup_code: "810078423691",
+        sku: "810078423691",
+        bin_location: "1/3 >*",
+        buyPrice: 19.99,
+        stock: 8,
+        category: { name: "C VITAMINS" },
+        categoryName: "C VITAMINS",
+        department: "VITAMINS A - Z",
+        images: []
+      },
+      {
+        _id: "sample5",
+        name: "JOINT SUPPORT FORMULA",
+        item_number: 5,
+        product_id: "4020001",
+        lookup_code: "810078425001",
+        sku: "810078425001",
+        bin_location: "2/1 >*",
+        buyPrice: 24.99,
+        stock: 8,
+        category: { name: "PAIN MANAGEMENT" },
+        categoryName: "PAIN MANAGEMENT",
+        department: "JOINT SUPPORT",
+        images: []
+      },
+      {
+        _id: "sample6",
+        name: "GLUCOSAMINE CHONDROITIN",
+        item_number: 6,
+        product_id: "4020002",
+        lookup_code: "810078425002",
+        sku: "810078425002",
+        bin_location: "2/1 >*",
+        buyPrice: 29.99,
+        stock: 12,
+        category: { name: "JOINT HEALTH" },
+        categoryName: "JOINT HEALTH",
+        department: "JOINT SUPPORT",
+        images: []
+      },
+      {
+        _id: "sample7",
+        name: "LAVENDER ESSENTIAL OIL",
+        item_number: 7,
+        product_id: "4030001",
+        lookup_code: "810078430001",
+        sku: "810078430001",
+        bin_location: "3/1 >*",
+        buyPrice: 19.99,
+        stock: 15,
+        category: { name: "ESSENTIAL OILS" },
+        categoryName: "ESSENTIAL OILS",
+        department: "AROMA THERAPY",
+        images: []
+      },
+      {
+        _id: "sample8",
+        name: "EUCALYPTUS ESSENTIAL OIL",
+        item_number: 8,
+        product_id: "4030002",
+        lookup_code: "810078430002",
+        sku: "810078430002",
+        bin_location: "3/1 >*",
+        buyPrice: 17.99,
+        stock: 10,
+        category: { name: "ESSENTIAL OILS" },
+        categoryName: "ESSENTIAL OILS",
+        department: "AROMA THERAPY",
+        images: []
+      }
+    ];
+
+    let filteredProducts = allSampleProducts;
+
+    if (filters.categories.length > 0) {
+      const selectedCategoryNames = filters.categories.map(catId => {
+        const cat = categories.find(c => c._id === catId);
+        return cat ? cat.name.toUpperCase().trim() : catId.toUpperCase().trim();
+      });
+      
+      console.log("🔍 Filtering by categories:", selectedCategoryNames);
+      
+      filteredProducts = allSampleProducts.filter(product => {
+        const categoryFields = [
+          product.category?.name,
+          product.categoryName,
+        ].filter(Boolean);
+        
+        return categoryFields.some(categoryField => {
+          const productCategoryName = String(categoryField).toUpperCase().trim();
+          return selectedCategoryNames.includes(productCategoryName);
+        });
+      });
+      
+      console.log(`✅ Sample data filtering: ${allSampleProducts.length} -> ${filteredProducts.length} products`);
+    }
+
+    if (filters.minPrice || filters.maxPrice) {
+      filteredProducts = filteredProducts.filter(product => {
+        const price = product.buyPrice;
+        const minPrice = parseFloat(filters.minPrice) || 0;
+        const maxPrice = parseFloat(filters.maxPrice) || Infinity;
+        return price >= minPrice && price <= maxPrice;
+      });
+      console.log(`💰 Price filtering applied: ${filteredProducts.length} products remaining`);
+    }
+
+    setProducts(filteredProducts);
+    setPagination({
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: filteredProducts.length,
+      itemsPerPage: 7,
+    });
+    
+    setLoading(false);
+    setIsFiltering(false);
+    
+    if (filteredProducts.length === 0 && filters.categories.length > 0) {
+      setError("No sample products found for selected categories");
+    } else if (filteredProducts.length === 0 && (filters.minPrice || filters.maxPrice)) {
+      setError("No sample products found in the selected price range");
+    } else {
+      setError("✅ Demo mode: Category filtering working with sample data! (API temporarily unavailable)");
+    }
+  }, [filters, categories]);
+
   const fetchAllProducts = useCallback(
     async (page = 1, limit = 7) => {
       console.log("fetchAllProducts called with page:", page);
@@ -320,13 +645,21 @@ export const ProductLists = () => {
         const apiUrl = `${BASE_URL}/api/wholesaler/get-tirtho-wholesaler?${queryParams.toString()}`;
         console.log("All Products API URL:", apiUrl);
 
-        const response = await fetchWithCancel(apiUrl, {
-          headers: {
+        let response;
+        try {
+          const token = localStorage.getItem('userToken');
+          const headers = {
             "Content-Type": "application/json",
-          },
-        });
+          };
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+          response = await fetchWithCancel(apiUrl, { headers });
+        } catch (fetchErr) {
+          throw fetchErr;
+        }
 
-        if (!response) return; // Request was cancelled
+        if (!response) return;
 
         const { products, currentPage, totalPages, totalProducts } = response.data;
         console.log("All Products API Response:", {
@@ -340,7 +673,6 @@ export const ProductLists = () => {
             category: products[0].category,
             categoryName: products[0].categoryName,
             department: products[0].department,
-            allFields: Object.keys(products[0])
           } : null
         });
 
@@ -360,33 +692,39 @@ export const ProductLists = () => {
         }
       } catch (err) {
         console.error("Error fetching all products:", err.response?.data, "Status:", err.response?.status);
-        
-        // If API fails, provide sample data so users can see the interface working
-        if (err.response?.status === 400 || err.response?.status === 429 || !err.response) {
-          console.log("API failed with status:", err.response?.status, "- loading sample data for demonstration...");
-          loadSampleData();
-          return;
-        }
-        
-        // Handle different error types
+
+        const isRateLimit = err.response?.status === 429;
+        const isNetworkError = !err.response;
+        const isServerError = err.response?.status >= 500;
+        const isBadRequest = err.response?.status === 400;
+        const isApiUnavailable = isRateLimit || isNetworkError || isServerError || isBadRequest;
+
         if (err.response?.status === 401) {
           setError("Authentication required. Please log in again.");
           localStorage.removeItem("userToken");
           navigate("/auth/login");
+          setProducts([]);
         } else if (err.response?.status === 403) {
           setError("Access denied. Please check your permissions.");
+          setProducts([]);
         } else if (err.response?.status === 404) {
           setError("API endpoint not found. Please contact support.");
+          setProducts([]);
+        } else if (isApiUnavailable) {
+          console.log("🔧 API unavailable (status:", err.response?.status || "network", ") - using sample products as fallback");
+
+          loadSampleData();
+          return;
         } else {
           setError(err.response?.data?.message || "Failed to load products. Please try again.");
+          setProducts([]);
         }
-        setProducts([]);
       } finally {
         setLoading(false);
         setIsPaginationLoading(false);
       }
     },
-    [BASE_URL, fetchWithCancel]
+    [BASE_URL, fetchWithCancel, loadSampleData, navigate]
   );
 
   const fetchFilteredProducts = useCallback(
@@ -408,37 +746,41 @@ export const ProductLists = () => {
         setError("");
 
         const queryParams = buildQueryParams(currentFilters, page, limit);
-        
+
         let apiUrl;
         if (currentFilters.categories.length > 0 || currentFilters.subcategories.length > 0) {
-          // For category filtering, get all products first then filter client-side for better reliability
           const allProductsParams = new URLSearchParams({
             role: "wholesaler",
             page: "1",
-            limit: "1000", // Get more products to filter from
+            limit: "1000",
             sortBy: "item_number",
             sortOrder: "asc",
           });
           apiUrl = `${BASE_URL}/api/wholesaler/get-tirtho-wholesaler?${allProductsParams.toString()}`;
         } else {
-          // For other filters, use the filter API
           apiUrl = `${BASE_URL}/api/user/filter-products?${queryParams.toString()}`;
         }
-        
+
         console.log("Filtered Products API URL:", apiUrl);
-        console.log("Full URL being called:", apiUrl);
 
-        const response = await fetchWithCancel(apiUrl, {
-          headers: {
+        let response;
+        try {
+          const token = localStorage.getItem('userToken');
+          const headers = {
             "Content-Type": "application/json",
-          },
-        });
+          };
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+          response = await fetchWithCancel(apiUrl, { headers });
+        } catch (fetchErr) {
+          throw fetchErr;
+        }
 
-        if (!response) return; // Request was cancelled
+        if (!response) return;
 
         let { products, currentPage, totalPages, totalProducts } = response.data;
-        
-        // If we have category filters, always use client-side filtering to ensure accuracy
+
         if (currentFilters.categories.length > 0 && products && products.length > 0) {
           console.log("Applying client-side category filtering...");
           const selectedCategoryNames = currentFilters.categories.map(catId => {
@@ -446,10 +788,8 @@ export const ProductLists = () => {
             return cat ? cat.name.toUpperCase().trim() : catId.toUpperCase().trim();
           });
           console.log("Filtering by categories:", selectedCategoryNames);
-          
-          // Filter products by matching category names
+
           const filteredProducts = products.filter(product => {
-            // Check multiple possible category fields in the product object
             const categoryFields = [
               product.category?.name,
               product.category,
@@ -457,36 +797,87 @@ export const ProductLists = () => {
               product.Categories,
               product.category_name
             ].filter(Boolean);
-            
-            // Check if any category field matches our selected categories
+
             return categoryFields.some(categoryField => {
               const productCategoryName = String(categoryField).toUpperCase().trim();
               return selectedCategoryNames.includes(productCategoryName);
             });
           });
-          
+
           console.log(`Client-side filtering: ${products.length} -> ${filteredProducts.length} products`);
-          console.log("Sample filtered products:", filteredProducts.slice(0, 2).map(p => ({
-            name: p.name,
-            category: p.category,
-            categoryName: p.categoryName
-          })));
-          
+
           if (filteredProducts.length > 0) {
             products = filteredProducts;
             totalProducts = filteredProducts.length;
             totalPages = Math.ceil(filteredProducts.length / limit);
-            
-            // Apply pagination to filtered results
+
             const startIndex = (page - 1) * limit;
             const endIndex = startIndex + limit;
             products = filteredProducts.slice(startIndex, endIndex);
           } else {
-            // If no products match, set empty results
             products = [];
             totalProducts = 0;
             totalPages = 0;
           }
+        }
+
+        if (currentFilters.subcategories.length > 0 && products && products.length > 0) {
+          const selectedSubcatNames = currentFilters.subcategories.map(subId => {
+            const cat = categories.find(c =>
+              (c.subcategories || []).some(s => s._id === subId)
+            );
+            if (cat) {
+              const sub = cat.subcategories.find(s => s._id === subId);
+              if (sub) return sub.name.toUpperCase().trim();
+            }
+            return subId.toUpperCase().trim();
+          });
+          console.log("Filtering by subcategories:", selectedSubcatNames);
+
+          const subFilteredProducts = products.filter(product => {
+            const subcategoryFields = [
+              product.subcategory?.name,
+              product.subcategory,
+              product.subcategoryName,
+              product.subcategory_name
+            ].filter(Boolean);
+
+            return subcategoryFields.some(scField => {
+              const productSubName = String(scField).toUpperCase().trim();
+              return selectedSubcatNames.includes(productSubName);
+            });
+          });
+
+          console.log(`Subcategory filtering: ${products.length} -> ${subFilteredProducts.length} products`);
+
+          if (subFilteredProducts.length > 0) {
+            products = subFilteredProducts;
+            totalProducts = subFilteredProducts.length;
+            totalPages = Math.ceil(subFilteredProducts.length / limit);
+
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            products = subFilteredProducts.slice(startIndex, endIndex);
+          } else {
+            products = [];
+            totalProducts = 0;
+            totalPages = 0;
+          }
+        }
+
+        if ((currentFilters.minPrice || currentFilters.maxPrice) && products && products.length > 0) {
+          const minP = parseFloat(currentFilters.minPrice) || 0;
+          const maxP = parseFloat(currentFilters.maxPrice) || Infinity;
+          const priceFiltered = products.filter(p => {
+            const price = parseFloat(p.buyPrice ?? p.sellPrice ?? p.price ?? 0);
+            return price >= minP && price <= maxP;
+          });
+          products = priceFiltered;
+          totalProducts = priceFiltered.length;
+          totalPages = Math.ceil(priceFiltered.length / limit);
+          const startIndex = (page - 1) * limit;
+          const endIndex = startIndex + limit;
+          products = priceFiltered.slice(startIndex, endIndex);
         }
 
         console.log("Filtered Products API Response:", {
@@ -494,7 +885,6 @@ export const ProductLists = () => {
           currentPage,
           totalPages,
           totalProducts,
-          actualProducts: products.slice(0, 3) // Show first 3 products for debugging
         });
 
         const sorted = Array.isArray(products)
@@ -528,17 +918,32 @@ export const ProductLists = () => {
         }
       } catch (err) {
         console.error("Error fetching filtered products:", err.response?.data, "Status:", err.response?.status);
-        console.error("Full error object:", err);
-        
-        // If API fails, use filtered sample data
-        if (err.response?.status === 400 || err.response?.status === 429 || !err.response) {
-          console.log("Filtered API failed with status:", err.response?.status, "- loading filtered sample data...");
+
+        const isRateLimit = err.response?.status === 429;
+        const isNetworkError = !err.response;
+        const isServerError = err.response?.status >= 500;
+        const isBadRequest = err.response?.status === 400;
+        const isApiUnavailable = isRateLimit || isNetworkError || isServerError || isBadRequest;
+
+        if (err.response?.status === 401) {
+          setError("Authentication required. Please log in again.");
+          localStorage.removeItem("userToken");
+          navigate("/auth/login");
+          setProducts([]);
+        } else if (err.response?.status === 403) {
+          setError("Access denied. Please check your permissions.");
+          setProducts([]);
+        } else if (err.response?.status === 404) {
+          setError("API endpoint not found. Please contact support.");
+          setProducts([]);
+        } else if (isApiUnavailable) {
+          console.log("🔧 Filter API unavailable (status:", err.response?.status || "network", ") - using filtered sample data as fallback");
           loadSampleDataWithFilters();
           return;
+        } else {
+          setError(err.response?.data?.message || "Failed to load products. Please try again.");
+          setProducts([]);
         }
-        
-        setError(err.response?.data?.message || "Failed to load products. Please try again.");
-        setProducts([]);
       } finally {
         if (showFilterLoading) {
           setIsFiltering(false);
@@ -547,7 +952,7 @@ export const ProductLists = () => {
         setIsPaginationLoading(false);
       }
     },
-    [BASE_URL, categories, validatePriceRange, buildQueryParams, generateNoProductsMessage, fetchWithCancel]
+    [BASE_URL, categories, validatePriceRange, buildQueryParams, generateNoProductsMessage, fetchWithCancel, navigate, loadSampleDataWithFilters]
   );
 
   // ── Exact Department → Category mapping sourced from RHL 1 Items July 21 26 CSV ──
@@ -577,151 +982,179 @@ export const ProductLists = () => {
     try {
       setLoading(true);
       console.log("🔄 Fetching initial data from:", BASE_URL);
-      
-      // Test basic connectivity first
-      console.log("🔍 Testing basic API connectivity...");
-      
-      const [categoriesResponse, countsResponse] = await Promise.all([
-        axios.get(`${BASE_URL}/api/user/categories`).then(response => {
-          console.log("✅ Categories API responded:", response.status, response.data);
-          return response;
-        }).catch(error => {
-          console.log("❌ Categories API failed:", error.response?.status, error.message);
-          throw error;
-        }),
-        axios.get(`${BASE_URL}/api/user/product-count`).then(response => {
-          console.log("✅ Product count API responded:", response.status, response.data);
-          return response;
-        }).catch(error => {
-          console.log("⚠️ Product count API failed:", error.response?.status, error.message, "- continuing with empty counts");
-          return { data: { success: false } };
-        })
-      ]);
 
-      // Flat categories from API
-      const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-      console.log("Categories loaded from API:", categoriesData.length, categoriesData.slice(0, 3));
-      setCategories(categoriesData.sort((a, b) => a.name.localeCompare(b.name)));
+      let categoriesData = [];
+      let categoryCountsData = {};
+      let subcategoryCountsData = {};
 
-      // Build departments tree:
-      // 1. Try grouping by the `department` field from DB
-      // 2. Fall back to matching by name against the CSV DEPT_MAP
-      // 3. Always ensure all 19 CSV departments appear (even if DB has no dept field yet)
-      const deptGroups = {};
-
-      // Seed all 19 departments from CSV map first (so the structure always exists)
-      Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
-
-      categoriesData.forEach(cat => {
-        const catNameUpper = (cat.name || '').toUpperCase().trim().replace(/\s+/g, ' ');
-        // Check if the DB record has a department field
-        let deptKey = cat.department?.toUpperCase()?.trim().replace(/\s+/g, ' ');
-
-        // If no dept in DB, look it up from CSV map by category name
-        if (!deptKey) {
-          for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
-            if (catNames.some(n => n.toUpperCase().trim().replace(/\s+/g, ' ') === catNameUpper)) {
-              deptKey = dept;
-              break;
-            }
-          }
+      try {
+        const categoriesResponse = await axiosInstance.get(`${BASE_URL}/api/user/categories`);
+        console.log("✅ Categories API responded:", categoriesResponse.status);
+        if (Array.isArray(categoriesResponse.data)) {
+          categoriesData = categoriesResponse.data;
         }
-
-        // Still no match — try partial match (first 10 chars)
-        if (!deptKey) {
-          const short = catNameUpper.slice(0, 10);
-          for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
-            if (catNames.some(n => n.toUpperCase().slice(0, 10) === short)) {
-              deptKey = dept;
-              break;
-            }
-          }
-        }
-
-        if (!deptKey) deptKey = 'OTHER';
-        if (!deptGroups[deptKey]) deptGroups[deptKey] = [];
-
-        // Avoid duplicates
-        if (!deptGroups[deptKey].find(c => c._id === cat._id)) {
-          deptGroups[deptKey].push(cat);
-        }
-      });
-
-      // Sort depts A-Z, sort categories within each dept A-Z
-      // Keep 'OTHER' only if it has categories
-      const deptTree = Object.entries(deptGroups)
-        .filter(([dept, cats]) => dept !== 'OTHER' || cats.length > 0)
-        .sort(([a], [b]) => {
-          // Put OTHER at the end
-          if (a === 'OTHER') return 1;
-          if (b === 'OTHER') return -1;
-          return a.localeCompare(b);
-        })
-        .map(([dept, cats]) => ({
-          department: dept,
-          categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
-        }));
-
-      setDepartments(deptTree);
-
-      if (countsResponse?.data?.success) {
-        setCategoryCounts(countsResponse.data.categoryCounts || {});
-        setSubcategoryCounts(countsResponse.data.subcategoryCounts || {});
-      } else {
-        setCategoryCounts({});
-        setSubcategoryCounts({});
+        console.log("Categories loaded from API:", categoriesData.length);
+      } catch (catErr) {
+        console.warn("⚠️ Categories API call failed:", catErr.response?.status || catErr.message, "- will retry with departments endpoint");
       }
-      setIsInitialized(true);
+
+      if (categoriesData.length === 0) {
+        try {
+          const deptResponse = await axiosInstance.get(`${BASE_URL}/api/user/departments`);
+          if (deptResponse.data?.success && Array.isArray(deptResponse.data.departments)) {
+            const flatCats = [];
+            deptResponse.data.departments.forEach(d => {
+              (d.categories || []).forEach(c => {
+                flatCats.push({
+                  ...c,
+                  department: d.department
+                });
+              });
+            });
+            if (flatCats.length > 0) {
+              categoriesData = flatCats;
+              console.log("Categories loaded from departments API:", categoriesData.length);
+            }
+          }
+        } catch (deptErr) {
+          console.warn("⚠️ Departments API also failed:", deptErr.response?.status || deptErr.message);
+        }
+      }
+
+      try {
+        const countsResponse = await axiosInstance.get(`${BASE_URL}/api/user/product-count`);
+        if (countsResponse.data?.success) {
+          categoryCountsData = countsResponse.data.categoryCounts || {};
+          subcategoryCountsData = countsResponse.data.subcategoryCounts || {};
+        }
+      } catch (countErr) {
+        console.warn("⚠️ Product count API failed:", countErr.response?.status || countErr.message, "- continuing with empty counts");
+      }
+
+      const hasApiData = categoriesData.length > 0;
+      const hasApiError = categoriesData.length === 0;
+      const shouldUseSampleFallback = hasApiError && !hasApiData;
+
+      if (hasApiData || !shouldUseSampleFallback) {
+        setCategories(categoriesData.sort((a, b) => a.name.localeCompare(b.name)));
+
+        const deptGroups = {};
+        Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
+
+        categoriesData.forEach(cat => {
+          const catNameUpper = (cat.name || '').toUpperCase().trim().replace(/\s+/g, ' ');
+          let deptKey = cat.department?.toUpperCase()?.trim().replace(/\s+/g, ' ');
+
+          if (!deptKey) {
+            for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
+              if (catNames.some(n => n.toUpperCase().trim().replace(/\s+/g, ' ') === catNameUpper)) {
+                deptKey = dept;
+                break;
+              }
+            }
+          }
+
+          if (!deptKey) {
+            const short = catNameUpper.slice(0, 10);
+            for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
+              if (catNames.some(n => n.toUpperCase().slice(0, 10) === short)) {
+                deptKey = dept;
+                break;
+              }
+            }
+          }
+
+          if (!deptKey) deptKey = 'OTHER';
+          if (!deptGroups[deptKey]) deptGroups[deptKey] = [];
+
+          if (!deptGroups[deptKey].find(c => c._id === cat._id)) {
+            deptGroups[deptKey].push(cat);
+          }
+        });
+
+        const deptTree = Object.entries(deptGroups)
+          .filter(([dept, cats]) => dept !== 'OTHER' || cats.length > 0)
+          .sort(([a], [b]) => {
+            if (a === 'OTHER') return 1;
+            if (b === 'OTHER') return -1;
+            return a.localeCompare(b);
+          })
+          .map(([dept, cats]) => ({
+            department: dept,
+            categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
+          }));
+
+        setDepartments(deptTree);
+        setCategoryCounts(categoryCountsData);
+        setSubcategoryCounts(subcategoryCountsData);
+        setError("");
+        setIsInitialized(true);
+      } else {
+        throw new Error("Both categories and departments APIs returned no data");
+      }
     } catch (err) {
       console.error('Error fetching initial data:', err.message, err.response?.data);
-      
-      // Provide sample categories that match our sample products
-      const sampleCategories = [
-        { _id: "cat1", name: "B VITAMINS", department: "VITAMINS A - Z" },
-        { _id: "cat2", name: "C VITAMINS", department: "VITAMINS A - Z" },
-        { _id: "cat3", name: "D VITAMINS", department: "VITAMINS A - Z" },
-        { _id: "cat4", name: "PAIN MANAGEMENT", department: "JOINT SUPPORT" },
-        { _id: "cat5", name: "JOINT HEALTH", department: "JOINT SUPPORT" },
-        { _id: "cat6", name: "ESSENTIAL OILS", department: "AROMA THERAPY" }
-      ];
-      
-      setCategories(sampleCategories);
-      
-      // Build sample department structure
-      const deptGroups = {};
-      Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
-      
-      sampleCategories.forEach(cat => {
-        const deptKey = cat.department;
-        if (deptGroups[deptKey]) {
-          deptGroups[deptKey].push(cat);
-        }
-      });
-      
-      const deptTree = Object.entries(deptGroups)
-        .filter(([dept, cats]) => cats.length > 0)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([dept, cats]) => ({
-          department: dept,
-          categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
-        }));
-      
-      setDepartments(deptTree);
-      setCategoryCounts({ 
-        cat1: 2,  // B VITAMINS: 2 products
-        cat2: 2,  // C VITAMINS: 2 products  
-        cat3: 0,  // D VITAMINS: 0 products
-        cat4: 1,  // PAIN MANAGEMENT: 1 product
-        cat5: 1,  // JOINT HEALTH: 1 product
-        cat6: 2   // ESSENTIAL OILS: 2 products
-      });
-      setSubcategoryCounts({});
-      setError("⚠️ Demo mode: Category API unavailable. Using sample data.");
-      setIsInitialized(true);
+
+      const isRateLimit = err.response?.status === 429;
+      const isNetworkError = !err.response;
+      const isServerError = err.response?.status >= 500;
+
+      if (isRateLimit || isNetworkError || isServerError) {
+        console.log("🔧 API unavailable (status:", err.response?.status || "network", ") - using sample categories as fallback");
+
+        const sampleCategories = [
+          { _id: "cat1", name: "B VITAMINS", department: "VITAMINS A - Z" },
+          { _id: "cat2", name: "C VITAMINS", department: "VITAMINS A - Z" },
+          { _id: "cat3", name: "D VITAMINS", department: "VITAMINS A - Z" },
+          { _id: "cat4", name: "PAIN MANAGEMENT", department: "JOINT SUPPORT" },
+          { _id: "cat5", name: "JOINT HEALTH", department: "JOINT SUPPORT" },
+          { _id: "cat6", name: "ESSENTIAL OILS", department: "AROMA THERAPY" }
+        ];
+
+        setCategories(sampleCategories);
+
+        const deptGroups = {};
+        Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
+
+        sampleCategories.forEach(cat => {
+          const deptKey = cat.department;
+          if (deptGroups[deptKey]) {
+            deptGroups[deptKey].push(cat);
+          }
+        });
+
+        const deptTree = Object.entries(deptGroups)
+          .filter(([dept, cats]) => cats.length > 0)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([dept, cats]) => ({
+            department: dept,
+            categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
+          }));
+
+        setDepartments(deptTree);
+        setCategoryCounts({
+          cat1: 2,
+          cat2: 2,
+          cat3: 0,
+          cat4: 1,
+          cat5: 1,
+          cat6: 2
+        });
+        setSubcategoryCounts({});
+        setError("⚠️ Demo mode: API temporarily unavailable. Showing sample categories.");
+        setIsInitialized(true);
+      } else {
+        setCategories([]);
+        setDepartments([]);
+        setCategoryCounts({});
+        setSubcategoryCounts({});
+        setError("");
+        setIsInitialized(true);
+      }
     } finally {
       setLoading(false);
     }
-  }, [BASE_URL]);
+  }, [BASE_URL, axiosInstance]);
 
   const debouncedFetchFilteredProducts = useMemo(
     () =>
@@ -743,7 +1176,17 @@ export const ProductLists = () => {
 
         try {
           setIsSearching(true);
-          const response = await fetchWithCancel(`${BASE_URL}/api/wholesaler/search-products?search=${encodeURIComponent(query)}&page=1&limit=8`);
+          const token = localStorage.getItem('userToken');
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+          const response = await fetchWithCancel(
+            `${BASE_URL}/api/wholesaler/search-products?search=${encodeURIComponent(query)}&page=1&limit=8`,
+            { headers }
+          );
 
           if (response) {
             setSearchResults(response.data.products || []);
@@ -783,338 +1226,6 @@ export const ProductLists = () => {
       }
     }
   }, [isInitialized, filters, pagination.currentPage, pagination.itemsPerPage, hasActiveFilters, debouncedFetchFilteredProducts, fetchAllProducts]);
-
-  // Function to load sample data immediately
-  const loadSampleData = useCallback(() => {
-    console.log("📦 Loading comprehensive sample data for demonstration...");
-    
-    const sampleProducts = [
-      // B Vitamins
-      {
-        _id: "sample1",
-        name: "B COMPLEX (RASP) 1 OZ",
-        item_number: 1,
-        product_id: "4013021",
-        lookup_code: "810078423539",
-        sku: "810078423539",
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 5,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample2", 
-        name: "B12 (RASP) 1000 MCG 1 OZ",
-        item_number: 2,
-        product_id: "4013011",
-        lookup_code: "810078423553",
-        sku: "810078423553", 
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 3,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z", 
-        images: []
-      },
-      // C Vitamins
-      {
-        _id: "sample3",
-        name: "VIT C 500 MG ORNG 4 OZ",
-        item_number: 3,
-        product_id: "4017614",
-        lookup_code: "810078423690",
-        sku: "810078423690",
-        bin_location: "1/3 >*", 
-        buyPrice: 13.99,
-        stock: 1,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample4",
-        name: "VITAMIN C 1000MG TABLETS",
-        item_number: 4,
-        product_id: "4017615",
-        lookup_code: "810078423691",
-        sku: "810078423691",
-        bin_location: "1/3 >*", 
-        buyPrice: 19.99,
-        stock: 8,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      // Joint Support
-      {
-        _id: "sample5",
-        name: "JOINT SUPPORT FORMULA",
-        item_number: 5,
-        product_id: "4020001",
-        lookup_code: "810078425001",
-        sku: "810078425001",
-        bin_location: "2/1 >*",
-        buyPrice: 24.99,
-        stock: 8,
-        category: { name: "PAIN MANAGEMENT" },
-        categoryName: "PAIN MANAGEMENT",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      {
-        _id: "sample6",
-        name: "GLUCOSAMINE CHONDROITIN",
-        item_number: 6,
-        product_id: "4020002",
-        lookup_code: "810078425002",
-        sku: "810078425002",
-        bin_location: "2/1 >*",
-        buyPrice: 29.99,
-        stock: 12,
-        category: { name: "JOINT HEALTH" },
-        categoryName: "JOINT HEALTH",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      // Essential Oils
-      {
-        _id: "sample7",
-        name: "LAVENDER ESSENTIAL OIL",
-        item_number: 7,
-        product_id: "4030001",
-        lookup_code: "810078430001",
-        sku: "810078430001",
-        bin_location: "3/1 >*",
-        buyPrice: 19.99,
-        stock: 15,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      },
-      {
-        _id: "sample8",
-        name: "EUCALYPTUS ESSENTIAL OIL",
-        item_number: 8,
-        product_id: "4030002",
-        lookup_code: "810078430002",
-        sku: "810078430002",
-        bin_location: "3/1 >*",
-        buyPrice: 17.99,
-        stock: 10,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      }
-    ];
-    
-    console.log("✅ Comprehensive sample products loaded:", sampleProducts.length);
-    setProducts(sampleProducts);
-    setPagination({
-      currentPage: 1,
-      totalPages: 1, 
-      totalItems: sampleProducts.length,
-      itemsPerPage: 7,
-    });
-    
-    setLoading(false);
-    setError("✅ Demo mode active: Showing sample products with full functionality! (API temporarily unavailable)");
-  }, []);
-
-  // Function to load filtered sample data
-  const loadSampleDataWithFilters = useCallback(() => {
-    console.log("🔍 Loading filtered sample data...");
-    
-    const allSampleProducts = [
-      // B Vitamins
-      {
-        _id: "sample1",
-        name: "B COMPLEX (RASP) 1 OZ",
-        item_number: 1,
-        product_id: "4013021",
-        lookup_code: "810078423539",
-        sku: "810078423539",
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 5,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample2", 
-        name: "B12 (RASP) 1000 MCG 1 OZ",
-        item_number: 2,
-        product_id: "4013011",
-        lookup_code: "810078423553",
-        sku: "810078423553", 
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 3,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z", 
-        images: []
-      },
-      // C Vitamins
-      {
-        _id: "sample3",
-        name: "VIT C 500 MG ORNG 4 OZ",
-        item_number: 3,
-        product_id: "4017614",
-        lookup_code: "810078423690",
-        sku: "810078423690",
-        bin_location: "1/3 >*", 
-        buyPrice: 13.99,
-        stock: 1,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample4",
-        name: "VITAMIN C 1000MG TABLETS",
-        item_number: 4,
-        product_id: "4017615",
-        lookup_code: "810078423691",
-        sku: "810078423691",
-        bin_location: "1/3 >*", 
-        buyPrice: 19.99,
-        stock: 8,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      // Joint Support
-      {
-        _id: "sample5",
-        name: "JOINT SUPPORT FORMULA",
-        item_number: 5,
-        product_id: "4020001",
-        lookup_code: "810078425001",
-        sku: "810078425001",
-        bin_location: "2/1 >*",
-        buyPrice: 24.99,
-        stock: 8,
-        category: { name: "PAIN MANAGEMENT" },
-        categoryName: "PAIN MANAGEMENT",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      {
-        _id: "sample6",
-        name: "GLUCOSAMINE CHONDROITIN",
-        item_number: 6,
-        product_id: "4020002",
-        lookup_code: "810078425002",
-        sku: "810078425002",
-        bin_location: "2/1 >*",
-        buyPrice: 29.99,
-        stock: 12,
-        category: { name: "JOINT HEALTH" },
-        categoryName: "JOINT HEALTH",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      // Essential Oils
-      {
-        _id: "sample7",
-        name: "LAVENDER ESSENTIAL OIL",
-        item_number: 7,
-        product_id: "4030001",
-        lookup_code: "810078430001",
-        sku: "810078430001",
-        bin_location: "3/1 >*",
-        buyPrice: 19.99,
-        stock: 15,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      },
-      {
-        _id: "sample8",
-        name: "EUCALYPTUS ESSENTIAL OIL",
-        item_number: 8,
-        product_id: "4030002",
-        lookup_code: "810078430002",
-        sku: "810078430002",
-        bin_location: "3/1 >*",
-        buyPrice: 17.99,
-        stock: 10,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      }
-    ];
-
-    let filteredProducts = allSampleProducts;
-
-    // Apply category filtering
-    if (filters.categories.length > 0) {
-      const selectedCategoryNames = filters.categories.map(catId => {
-        const cat = categories.find(c => c._id === catId);
-        return cat ? cat.name.toUpperCase().trim() : catId.toUpperCase().trim();
-      });
-      
-      console.log("🔍 Filtering by categories:", selectedCategoryNames);
-      
-      filteredProducts = allSampleProducts.filter(product => {
-        const categoryFields = [
-          product.category?.name,
-          product.categoryName,
-        ].filter(Boolean);
-        
-        return categoryFields.some(categoryField => {
-          const productCategoryName = String(categoryField).toUpperCase().trim();
-          return selectedCategoryNames.includes(productCategoryName);
-        });
-      });
-      
-      console.log(`✅ Sample data filtering: ${allSampleProducts.length} -> ${filteredProducts.length} products`);
-    }
-
-    // Apply price filtering
-    if (filters.minPrice || filters.maxPrice) {
-      filteredProducts = filteredProducts.filter(product => {
-        const price = product.buyPrice;
-        const minPrice = parseFloat(filters.minPrice) || 0;
-        const maxPrice = parseFloat(filters.maxPrice) || Infinity;
-        return price >= minPrice && price <= maxPrice;
-      });
-      console.log(`💰 Price filtering applied: ${filteredProducts.length} products remaining`);
-    }
-
-    setProducts(filteredProducts);
-    setPagination({
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: filteredProducts.length,
-      itemsPerPage: 7,
-    });
-    
-    setLoading(false);
-    setIsFiltering(false);
-    
-    if (filteredProducts.length === 0 && filters.categories.length > 0) {
-      setError("No sample products found for selected categories");
-    } else if (filteredProducts.length === 0 && (filters.minPrice || filters.maxPrice)) {
-      setError("No sample products found in the selected price range");
-    } else {
-      setError("✅ Demo mode: Category filtering working with sample data! (API temporarily unavailable)");
-    }
-  }, [filters, categories]);
 
   const handleFilterChange = useCallback(
     (e) => {
