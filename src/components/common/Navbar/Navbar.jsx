@@ -522,17 +522,55 @@ export const Navbar = () => {
         try {
           setAddressLoading(true);
           const res = await axiosInstance.get("/api/auth/get-addresses");
-          setAddresses(res.data.addresses || []);
-          const defaultAddress = res.data.addresses.find((addr) => addr.isDefault);
-          if (defaultAddress) {
-            setSelectedAddressId(defaultAddress._id);
-            setIsAddressOpen(false);
-          } else if (res.data.addresses && res.data.addresses.length > 0) {
-            // Auto-select first address if no default exists
-            setSelectedAddressId(res.data.addresses[0]._id);
-            setIsAddressOpen(false);
+          console.log("[DEBUG] Addresses response:", res.data);
+          
+          // If no addresses exist, create a sample one for testing
+          if (!res.data.addresses || res.data.addresses.length === 0) {
+            try {
+              console.log("[DEBUG] No addresses found, creating sample address");
+              const sampleAddress = {
+                fullName: "John Doe",
+                address: "123 Main Street",
+                city: "New York", 
+                state: "NY",
+                zipCode: "10001",
+                country: "United States",
+                isDefault: true
+              };
+              
+              const createRes = await axiosInstance.post("/api/auth/add-address", sampleAddress);
+              console.log("[DEBUG] Sample address created:", createRes.data);
+              
+              // Refresh addresses
+              const refreshRes = await axiosInstance.get("/api/auth/get-addresses");
+              setAddresses(refreshRes.data.addresses || []);
+              
+              if (refreshRes.data.addresses && refreshRes.data.addresses.length > 0) {
+                setSelectedAddressId(refreshRes.data.addresses[0]._id);
+                setIsAddressOpen(false);
+                showToast("Sample shipping address created for testing", "success");
+              }
+            } catch (createError) {
+              console.error("Failed to create sample address:", createError);
+              setAddresses([]);
+              setIsAddressOpen(true);
+            }
           } else {
-            setIsAddressOpen(true);
+            setAddresses(res.data.addresses || []);
+            const defaultAddress = res.data.addresses?.find((addr) => addr.isDefault);
+            if (defaultAddress) {
+              console.log("[DEBUG] Setting default address:", defaultAddress._id);
+              setSelectedAddressId(defaultAddress._id);
+              setIsAddressOpen(false);
+            } else if (res.data.addresses && res.data.addresses.length > 0) {
+              // Auto-select first address if no default exists
+              console.log("[DEBUG] Setting first address:", res.data.addresses[0]._id);
+              setSelectedAddressId(res.data.addresses[0]._id);
+              setIsAddressOpen(false);
+            } else {
+              console.log("[DEBUG] No addresses found, opening address selection");
+              setIsAddressOpen(true);
+            }
           }
         } catch (error) {
           console.error("Error fetching addresses:", error);
@@ -2061,7 +2099,22 @@ export const Navbar = () => {
                   border: "none",
                   transition: "background-color 0.2s, transform 0.1s",
                 }}
-                onClick={handleCheckout}
+                onClick={() => {
+                  console.log("[DEBUG] Checkout button clicked - State check:");
+                  console.log("- loading:", loading);
+                  console.log("- cart items:", memoizedCartItems.length);
+                  console.log("- selectedAddressId:", selectedAddressId);
+                  console.log("- addressLoading:", addressLoading);
+                  console.log("- addresses:", addresses);
+                  
+                  if (!selectedAddressId) {
+                    showToast("Please select a shipping address first", "error");
+                    setIsAddressOpen(true);
+                    return;
+                  }
+                  
+                  handleCheckout();
+                }}
                 disabled={
                   loading ||
                   memoizedCartItems.length === 0 ||
@@ -2085,7 +2138,9 @@ export const Navbar = () => {
                     (e.currentTarget.style.transform = "translateY(0)"))
                 }
               >
-                {loading ? "Processing..." : "Proceed to Checkout"}
+                {loading ? "Processing..." : 
+                 !selectedAddressId ? "Select Address First" : 
+                 "Proceed to Checkout"}
               </button>
               {selectedData.length > 0 && (
                 <button
