@@ -527,6 +527,10 @@ export const Navbar = () => {
           if (defaultAddress) {
             setSelectedAddressId(defaultAddress._id);
             setIsAddressOpen(false);
+          } else if (res.data.addresses && res.data.addresses.length > 0) {
+            // Auto-select first address if no default exists
+            setSelectedAddressId(res.data.addresses[0]._id);
+            setIsAddressOpen(false);
           } else {
             setIsAddressOpen(true);
           }
@@ -1120,7 +1124,7 @@ export const Navbar = () => {
 
         const checkoutPayload = {
           addressId: selectedAddressId,
-          shippingCost: shippingCost,
+          shippingCost: shippingCost || 0, // Allow $0.00 shipping
           userType: 'wholesaler',
           websiteRole: 'wholesaler',
           cartItems: validatedCart.map((item) => ({
@@ -2041,9 +2045,7 @@ export const Navbar = () => {
                     loading ||
                       memoizedCartItems.length === 0 ||
                       !selectedAddressId ||
-                      addressLoading ||
-                      shippingLoading ||
-                      shippingCost <= 0
+                      addressLoading
                       ? "#28a74580"
                       : "#28a745",
                   color: "#ffffff",
@@ -2053,9 +2055,7 @@ export const Navbar = () => {
                     loading ||
                       memoizedCartItems.length === 0 ||
                       !selectedAddressId ||
-                      addressLoading ||
-                      shippingLoading ||
-                      shippingCost <= 0
+                      addressLoading
                       ? "not-allowed"
                       : "pointer",
                   border: "none",
@@ -2066,17 +2066,13 @@ export const Navbar = () => {
                   loading ||
                   memoizedCartItems.length === 0 ||
                   !selectedAddressId ||
-                  addressLoading ||
-                  shippingLoading ||
-                  shippingCost <= 0
+                  addressLoading
                 }
                 onMouseEnter={(e) =>
                   !loading &&
                   memoizedCartItems.length > 0 &&
                   selectedAddressId &&
                   !addressLoading &&
-                  !shippingLoading &&
-                  shippingCost > 0 &&
                   ((e.currentTarget.style.backgroundColor = "#218838"),
                     (e.currentTarget.style.transform = "translateY(-1px)"))
                 }
@@ -2085,8 +2081,6 @@ export const Navbar = () => {
                   memoizedCartItems.length > 0 &&
                   selectedAddressId &&
                   !addressLoading &&
-                  !shippingLoading &&
-                  shippingCost > 0 &&
                   ((e.currentTarget.style.backgroundColor = "#28a745"),
                     (e.currentTarget.style.transform = "translateY(0)"))
                 }
