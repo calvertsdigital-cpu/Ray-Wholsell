@@ -127,6 +127,7 @@ import BlogDetail from "./Pages/BlogDetail.jsx";
 import BengalReview from "./Pages/BengalReview.jsx";
 import { AnimatePresence } from 'framer-motion';
 import DiagonalLoader from './components/Loader/DiagonalLoader';
+import Loader from './components/common/Loader/Loader';
 import { useState, useEffect } from 'react';
 import { CookieConsentProvider } from './context/CookieConsentContext';
 import { CookieConsentBanner } from './components/CookieConsent/CookieConsentBanner';
@@ -139,10 +140,14 @@ function App() {
     // Simulate asset loading or minimum display time
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 seconds delay
+    }, 3000); // 3 seconds for beautiful loading experience
 
     return () => clearTimeout(timer);
   }, []);
+
+  if (isLoading) {
+    return <Loader show={true} fullScreen={true} />;
+  }
 
   return (
     <CookieConsentProvider>
