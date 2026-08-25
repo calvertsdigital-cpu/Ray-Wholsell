@@ -1016,7 +1016,7 @@ export const Navbar = () => {
               productId: item.product?._id,
               quantity: item.quantity,
               price: item.product?.buyPrice || item.product?.sellPrice || item.price,
-              websiteRole: 'user'
+              websiteRole: 'wholesaler'
             }))
         };
 
