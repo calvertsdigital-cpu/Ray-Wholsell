@@ -1,6 +1,3 @@
-
-
-
 import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import "./Navbar.scss";
 import Logo from "../../../assets/images/logos/WholesaleLogo.png";
@@ -34,7 +31,6 @@ import axiosInstance from "../../../utils/axiosInstance";
 import { loadStripe } from "@stripe/stripe-js";
 import _ from "lodash";
 import { motion } from "framer-motion";
-
 import { jwtDecode } from "jwt-decode";
 
 const Toast = ({ message, type, onClose, show }) => {
@@ -68,7 +64,6 @@ const STRIPE_PUBLISHABLE_KEY =
   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
   "pk_test_51Pzw0LP7DJ8fgdDBWpegxFsZqtmbHZkIxChlGrx1cQmacXTlJa5w2FvSr9cEF8phWB7wxsRlzI2qCYoYHcm4YbQw00a45tFQ2c";
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
-
 export const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
@@ -81,11 +76,6 @@ export const Navbar = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const navigate = useNavigate();
-  const [expandedCategory, setExpandedCategory] = useState(null);
-
-  const toggleCategory = (category) => {
-    setExpandedCategory(expandedCategory === category ? null : category);
-  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -98,7 +88,7 @@ export const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isCartOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -106,7 +96,7 @@ export const Navbar = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isCartOpen]);
 
   useEffect(() => {
     const handleEscape = (event) => {
@@ -117,6 +107,7 @@ export const Navbar = () => {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isMobileMenuOpen]);
+
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const profileRef = useRef(null);
   const searchRef = useRef(null);
@@ -142,7 +133,6 @@ export const Navbar = () => {
   const hideToast = () => {
     setToast({ show: false, message: "", type: "" });
   };
-
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("checkoutSessionId");
@@ -152,7 +142,6 @@ export const Navbar = () => {
     showToast("Logged out successfully", "success");
     setIsProfileOpen(false);
     setIsMobileMenuOpen(false);
-    setExpandedCategory(null);
     navigate("/");
   };
 
@@ -182,7 +171,7 @@ export const Navbar = () => {
       setSearchLoading(true);
       try {
         const response = await axiosInstance.get(
-          `${BASE_URL}/api/wholesaler/search-products?search=${encodeURIComponent(query.trim())}&page=1&limit=6`
+          `/api/wholesaler/search-products?search=${encodeURIComponent(query.trim())}&page=1&limit=6`
         );
 
         if (response.data.products) {
@@ -202,26 +191,55 @@ export const Navbar = () => {
   const updateCartCount = useCallback(
     _.debounce(async () => {
       try {
-        // Skip cart count update during any cart operations to prevent conflicts
         if (window.isCouponApplying) {
           console.log("[DEBUG] Skipping cart count update during coupon application");
           return;
         }
 
         const token = localStorage.getItem("userToken");
-        if (!token) return;
-        const response = await axiosInstance.get("/api/user/get-cart", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-Website-Role': 'wholesaler'
-          },
-        });
-        const cart = response.data.cart;
-        // Count unique products, not total quantity
-        const uniqueItems = cart.items.length;
-        setCartItemCount(uniqueItems);
+        if (token) {
+          try {
+            // PRIORITY: Always get cart from backend first for logged-in users
+            const response = await axiosInstance.get("/api/user/get-cart", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'X-Website-Role': 'user'
+              },
+            });
+            const backendCart = response.data.cart;
+            const backendCount = backendCart.items.length;
+            
+            console.log("[DEBUG] Backend cart count:", backendCount);
+            setCartItemCount(backendCount);
+            
+            // Sync localStorage with backend for consistency
+            if (backendCart.items.length > 0) {
+              const syncedLocalCart = backendCart.items.map(item => ({
+                _id: item._id,
+                product: item.product,
+                quantity: item.quantity,
+                websiteRole: item.websiteRole || 'wholesaler'
+              }));
+              localStorage.setItem("localCart", JSON.stringify(syncedLocalCart));
+              console.log("[DEBUG] Synchronized localStorage with backend cart");
+            }
+            
+            return; // Exit early if backend call succeeded
+            
+          } catch (apiError) {
+            console.log("[DEBUG] Backend cart API error:", apiError.response?.status);
+            // If backend fails, show 0 items (honest empty cart)
+            setCartItemCount(0);
+            return;
+          }
+        }
+
+        // No token - show empty cart
+        setCartItemCount(0);
+        
       } catch (error) {
-        console.error("Error fetching cart count:", error);
+        console.error("Error in updateCartCount:", error);
+        setCartItemCount(0);
       }
     }, 300),
     []
@@ -236,7 +254,6 @@ export const Navbar = () => {
       updateCartCount.cancel();
     };
   }, [updateCartCount]);
-
   // Memoized Coupon Section to prevent unnecessary re-renders
   const CouponSection = memo(({
     couponCode,
@@ -328,7 +345,6 @@ export const Navbar = () => {
             </div>
           </div>
         )}
-
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: "0.75rem 0" }}>
           <input
             type="text"
@@ -418,12 +434,11 @@ export const Navbar = () => {
       </div>
     );
   });
-
   const CartModel = ({ setIsCartOpen }) => {
     const [cartItems, setCartItems] = useState([]);
     const [selectedData, setSelectedData] = useState([]);
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [shippingLoading, setShippingLoading] = useState(false);
     const [couponLoading, setCouponLoading] = useState(false);
     const [addresses, setAddresses] = useState([]);
@@ -446,74 +461,182 @@ export const Navbar = () => {
     const hideToast = () => {
       setToast({ show: false, message: "", type: "" });
     };
+
     const mainWrapperRef = useRef(null);
     const prevCartItemsRef = useRef(cartItems);
     const isCheckingOut = useRef(false);
     const isCouponApplying = useRef(false);
     const shippingFetched = useRef(false);
-
     const memoizedCartItems = useMemo(() => cartItems, [cartItems]);
     const initialCartFetched = useRef(false);
 
     useEffect(() => {
-      if (initialCartFetched.current) return; // Prevent multiple fetches
-
-      const fetchCart = async () => {
-        try {
-          setLoading(true);
-          const token = localStorage.getItem("userToken");
-          if (!token) {
-            showToast("Please log in to view cart", "error");
-            navigate("/auth/login");
-            setIsCartOpen(false);
-            return;
-          }
-          const response = await axiosInstance.get("/api/user/get-cart", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'X-Website-Role': 'wholesaler'
-            },
-          });
-          const cart = response.data.cart;
-
-          // Store createdBy info in cookie for review submission
-          const createdByIds = cart.items.map(item => item.product.createdBy?._id).filter(Boolean);
-          if (createdByIds.length > 0) {
-            document.cookie = `cartCreatedBy=${JSON.stringify(createdByIds)}; path=/; max-age=3600`;
-          }
-
-          const validatedCart = cart.items
-            .filter((item) => item.product?._id && /^[0-9a-fA-F]{24}$/.test(item.product._id))
-            .map((item) => ({
-              _id: `${item.product._id}_${Date.now()}`,
-              product: {
-                _id: item.product._id,
-                name: item.product.name || "Unnamed Product",
-                buyPrice: item.product.buyPrice || 0,
-                images: item.product.images || [],
-                stock: item.product.stock || 0,
-                weight: item.product.weight || 0.016,
-                dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
-                description: item.product.description || "No description available",
-              },
-              quantity: item.quantity,
-            }));
-          setCartItems(validatedCart);
-          initialCartFetched.current = true;
-        } catch (error) {
-          console.error("Error fetching cart:", error);
-          showToast("Failed to load cart", "error");
-          setCartItems([]);
-        } finally {
-          setLoading(false);
+      console.log("[DEBUG] Cart modal opened, starting backend-first cart load");
+      
+      let isMounted = true;
+      
+      // Listen for cart updates from other components
+      const handleCartUpdate = () => {
+        console.log("[DEBUG] Cart update event received, refreshing cart...");
+        if (isMounted) fetchCart();
+      };
+      
+      // Also listen for storage changes (when localCart is updated from another component/tab)
+      const handleStorageChange = (e) => {
+        if (e.key === 'localCart' && isMounted) {
+          console.log("[DEBUG] localStorage cart changed, refreshing...");
+          fetchCart();
         }
       };
+      
+      window.addEventListener("cartUpdated", handleCartUpdate);
+      window.addEventListener("storage", handleStorageChange);
+      
+      const fetchCart = async () => {
+        try {
+          console.log("[DEBUG] Starting cart fetch...");
+          setLoading(true);
+          
+          const token = localStorage.getItem("userToken");
+          
+          if (token) {
+            // PRIORITY: Try backend first for logged-in users
+            try {
+              console.log("[DEBUG] Fetching cart from backend API...");
+              const response = await axiosInstance.get("/api/user/get-cart", {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'X-Website-Role': 'user'
+                },
+              });
+              
+              const backendCart = response.data.cart;
+              console.log("[DEBUG] Backend cart items:", backendCart.items.length);
+              
+              if (backendCart.items && backendCart.items.length > 0) {
+                const backendCartFormatted = backendCart.items.map((item, index) => ({
+                  _id: item._id || `backend_${item.product._id}_${Date.now()}_${index}`,
+                  product: {
+                    _id: item.product._id,
+                    name: item.product.name || "Unnamed Product",
+                    buyPrice: item.product.buyPrice || item.product.sellPrice || 0,
+                    images: item.product.images || [],
+                    stock: item.product.stock || 0,
+                    weight: item.product.weight || 0.016,
+                    dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
+                    description: item.product.description || "No description available",
+                  },
+                  quantity: item.quantity,
+                }));
+                
+                if (isMounted) setCartItems(backendCartFormatted);
+                
+                // Sync localStorage with backend
+                const localCartSync = backendCartFormatted.map(item => ({
+                  _id: item._id,
+                  product: item.product,
+                  quantity: item.quantity,
+                  websiteRole: 'wholesaler'
+                }));
+                localStorage.setItem("localCart", JSON.stringify(localCartSync));
+                
+                console.log("[DEBUG] Displayed cart from backend API:", backendCartFormatted.length, "items");
+                initialCartFetched.current = true;
+                return; // Exit early - backend data loaded successfully
+              }
+            } catch (apiError) {
+              console.log("[DEBUG] Backend cart API failed:", apiError.response?.status);
+              // On backend failure, try localStorage as fallback
+              console.log("[DEBUG] Trying localStorage fallback...");
+              const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+              if (localCart.length > 0) {
+                // Transform localCart items to match expected format
+                const transformedCart = localCart.map((item, index) => {
+                  // Check if item is already in the expected format (has nested product)
+                  if (item.product && item.product._id) {
+                    return item;
+                  }
+                  // Transform from ProductLists format to CartModel format
+                  return {
+                    _id: item._id || `local_${index}_${Date.now()}`,
+                    product: {
+                      _id: item._id,
+                      name: item.name || "Unnamed Product",
+                      buyPrice: item.price || 0,
+                      sellPrice: item.price || 0,
+                      images: item.images || [],
+                      stock: item.stock || 0,
+                      weight: item.weight || 0.016,
+                      dimensions: item.dimensions || { length: 10, width: 5, height: 2 },
+                      description: item.description || "No description available",
+                    },
+                    quantity: item.quantity || 1,
+                  };
+                });
+                if (isMounted) setCartItems(transformedCart);
+                console.log("[DEBUG] Loaded from localStorage fallback:", transformedCart.length, "items");
+                initialCartFetched.current = true;
+                return;
+              }
+              // If both fail, show empty cart
+              if (isMounted) setCartItems([]);
+              initialCartFetched.current = true;
+              return;
+            }
+          }
+          
+          // No token - try localStorage cart
+          console.log("[DEBUG] No token - checking localStorage for cart");
+          const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+          if (localCart.length > 0) {
+            // Transform localCart items to match expected format
+            const transformedCart = localCart.map((item, index) => {
+              // Check if item is already in the expected format (has nested product)
+              if (item.product && item.product._id) {
+                return item;
+              }
+              // Transform from ProductLists format to CartModel format
+              return {
+                _id: item._id || `local_${index}_${Date.now()}`,
+                product: {
+                  _id: item._id,
+                  name: item.name || "Unnamed Product",
+                  buyPrice: item.price || 0,
+                  sellPrice: item.price || 0,
+                  images: item.images || [],
+                  stock: item.stock || 0,
+                  weight: item.weight || 0.016,
+                  dimensions: item.dimensions || { length: 10, width: 5, height: 2 },
+                  description: item.description || "No description available",
+                },
+                quantity: item.quantity || 1,
+              };
+            });
+            if (isMounted) setCartItems(transformedCart);
+            console.log("[DEBUG] Displayed cart from localStorage:", transformedCart.length, "items");
+          } else {
+            console.log("[DEBUG] No cart found - showing empty cart");
+            if (isMounted) setCartItems([]);
+          }
+          initialCartFetched.current = true;
+        } catch (error) {
+          console.error("[ERROR] Error in fetchCart:", error);
+          if (isMounted) setCartItems([]);
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      };
+      
       fetchCart();
+      
+      return () => {
+        isMounted = false;
+        window.removeEventListener("cartUpdated", handleCartUpdate);
+        window.removeEventListener("storage", handleStorageChange);
+      };
     }, []);
-
     useEffect(() => {
       const fetchAddresses = async () => {
-        // Skip address fetch if cart is empty
         if (cartItems.length === 0) {
           setAddressLoading(false);
           return;
@@ -522,11 +645,8 @@ export const Navbar = () => {
         try {
           setAddressLoading(true);
           const res = await axiosInstance.get("/api/auth/get-addresses");
-          console.log("[DEBUG] Addresses response:", res.data);
           
-          // If no addresses exist, create a simple default one for testing
           if (!res.data.addresses || res.data.addresses.length === 0) {
-            console.log("[DEBUG] Creating default address for checkout");
             setAddresses([{
               _id: 'temp-address-' + Date.now(),
               fullName: 'Test User',
@@ -535,7 +655,10 @@ export const Navbar = () => {
               state: 'NY',
               zipCode: '10001',
               country: 'US',
-              isDefault: true
+              isDefault: true,
+              name: 'Test User',
+              addressLine1: '123 Main Street',
+              zipcode: '10001'
             }]);
             setSelectedAddressId('temp-address-' + Date.now());
             setIsAddressOpen(false);
@@ -544,22 +667,35 @@ export const Navbar = () => {
             setAddresses(res.data.addresses || []);
             const defaultAddress = res.data.addresses?.find((addr) => addr.isDefault);
             if (defaultAddress) {
-              console.log("[DEBUG] Setting default address:", defaultAddress._id);
               setSelectedAddressId(defaultAddress._id);
               setIsAddressOpen(false);
             } else if (res.data.addresses && res.data.addresses.length > 0) {
-              // Auto-select first address if no default exists
-              console.log("[DEBUG] Setting first address:", res.data.addresses[0]._id);
               setSelectedAddressId(res.data.addresses[0]._id);
               setIsAddressOpen(false);
             } else {
-              console.log("[DEBUG] No addresses found, opening address selection");
               setIsAddressOpen(true);
             }
           }
         } catch (error) {
-          console.error("Error fetching addresses:", error);
-          showToast("Failed to fetch addresses", "error");
+          if (error.response?.status === 429) {
+            setAddresses([{
+              _id: 'temp-address-' + Date.now(),
+              fullName: 'Test User', 
+              address: '123 Main Street',
+              city: 'New York',
+              state: 'NY',
+              zipCode: '10001',
+              country: 'US',
+              isDefault: true,
+              name: 'Test User',
+              addressLine1: '123 Main Street',
+              zipcode: '10001'
+            }]);
+            setSelectedAddressId('temp-address-' + Date.now());
+            setIsAddressOpen(false);
+          } else {
+            showToast("Unable to load addresses", "error");
+          }
         } finally {
           setAddressLoading(false);
         }
@@ -569,39 +705,98 @@ export const Navbar = () => {
         try {
           const token = localStorage.getItem("userToken");
           if (!token) return;
+          
           const response = await axiosInstance.get(`/api/user/get-coupon`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           setCoupons(response.data || []);
         } catch (error) {
-          console.error("Error fetching coupons:", error);
-          showToast("Failed to fetch coupons", "error");
+          if (error.response?.status !== 429) {
+            console.error("Coupon fetch error:", error);
+          }
           setCoupons([]);
         }
       };
 
-      // Fetch both address and coupons only once on mount
       fetchAddresses();
       fetchCoupons();
     }, [cartItems.length]);
+    useEffect(() => {
+      const handleCartUpdate = () => {
+        console.log("[DEBUG] Cart updated event received, refreshing cart display");
+        
+        setTimeout(() => {
+          const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+          console.log("[DEBUG] Reading localStorage cart:", localCart.length, "items");
+          
+          if (localCart.length > 0) {
+            const localCartFormatted = localCart.map((item, index) => {
+              // Handle both formats:
+              // Format 1 (from backend): { _id, product: { _id, name, buyPrice, images, stock, weight, dimensions, description }, quantity }
+              // Format 2 (from ProductLists): { _id, name, price, quantity, stock, category, sku }
+              
+              const isBackendFormat = item.product && typeof item.product === 'object' && item.product._id;
+              
+              if (isBackendFormat) {
+                // Already in backend format
+                return {
+                  _id: item._id || `${item.product._id}_${Date.now()}_${index}`,
+                  product: {
+                    _id: item.product._id,
+                    name: item.product.name || "Unnamed Product",
+                    buyPrice: item.product.buyPrice || item.product.sellPrice || 0,
+                    images: item.product.images || [],
+                    stock: item.product.stock || 0,
+                    weight: item.product.weight || 0.016,
+                    dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
+                    description: item.product.description || "No description available",
+                  },
+                  quantity: item.quantity,
+                };
+              } else {
+                // ProductLists format - convert to backend format
+                return {
+                  _id: item._id || `product_${item._id}_${Date.now()}_${index}`,
+                  product: {
+                    _id: item._id,
+                    name: item.name || "Unnamed Product",
+                    buyPrice: item.price || 0,
+                    images: item.images || [],
+                    stock: item.stock || 0,
+                    weight: item.weight || 0.016,
+                    dimensions: item.dimensions || { length: 10, width: 5, height: 2 },
+                    description: item.description || "No description available",
+                  },
+                  quantity: item.quantity,
+                };
+              }
+            });
+            
+            setCartItems(localCartFormatted);
+            setLoading(false);
+          } else {
+            setCartItems([]);
+            setLoading(false);
+          }
+        }, 50);
+      };
+
+      handleCartUpdate();
+      window.addEventListener("cartUpdated", handleCartUpdate);
+      return () => {
+        window.removeEventListener("cartUpdated", handleCartUpdate);
+      };
+    }, []);
 
     const fetchShippingRates = useCallback(
       _.debounce(async (addressId, cart) => {
-        // Prevent shipping calculation during coupon application
-        if (isCouponApplying.current) {
-          console.log("[DEBUG] Skipping shipping calculation during coupon application");
-          return;
-        }
-
-        if (!addressId || addressLoading || cart.length === 0) {
+        if (isCouponApplying.current || !addressId || addressLoading || cart.length === 0) {
           setShippingCost(0);
           setShippingLoading(false);
           return;
         }
 
-        // Skip if shipping already fetched for this cart and address combination
         if (shippingFetched.current && selectedAddressId === addressId) {
-          console.log("[DEBUG] Shipping already calculated for this address");
           return;
         }
 
@@ -609,9 +804,8 @@ export const Navbar = () => {
           setShippingLoading(true);
           const token = localStorage.getItem("userToken");
           if (!token) {
-            showToast("Please log in to calculate shipping", "error");
-            navigate("/auth/login");
-            setIsCartOpen(false);
+            setShippingCost(0);
+            setShippingLoading(false);
             return;
           }
 
@@ -626,77 +820,44 @@ export const Navbar = () => {
 
           const response = await axiosInstance.post(
             "/api/user/calculate-shipping-rates",
-            {
-              addressId,
-              cartItems: payloadCart,
-            },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            { addressId, cartItems: payloadCart },
+            { headers: { Authorization: `Bearer ${token}` } }
           );
 
           if (response.data.shippingRates?.length > 0) {
             const cost = parseFloat(response.data.shippingRates[0].cost);
             setShippingCost(cost);
-            shippingFetched.current = true; // Mark shipping as fetched
-            console.log("[DEBUG] Shipping cost fetched:", cost);
+            shippingFetched.current = true;
           } else {
-            console.log("[DEBUG] No shipping rates available, using free shipping");
             setShippingCost(0);
           }
         } catch (err) {
-          console.error("Error fetching shipping rates:", err.response?.data || err);
-          // Don't block checkout with shipping errors - just use free shipping
-          setShippingCost(0);
-          console.log("[DEBUG] Using free shipping due to calculation error");
-          
-          // Only show error toast for authentication issues
-          if (
-            err.response?.status === 401 &&
-            (err.response?.data?.message === "Not authorized, token failed" ||
-              err.response?.data?.message === "Not authorized, no token")
-          ) {
-            localStorage.removeItem("userToken");
-            navigate("/auth/login");
-            setIsCartOpen(false);
-          }
           setShippingCost(0);
         } finally {
           setShippingLoading(false);
         }
       }, 1000),
-      [addressLoading, navigate]
+      [addressLoading]
     );
-
     useEffect(() => {
-      // Skip all calculations during coupon application or if cart is empty
-      if (isCouponApplying.current || memoizedCartItems.length === 0) {
-        return;
-      }
+      if (isCouponApplying.current || memoizedCartItems.length === 0) return;
 
-      const prevCart = prevCartItemsRef.current;
-      const cartHasChanged =
-        JSON.stringify(
-          memoizedCartItems.map((item) => ({
-            id: item.product._id,
-            quantity: item.quantity,
-            weight: item.product.weight || 0.016,
-          }))
-        ) !==
-        JSON.stringify(
-          prevCart.map((item) => ({
-            id: item.product._id,
-            quantity: item.quantity,
-            weight: item.product.weight || 0.016,
-          }))
-        );
+      const cartHasChanged = JSON.stringify(
+        memoizedCartItems.map((item) => ({
+          id: item.product._id,
+          quantity: item.quantity,
+          weight: item.product.weight || 0.016,
+        }))
+      ) !== JSON.stringify(
+        prevCartItemsRef.current.map((item) => ({
+          id: item.product._id,
+          quantity: item.quantity,
+          weight: item.product.weight || 0.016,
+        }))
+      );
 
-      // Only fetch shipping rates if cart items actually changed or address changed (first time)
-      // Don't refetch on coupon state changes or if already fetched
       if ((cartHasChanged || (selectedAddressId && !shippingFetched.current)) &&
-        !addressLoading &&
-        !isCheckingOut.current &&
-        initialCartFetched.current &&
+        !addressLoading && !isCheckingOut.current && initialCartFetched.current &&
         !isCouponApplying.current) {
         fetchShippingRates(selectedAddressId, memoizedCartItems);
       }
@@ -723,9 +884,8 @@ export const Navbar = () => {
         return;
       }
 
-      // Set flag to prevent other API calls
       isCouponApplying.current = true;
-      window.isCouponApplying = true; // Global flag for updateCartCount
+      window.isCouponApplying = true;
       setCouponLoading(true);
       setCouponError("");
 
@@ -750,17 +910,13 @@ export const Navbar = () => {
             cartItems: payloadCart,
             addressId: selectedAddressId,
           },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // Update coupon state without triggering other re-renders
         setCouponDiscount(response.data.discount);
         setCouponId(response.data.couponId);
         showToast(`Coupon applied! You saved $${response.data.discount.toFixed(2)}`, "success");
 
-        // Keep the coupon applying flag for a short time to prevent immediate API calls
         setTimeout(() => {
           isCouponApplying.current = false;
           window.isCouponApplying = false;
@@ -773,13 +929,10 @@ export const Navbar = () => {
         setCouponDiscount(0);
         setCouponId(null);
         showToast(errorMessage, "error");
-        isCouponApplying.current = false; // Reset flag on error
+        isCouponApplying.current = false;
         window.isCouponApplying = false;
-        if (
-          err.response?.status === 401 &&
-          (err.response?.data?.message === "Not authorized, token failed" ||
-            err.response?.data?.message === "Not authorized, no token")
-        ) {
+        
+        if (err.response?.status === 401) {
           localStorage.removeItem("userToken");
           navigate("/auth/login");
           setIsCartOpen(false);
@@ -788,273 +941,15 @@ export const Navbar = () => {
         setCouponLoading(false);
       }
     }, [couponCode, selectedAddressId, memoizedCartItems, navigate]);
-
     const handleRemoveCoupon = useCallback(() => {
       setCouponCode("");
       setCouponDiscount(0);
       setCouponId(null);
       setCouponError("");
-      isCouponApplying.current = false; // Reset flag when removing coupon
+      isCouponApplying.current = false;
       window.isCouponApplying = false;
       showToast("Coupon removed", "success");
     }, []);
-
-    const handleOnChange = (e) => {
-      const value = e.target.value;
-      if (value === "checkAll" && e.target.checked) {
-        const allIds = memoizedCartItems.map((item) => item._id);
-        setSelectedData(allIds);
-      } else if (value === "checkAll" && !e.target.checked) {
-        setSelectedData([]);
-      } else {
-        setSelectedData((prev) =>
-          prev.includes(value) ? prev.filter((id) => id !== value) : [...prev, value]
-        );
-      }
-    };
-
-    const handleQuantityChange = async (item, action) => {
-      if (isCheckingOut.current) {
-        showToast("Checkout in progress, please wait", "error");
-        return;
-      }
-
-      const newQuantity = action === "increment" ? item.quantity + 1 : item.quantity - 1;
-      if (newQuantity < 1) {
-        showToast("Quantity cannot be less than 1", "error");
-        return;
-      }
-      if (newQuantity > item.product.stock) {
-        showToast(`Only ${item.product.stock} items available`, "error");
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const token = localStorage.getItem("userToken");
-        if (!token) {
-          showToast("Please log in to update cart", "error");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-          return;
-        }
-
-        if (!item.product._id || !/^[0-9a-fA-F]{24}$/.test(item.product._id)) {
-          showToast("Invalid product ID in cart", "error");
-          return;
-        }
-
-        const response = await axiosInstance.put(
-          "/api/user/update-cart",
-          {
-            productId: item.product._id,
-            quantity: newQuantity,
-            websiteRole: 'wholesaler',
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        setCartItems(
-          response.data.cart.items.map((item) => ({
-            _id: `${item.product._id}_${Date.now()}`,
-            product: {
-              _id: item.product._id,
-              name: item.product.name || "Unnamed Product",
-              buyPrice: item.product.buyPrice || 0,
-              images: item.product.images || [],
-              stock: item.product.stock || 0,
-              weight: item.product.weight || 0.016,
-              dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
-              description: item.product.description || "No description available",
-            },
-            quantity: item.quantity,
-          }))
-        );
-
-        // Don't clear coupon state when updating quantity
-        // setCouponDiscount(0);
-        // setCouponId(null);
-        // setCouponCode("");
-        // setCouponError("");
-        showToast("Cart item updated successfully", "success");
-        // Don't dispatch cartUpdated event during coupon application
-        if (!isCouponApplying.current) {
-          window.dispatchEvent(new Event("cartUpdated"));
-        }
-      } catch (err) {
-        console.error("Error updating cart item:", err.response?.data);
-        const errorMessage = err.response?.data?.message || "Failed to update cart item";
-        showToast(errorMessage, "error");
-        if (
-          err.response?.status === 401 &&
-          (err.response?.data?.message === "Not authorized, token failed" ||
-            err.response?.data?.message === "Not authorized, no token")
-        ) {
-          localStorage.removeItem("userToken");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const handleRemoveItem = async (item) => {
-      if (isCheckingOut.current) {
-        showToast("Checkout in progress, please wait", "error");
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const token = localStorage.getItem("userToken");
-        if (!token) {
-          showToast("Please log in to remove items from cart", "error");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-          return;
-        }
-
-        const productId = item.product._id;
-        if (!productId || !/^[0-9a-fA-F]{24}$/.test(productId)) {
-          showToast("Invalid product ID", "error");
-          return;
-        }
-
-        const response = await axiosInstance.delete("/api/user/delete-cart", {
-          data: { productId },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setCartItems(
-          response.data.cart.items.map((item) => ({
-            _id: `${item.product._id}_${Date.now()}`,
-            product: {
-              _id: item.product._id,
-              name: item.product.name || "Unnamed Product",
-              buyPrice: item.product.buyPrice || 0,
-              images: item.product.images || [],
-              stock: item.product.stock || 0,
-              weight: item.product.weight || 0.016,
-              dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
-              description: item.product.description || "No description available",
-            },
-            quantity: item.quantity,
-          }))
-        );
-
-        setSelectedData((prev) => prev.filter((id) => id !== item._id));
-        setCouponDiscount(0);
-        setCouponId(null);
-        setCouponCode("");
-        setCouponError("");
-        showToast("Item removed from cart", "success");
-        window.dispatchEvent(new Event("cartUpdated"));
-      } catch (err) {
-        console.error("Error removing cart item:", err.response?.data);
-        const errorMessage = err.response?.data?.message || "Failed to remove cart item";
-        showToast(errorMessage, "error");
-        if (
-          err.response?.status === 401 &&
-          (err.response?.data?.message === "Not authorized, token failed" ||
-            err.response?.data?.message === "Not authorized, no token")
-        ) {
-          localStorage.removeItem("userToken");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const handleRemoveSelected = async () => {
-      if (isCheckingOut.current) {
-        showToast("Checkout in progress, please wait", "error");
-        return;
-      }
-
-      if (selectedData.length === 0) {
-        showToast("No items selected", "error");
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const token = localStorage.getItem("userToken");
-        if (!token) {
-          showToast("Please log in to remove items from cart", "error");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-          return;
-        }
-
-        for (const itemId of selectedData) {
-          const item = memoizedCartItems.find((cartItem) => cartItem._id === itemId);
-          if (item) {
-            const productId = item.product._id;
-            if (!productId || !/^[0-9a-fA-F]{24}$/.test(productId)) {
-              showToast("Invalid product ID in selected items", "error");
-              continue;
-            }
-            await axiosInstance.delete("/api/user/delete-cart", {
-              data: { productId },
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          }
-        }
-
-        const response = await axiosInstance.get("/api/user/get-cart", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-Website-Role': 'wholesaler'
-          },
-        });
-        const updatedCart = response.data.cart.items.map((item) => ({
-          _id: `${item.product._id}_${Date.now()}`,
-          product: {
-            _id: item.product._id,
-            name: item.product.name || "Unnamed Product",
-            buyPrice: item.product.buyPrice || 0,
-            images: item.product.images || [],
-            stock: item.product.stock || 0,
-            weight: item.product.weight || 0.016,
-            dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
-            description: item.product.description || "No description available",
-          },
-          quantity: item.quantity,
-        }));
-
-        setCartItems(updatedCart);
-        setSelectedData([]);
-        setCouponDiscount(0);
-        setCouponId(null);
-        setCouponCode("");
-        setCouponError("");
-        showToast("Selected items removed from cart", "success");
-        window.dispatchEvent(new Event("cartUpdated"));
-      } catch (err) {
-        console.error("Error removing selected items:", err.response?.data);
-        const errorMessage = err.response?.data?.message || "Failed to remove selected items";
-        showToast(errorMessage, "error");
-        if (
-          err.response?.status === 401 &&
-          (err.response?.data?.message === "Not authorized, token failed" ||
-            err.response?.data?.message === "Not authorized, no token")
-        ) {
-          localStorage.removeItem("userToken");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
 
     const handleCheckout = async () => {
       if (isCheckingOut.current) {
@@ -1070,16 +965,9 @@ export const Navbar = () => {
         return;
       }
 
-      if (addresses.length === 0) {
-        showToast("Please add a shipping address before checkout", "error");
-        navigate("/account/my-profile", { state: { openTab: "Address" } });
-        setIsCartOpen(false);
-        isCheckingOut.current = false;
-        return;
-      }
-
       if (!selectedAddressId) {
         showToast("Please select a shipping address", "error");
+        setIsAddressOpen(true);
         isCheckingOut.current = false;
         return;
       }
@@ -1090,11 +978,7 @@ export const Navbar = () => {
         return;
       }
 
-      // Allow checkout with any shipping cost (including $0.00)
-      console.log("[DEBUG] Proceeding with shipping cost:", shippingCost);
-
       setLoading(true);
-      setError("");
       try {
         const token = localStorage.getItem("userToken");
         if (!token) {
@@ -1105,112 +989,196 @@ export const Navbar = () => {
           return;
         }
 
-        const cartResponse = await axiosInstance.get("/api/user/get-cart", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-Website-Role': 'wholesaler'
-          },
-        });
-        const validatedCart = cartResponse.data.cart.items
-          .filter((item) => item.product?._id && /^[0-9a-fA-F]{24}$/.test(item.product._id))
-          .map((item) => ({
-            _id: `${item.product._id}_${Date.now()}`,
-            product: {
-              _id: item.product._id,
-              name: item.product.name || "Unnamed Product",
-              buyPrice: item.product.buyPrice || 0,
-              weight: item.product.weight || 0.016,
-              dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
-            },
-            quantity: item.quantity,
-          }));
-
-        if (validatedCart.length === 0) {
-          showToast("No valid items in cart", "error");
-          isCheckingOut.current = false;
-          setLoading(false);
-          return;
+        // Real API mode: Create order with pending_review status
+        console.log('🚀 Real checkout mode - calling API');
+        console.log('📧 User token exists:', !!token);
+        console.log('🏠 Selected address ID:', selectedAddressId);
+        console.log('🛒 Cart items count:', cartItems.length);
+        
+        // Validate required data before API call
+        if (!token) {
+          throw new Error('User not authenticated');
         }
-
-        console.log(
-          "[DEBUG] Validated cart items before checkout:",
-          JSON.stringify(validatedCart, null, 2)
-        );
-        console.log("[DEBUG] Shipping cost before checkout:", shippingCost);
-
-        const checkoutPayload = {
+        if (!selectedAddressId) {
+          throw new Error('No shipping address selected');
+        }
+        if (!cartItems || cartItems.length === 0) {
+          throw new Error('Cart is empty');
+        }
+        
+        const orderPayload = {
           addressId: selectedAddressId,
-          shippingCost: shippingCost || 0, // Allow $0.00 shipping
-          userType: 'wholesaler',
-          websiteRole: 'wholesaler',
-          cartItems: validatedCart.map((item) => ({
-            product: {
-              _id: item.product._id,
-              name: item.product.name || "Unnamed Product",
-              buyPrice: item.product.buyPrice,
-            },
-            quantity: item.quantity,
-          })),
+          couponCode: couponCode || null,
+          notes: "",
+          items: memoizedCartItems
+            .filter(item => item?.product?._id)
+            .map(item => ({
+              productId: item.product?._id,
+              quantity: item.quantity,
+              price: item.product?.buyPrice || item.product?.sellPrice || item.price,
+              websiteRole: 'user'
+            }))
         };
 
-        if (couponId) {
-          checkoutPayload.couponId = couponId;
-        }
+        console.log('📦 Creating order with payload:', orderPayload);
 
-        console.log('[DEBUG] Frontend - Checkout payload being sent:', JSON.stringify(checkoutPayload, null, 2));
-
-        // Store shipping cost in cookie for purchase summary
-        document.cookie = `shippingCost=${shippingCost}; path=/; max-age=3600`;
-
-        const checkoutResponse = await axiosInstance.post(
-          "/api/user/create-checkout-session",
-          checkoutPayload,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const orderResponse = await axiosInstance.post(
+          "/api/orders/checkout",
+          orderPayload,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log(
-          "[DEBUG] Checkout session response:",
-          JSON.stringify(checkoutResponse.data, null, 2)
-        );
+        console.log('✅ Order created successfully:', orderResponse.data);
+        console.log('📧 Order number:', orderResponse.data.orderNumber);
+        console.log('📧 Order confirmation email sent');
 
-        if (!checkoutResponse.data.url) {
-          throw new Error("Invalid checkout session URL");
-        }
-
-        localStorage.setItem("checkoutSessionId", checkoutResponse.data.sessionId);
-
-        // Redirect to Stripe checkout page
-        window.location.href = checkoutResponse.data.url;
-        return; // Stop execution here as we are redirecting
+        // Show success message
+        showToast(`Order created successfully! Order #${orderResponse.data.orderNumber}`, "success");
+        
+        // Wait 3 seconds before closing cart so user can see success message
+        setTimeout(() => {
+          setIsCartOpen(false);
+        }, 3000);
+        
+        // Reset form state
+        setSelectedData([]);
+        setCouponCode("");
+        setCouponDiscount(0);
+        setCouponId(null);
+        setCouponError("");
+        
+        // Update cart items (will be empty from backend)
+        window.dispatchEvent(new Event("cartUpdated"));
+        
+        return;
       } catch (err) {
         console.error("Error during checkout:", err.response?.data || err);
-        let errorMessage = err.response?.data?.message || err.message || "Failed to initiate checkout";
-        showToast(errorMessage, "error");
-
-        if (
-          err.response?.status === 401 &&
-          (err.response?.data?.message === "Not authorized, token failed" ||
-            err.response?.data?.message === "Not authorized, no token")
-        ) {
+        let errorMessage = err.response?.data?.message || err.message || "Failed to create order";
+        
+        // More specific error handling
+        if (err.response?.status === 401) {
+          errorMessage = "Please log in to complete checkout";
           localStorage.removeItem("userToken");
+          showToast(errorMessage, "error");
           navigate("/auth/login");
           setIsCartOpen(false);
+        } else if (err.response?.status === 400) {
+          // Check for specific 400 error types
+          if (errorMessage.includes('address')) {
+            errorMessage = "Please add a shipping address before checkout";
+          } else if (errorMessage.includes('cart')) {
+            errorMessage = "Your cart is empty or invalid";
+          } else {
+            errorMessage = "Checkout failed: " + errorMessage;
+          }
+          showToast(errorMessage, "error");
+        } else {
+          showToast(errorMessage, "error");
         }
       } finally {
         setLoading(false);
         isCheckingOut.current = false;
       }
     };
+    const handleRemoveItem = async (item) => {
+      if (isCheckingOut.current) {
+        showToast("Checkout in progress, please wait", "error");
+        return;
+      }
+
+      setLoading(true);
+      
+      try {
+        console.log("[DEBUG] Removing item from cart:", item.product.name);
+        
+        const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+        const updatedLocalCart = localCart.filter(cartItem => cartItem.product?._id !== item.product?._id);
+        localStorage.setItem("localCart", JSON.stringify(updatedLocalCart));
+        
+        const updatedCartItems = memoizedCartItems.filter(cartItem => cartItem.product?._id !== item.product?._id);
+        setCartItems(updatedCartItems);
+        setSelectedData((prev) => prev.filter((id) => id !== item._id));
+        
+        window.dispatchEvent(new Event("cartUpdated"));
+        showToast("Item removed from cart", "success");
+        
+      } catch (err) {
+        console.error("Error in handleRemoveItem:", err);
+        showToast("Failed to remove item from cart", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleQuantityChange = async (item, action) => {
+      if (isCheckingOut.current) {
+        showToast("Checkout in progress, please wait", "error");
+        return;
+      }
+
+      const moq = 12; // Minimum Order Quantity
+      const newQuantity = action === "increment" ? item.quantity + 1 : item.quantity - 1;
+      
+      if (newQuantity < moq) {
+        showToast(`Minimum order quantity is ${moq} items`, "error");
+        return;
+      }
+      if (newQuantity > (item.product?.stock || 0)) {
+        showToast(`Only ${item.product?.stock || 0} items available`, "error");
+        return;
+      }
+
+      try {
+        const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+        const updatedLocalCart = localCart.map(cartItem => {
+          if (cartItem.product?._id === item.product?._id) {
+            return { ...cartItem, quantity: newQuantity };
+          }
+          return cartItem;
+        });
+        localStorage.setItem("localCart", JSON.stringify(updatedLocalCart));
+
+        const updatedCartItems = memoizedCartItems.map(cartItem => {
+          if (cartItem.product?._id === item.product?._id) {
+            return { ...cartItem, quantity: newQuantity };
+          }
+          return cartItem;
+        });
+        setCartItems(updatedCartItems);
+        
+        window.dispatchEvent(new Event("cartUpdated"));
+        showToast("Cart item updated successfully", "success");
+        
+      } catch (err) {
+        console.error("Error in handleQuantityChange:", err);
+        showToast("Failed to update cart item", "error");
+      }
+    };
+
+    const handleOnChange = (e) => {
+      const value = e.target.value;
+      if (value === "checkAll" && e.target.checked) {
+        const allIds = memoizedCartItems.map((item) => item._id);
+        setSelectedData(allIds);
+      } else if (value === "checkAll" && !e.target.checked) {
+        setSelectedData([]);
+      } else {
+        setSelectedData((prev) =>
+          prev.includes(value) ? prev.filter((id) => id !== value) : [...prev, value]
+        );
+      }
+    };
 
     const totalCartPrice = memoizedCartItems
-      .reduce((sum, item) => sum + (item.product.buyPrice || 0) * item.quantity, 0)
+      .filter(item => item?.product?._id)
+      .reduce((sum, item) => {
+        const price = item.product?.buyPrice || item.product?.sellPrice || item.price || 0;
+        return sum + (price * (item.quantity || 1));
+      }, 0)
       .toFixed(2);
     const totalWithShipping = (parseFloat(totalCartPrice) + shippingCost - couponDiscount).toFixed(2);
 
     const selectedAddress = addresses.find((addr) => addr._id === selectedAddressId);
-
     return (
       <div
         style={{
@@ -1240,11 +1208,7 @@ export const Navbar = () => {
           }}
         >
           <Toast message={toast.message} type={toast.type} show={toast.show} onClose={hideToast} />
-          {loading && (
-            <div className="loading-overlay">
-              <div className="spinner"></div>
-            </div>
-          )}
+          
           <div
             style={{
               display: "flex",
@@ -1280,7 +1244,6 @@ export const Navbar = () => {
                   value="checkAll"
                   checked={selectedData.length === memoizedCartItems.length && memoizedCartItems.length > 0}
                   style={{ height: window.innerWidth <= 768 ? "3vw" : "1dvw", width: window.innerWidth <= 768 ? "3vw" : "1dvw" }}
-                  disabled={loading}
                 />
                 <label
                   style={{
@@ -1297,343 +1260,42 @@ export const Navbar = () => {
             </div>
             <button
               type="button"
-              onClick={() => {
-                setIsCartOpen(false);
-                setShippingCost(0);
-                setLabelDetails(null);
-                setCouponDiscount(0);
-                setCouponId(null);
-                setCouponCode("");
-                setCouponError("");
-              }}
-              style={{ cursor: loading ? "not-allowed" : "pointer" }}
-              disabled={loading}
+              onClick={() => setIsCartOpen(false)}
+              style={{ cursor: "pointer" }}
             >
               <CircleX size={window.innerWidth <= 768 ? 24 : 30} />
             </button>
           </div>
-
-          {labelDetails && (
-            <div
-              style={{
-                margin: "1rem 0",
-                padding: "1rem",
-                backgroundColor: "#e9f7ef",
-                borderRadius: "8px",
-                border: "1px solid #28a745",
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.3dvw",
-                  fontFamily: "Roboto, sans-serif",
-                  fontWeight: "600",
-                  color: "#28a745",
-                }}
-              >
-                Shipping Label Created
-              </h3>
-              <p
-                style={{
-                  fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                  fontFamily: "Open Sans, sans-serif",
-                  color: "#333",
-                  margin: "0.5rem 0",
-                }}
-              >
-                Tracking Number: {labelDetails.trackingNumber}
-              </p>
-              <a
-                href={labelDetails.labelDownload.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                  fontFamily: "Roboto, sans-serif",
-                  color: "#28a745",
-                  textDecoration: "underline",
-                  marginRight: "1rem",
-                }}
-              >
-                Download Label (PDF)
-              </a>
-              <a
-                href={labelDetails.tracking_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                  fontFamily: "Roboto, sans-serif",
-                  color: "#28a745",
-                  textDecoration: "underline",
-                }}
-              >
-                Track Shipment
-              </a>
-            </div>
-          )}
-
-          <div style={{ margin: "0.75rem 0" }}>
-            <div
-              style={{
+          <div ref={mainWrapperRef} style={{ margin: "1.25rem 0" }}>
+            {loading && memoizedCartItems.length === 0 && (
+              <div style={{
                 display: "flex",
-                justifyContent: "space-between",
+                flexDirection: "column",
                 alignItems: "center",
-                cursor: "pointer",
-                padding: "0.75rem 1rem",
-                backgroundColor: "#f5f5f5",
-                borderRadius: "0.5rem",
-              }}
-              onClick={() => setIsAddressOpen(!isAddressOpen)}
-              aria-expanded={isAddressOpen}
-            >
-              <h3
-                style={{
-                  fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.2dvw",
-                  fontFamily: "Roboto, sans-serif",
-                  fontWeight: "600",
-                  color: "#333",
-                }}
-              >
-                Select Shipping Address
-              </h3>
-              {isAddressOpen ? <ChevronUp size={window.innerWidth <= 768 ? 16 : 18} color="#333" /> : <ChevronDown size={window.innerWidth <= 768 ? 16 : 18} color="#333" />}
-            </div>
-            {selectedAddress && !isAddressOpen && (
-              <div
-                style={{
-                  margin: "0.75rem 0",
-                  padding: "0.75rem",
-                  backgroundColor: "#f9f9f9",
-                  borderRadius: "0.5rem",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                    fontFamily: "Open Sans, sans-serif",
-                    fontWeight: "400",
-                    color: "#666",
-                  }}
-                >
-                  Shipping to: {selectedAddress.name}, {selectedAddress.addressLine1},{" "}
-                  {selectedAddress.city}, {selectedAddress.state} {selectedAddress.zipcode}
-                </p>
-                <p
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                    fontFamily: "Open Sans, sans-serif",
-                    fontWeight: "400",
-                    color: "#666",
-                  }}
-                >
-                  Service: USPS Priority Mail Express
+                justifyContent: "center",
+                padding: "2rem 1rem",
+                textAlign: "center"
+              }}>
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "3px solid #e0e0e0",
+                  borderTop: "3px solid #28a745",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  marginBottom: "1rem"
+                }}></div>
+                <p style={{
+                  fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
+                  fontFamily: "Open Sans, sans-serif",
+                  color: "#666"
+                }}>
+                  Loading your cart...
                 </p>
               </div>
             )}
-            {isAddressOpen &&
-              (addressLoading ? (
-                <div style={{ margin: "0.75rem 0" }}>
-                  <p
-                    style={{
-                      fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                      fontFamily: "Open Sans, sans-serif",
-                      fontWeight: "400",
-                      color: "#666",
-                    }}
-                  >
-                    Loading addresses...
-                  </p>
-                </div>
-              ) : addresses.length === 0 ? (
-                <div style={{ margin: "0.75rem 0" }}>
-                  <p
-                    style={{
-                      fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                      fontFamily: "Open Sans, sans-serif",
-                      fontWeight: "400",
-                      color: "#666",
-                    }}
-                  >
-                    No addresses found. Please add a shipping address.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCartOpen(false);
-                      navigate("/account/my-profile", {
-                        state: { openTab: "Address" },
-                      });
-                    }}
-                    style={{
-                      fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      padding: "0.5rem 1rem",
-                      borderRadius: "0.5rem",
-                      backgroundColor: "#28a745",
-                      color: "#ffffff",
-                      fontFamily: "Roboto, sans-serif",
-                      fontWeight: "600",
-                      marginTop: "0.5rem",
-                      cursor: "pointer",
-                      border: "none",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#218838")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#28a745")}
-                  >
-                    Add New Address
-                  </button>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    display: "grid",
-                    gridTemplateColumns: window.innerWidth <= 768 ? "1fr" : "repeat(2, 1fr)",
-                    gap: "0.75rem",
-                    margin: "0.75rem 0",
-                    borderTop: "1px solid #e0e0e0",
-                    paddingTop: "0.75rem",
-                  }}
-                >
-                  {addresses.map((addr) => (
-                    <div
-                      key={addr._id}
-                      style={{
-                        border: selectedAddressId === addr._id ? "2px solid #28a745" : "1px solid #e0e0e0",
-                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-                        borderRadius: "0.5rem",
-                        padding: "0.75rem",
-                        cursor: "pointer",
-                        backgroundColor:
-                          selectedAddressId === addr._id ? "rgba(40, 167, 69, 0.1)" : "#ffffff",
-                        transition: "background-color 0.2s",
-                      }}
-                      onClick={() => setSelectedAddressId(addr._id)}
-                      onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        selectedAddressId === addr._id ? "rgba(40, 167, 69, 0.1)" : "#f9f9f9")
-                      }
-                      onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        selectedAddressId === addr._id ? "rgba(40, 167, 69, 0.1)" : "#ffffff")
-                      }
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "flex-start",
-                            gap: "0.5rem",
-                            alignItems: "center",
-                          }}
-                        >
-                          <h3
-                            style={{
-                              fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.2dvw",
-                              fontFamily: "Roboto, sans-serif",
-                              fontWeight: "600",
-                              color: "#333",
-                            }}
-                          >
-                            {addr.title}
-                          </h3>
-                          {addr.isDefault && (
-                            <span
-                              style={{
-                                backgroundColor: "#6c757d",
-                                padding: "0.2rem 0.5rem",
-                                fontSize: window.innerWidth <= 768 ? "2vw" : "0.8dvw",
-                                borderRadius: "0.75rem",
-                                color: "#ffffff",
-                                fontFamily: "Roboto, sans-serif",
-                                fontWeight: "600",
-                              }}
-                            >
-                              Default
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.25rem",
-                          margin: "0.5rem 0",
-                        }}
-                      >
-                        <h3
-                          style={{
-                            fontSize: window.innerWidth <= 768 ? "3vw" : "1.1dvw",
-                            fontFamily: "Roboto, sans-serif",
-                            fontWeight: "600",
-                            color: "#333",
-                            lineHeight: "1.2",
-                          }}
-                        >
-                          {addr.name}
-                        </h3>
-                        <p
-                          style={{
-                            fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                            fontFamily: "Open Sans, sans-serif",
-                            fontWeight: "400",
-                            color: "#666",
-                            lineHeight: "1.2",
-                          }}
-                        >
-                          {addr.addressLine1}
-                          {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
-                          {addr.addressLine2 === "" ? " (No Apt/Suite)" : ""}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                            fontFamily: "Open Sans, sans-serif",
-                            fontWeight: "400",
-                            color: "#666",
-                            lineHeight: "1.2",
-                          }}
-                        >
-                          {addr.city}, {addr.state}, {addr.country} - {addr.zipcode}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                            fontFamily: "Open Sans, sans-serif",
-                            fontWeight: "400",
-                            color: "#666",
-                            lineHeight: "1.2",
-                          }}
-                        >
-                          {addr.contactNumber}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-          </div>
-
-          {error && memoizedCartItems.length > 0 && (
-            <p style={{ color: "#dc3545", fontSize: window.innerWidth <= 768 ? "3vw" : "1.2dvw", fontFamily: "Open Sans, sans-serif" }}>
-              {error}
-            </p>
-          )}
-          <div ref={mainWrapperRef} style={{ margin: "1.25rem 0" }}>
-            {memoizedCartItems.length === 0 && (
+            
+            {!loading && memoizedCartItems.length === 0 && (
               <div style={{
                 display: "flex",
                 flexDirection: "column",
@@ -1642,19 +1304,6 @@ export const Navbar = () => {
                 padding: "3rem 1rem",
                 textAlign: "center"
               }}>
-                <svg
-                  width="120"
-                  height="120"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  style={{ marginBottom: "1.5rem", opacity: 0.5 }}
-                >
-                  <path
-                    d="M9 2C9 1.44772 9.44772 1 10 1H14C14.5523 1 15 1.44772 15 2V3H20C20.5523 3 21 3.44772 21 4C21 4.55228 20.5523 5 20 5H19.9311L19.1305 19.2137C19.0567 20.7837 17.7678 22 16.1959 22H7.80407C6.23221 22 4.94331 20.7837 4.86949 19.2137L4.06888 5H4C3.44772 5 3 4.55228 3 4C3 3.44772 3.44772 3 4 3H9V2Z"
-                    fill="#e0e0e0"
-                  />
-                </svg>
                 <h3 style={{
                   fontSize: window.innerWidth <= 768 ? "4vw" : "1.5dvw",
                   fontFamily: "Roboto, sans-serif",
@@ -1687,16 +1336,13 @@ export const Navbar = () => {
                     fontFamily: "Roboto, sans-serif",
                     fontWeight: "600",
                     cursor: "pointer",
-                    transition: "background-color 0.2s"
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#218838"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#28a745"}
                 >
                   Browse Products
                 </button>
               </div>
             )}
-            {memoizedCartItems.map((item) => (
+            {memoizedCartItems.length > 0 && memoizedCartItems.filter(item => item?.product?._id).map((item, index) => (
               <div
                 key={item._id}
                 style={{
@@ -1705,15 +1351,7 @@ export const Navbar = () => {
                   gap: "1rem",
                   padding: "1rem 0",
                   borderBottom: "1px solid #e0e0e0",
-                  transition: "background-color 0.2s",
-                  backgroundColor: selectedData.includes(item._id) ? "#f9f9f9" : "transparent",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f9f9f9")}
-                onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = selectedData.includes(item._id)
-                  ? "#f9f9f9"
-                  : "transparent")
-                }
               >
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   <input
@@ -1721,159 +1359,233 @@ export const Navbar = () => {
                     type="checkbox"
                     value={item._id}
                     checked={selectedData.includes(item._id)}
-                    style={{ height: window.innerWidth <= 768 ? "3vw" : "1dvw", width: window.innerWidth <= 768 ? "3vw" : "1dvw" }}
-                    disabled={loading}
+                    style={{ height: "16px", width: "16px" }}
                   />
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flex: 1,
-                    flexDirection: window.innerWidth <= 768 ? "column" : "row",
-                    gap: window.innerWidth <= 768 ? "0.5rem" : "0",
-                  }}
-                >
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flex: 1,
+                }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    <h3
-                      style={{
-                        fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.2dvw",
-                        fontFamily: "Roboto, sans-serif",
-                        fontWeight: "600",
-                        color: "#333",
-                      }}
-                    >
-                      {item.product.name || "Unnamed Product"}
+                    <h3 style={{
+                      fontSize: "1.2rem",
+                      fontFamily: "Roboto, sans-serif",
+                      fontWeight: "600",
+                      color: "#333",
+                    }}>
+                      {item.product?.name || "Unnamed Product"}
                     </h3>
-                    <p
-                      style={{
-                        fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
-                        fontFamily: "Open Sans, sans-serif",
-                        fontWeight: "400",
-                        color: "#666",
-                      }}
-                    >
-                      {item.product.description || "No description available"}
-                    </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                        marginTop: "0.5rem",
-                      }}
-                    >
-                      <h4
+                    <h4 style={{
+                      fontSize: "1.1rem",
+                      fontFamily: "Roboto, sans-serif",
+                      fontWeight: "700",
+                      color: "#333",
+                    }}>
+                      ${(item.product?.buyPrice || 0).toFixed(2)}
+                      {item.quantity > 1 && (
+                        <span style={{ fontSize: "0.9rem", fontWeight: "400", color: "#666" }}>
+                          {" "}(Total: ${((item.product?.buyPrice || 0) * item.quantity).toFixed(2)})
+                        </span>
+                      )}
+                    </h4>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(item, "decrement")}
+                        disabled={item.quantity <= 12}
                         style={{
-                          fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.3dvw",
-                          fontFamily: "Roboto, sans-serif",
-                          fontWeight: "700",
-                          color: "#333",
+                          width: "2rem",
+                          height: "2rem",
+                          backgroundColor: "#f5f5f5",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "4px",
+                          cursor: item.quantity <= 12 ? "not-allowed" : "pointer",
                         }}
                       >
-                        ${(item.product.buyPrice || 0).toFixed(2)}
-                        {item.quantity > 1 && (
-                          <span style={{ fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw", fontWeight: "400", color: "#666" }}>
-                            {" "}
-                            (Total: ${((item.product.buyPrice || 0) * item.quantity).toFixed(2)})
-                          </span>
-                        )}
-                      </h4>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <button
-                          type="button"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: window.innerWidth <= 768 ? "2.5rem" : "2rem",
-                            height: window.innerWidth <= 768 ? "2.5rem" : "2rem",
-                            backgroundColor: "#f5f5f5",
-                            border: "1px solid #e0e0e0",
-                            borderRadius: "4px",
-                            cursor: item.quantity <= 1 || loading ? "not-allowed" : "pointer",
-                            opacity: item.quantity <= 1 || loading ? 0.5 : 1,
-                            transition: "background-color 0.2s",
-                          }}
-                          onClick={() => handleQuantityChange(item, "decrement")}
-                          disabled={item.quantity <= 1 || loading}
-                          onMouseEnter={(e) =>
-                            !loading &&
-                            item.quantity > 1 &&
-                            (e.currentTarget.style.backgroundColor = "#e0e0e0")
-                          }
-                          onMouseLeave={(e) =>
-                            !loading &&
-                            item.quantity > 1 &&
-                            (e.currentTarget.style.backgroundColor = "#f5f5f5")
-                          }
-                        >
-                          <Minus size={window.innerWidth <= 768 ? 12 : 14} />
-                        </button>
-                        <span
-                          style={{
-                            fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                            backgroundColor: "#f5f5f5",
-                            padding: "0.25rem 1rem",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: window.innerWidth <= 768 ? "2.5rem" : "2rem",
-                            height: window.innerWidth <= 768 ? "2.5rem" : "2rem",
-                            backgroundColor: "#f5f5f5",
-                            border: "1px solid #e0e0e0",
-                            borderRadius: "4px",
-                            cursor: item.quantity >= item.product.stock || loading ? "not-allowed" : "pointer",
-                            opacity: item.quantity >= item.product.stock || loading ? 0.5 : 1,
-                            transition: "background-color 0.2s",
-                          }}
-                          onClick={() => handleQuantityChange(item, "increment")}
-                          disabled={item.quantity >= item.product.stock || loading}
-                          onMouseEnter={(e) =>
-                            !loading &&
-                            item.quantity < item.product.stock &&
-                            (e.currentTarget.style.backgroundColor = "#e0e0e0")
-                          }
-                          onMouseLeave={(e) =>
-                            !loading &&
-                            item.quantity < item.product.stock &&
-                            (e.currentTarget.style.backgroundColor = "#f5f5f5")
-                          }
-                        >
-                          <Plus size={window.innerWidth <= 768 ? 12 : 14} />
-                        </button>
-                      </div>
+                        <Minus size={14} />
+                      </button>
+                      <span style={{
+                        padding: "0.25rem 1rem",
+                        backgroundColor: "#f5f5f5",
+                        borderRadius: "4px",
+                      }}>
+                        {item.quantity}
+                      </span>
+                      <span style={{
+                        fontSize: "0.8rem",
+                        color: "#666",
+                        fontStyle: "italic",
+                        marginLeft: "0.5rem"
+                      }}>
+                        (MOQ: 12)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(item, "increment")}
+                        disabled={item.quantity >= (item.product?.stock || 0)}
+                        style={{
+                          width: "2rem",
+                          height: "2rem",
+                          backgroundColor: "#f5f5f5",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "4px",
+                          cursor: item.quantity >= (item.product?.stock || 0) ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        <Plus size={14} />
+                      </button>
                     </div>
                   </div>
                   <button
                     type="button"
-                    style={{
-                      cursor: loading ? "not-allowed" : "pointer",
-                      color: "#666",
-                      transition: "color 0.2s",
-                    }}
                     onClick={() => handleRemoveItem(item)}
-                    disabled={loading}
-                    onMouseEnter={(e) => !loading && (e.currentTarget.style.color = "#dc3545")}
-                    onMouseLeave={(e) => !loading && (e.currentTarget.style.color = "#666")}
+                    style={{ cursor: "pointer", color: "#666" }}
                   >
-                    <Trash2 size={window.innerWidth <= 768 ? 16 : 18} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
-
-          {/* Coupon Section - Optimized and Memoized */}
+          {/* Address Selection Section */}
+          <div style={{ margin: "0.75rem 0" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                padding: "0.75rem 1rem",
+                backgroundColor: "#f5f5f5",
+                borderRadius: "0.5rem",
+              }}
+              onClick={() => setIsAddressOpen(!isAddressOpen)}
+            >
+              <h3
+                style={{
+                  fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.2dvw",
+                  fontFamily: "Roboto, sans-serif",
+                  fontWeight: "600",
+                  color: "#333",
+                }}
+              >
+                Select Shipping Address
+              </h3>
+              {isAddressOpen ? (
+                <ChevronUp size={window.innerWidth <= 768 ? 16 : 18} color="#333" />
+              ) : (
+                <ChevronDown size={window.innerWidth <= 768 ? 16 : 18} color="#333" />
+              )}
+            </div>
+            
+            {selectedAddress && !isAddressOpen && (
+              <div
+                style={{
+                  margin: "0.75rem 0",
+                  padding: "0.75rem",
+                  backgroundColor: "#f9f9f9",
+                  borderRadius: "0.5rem",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: window.innerWidth <= 768 ? "2.5vw" : "0.9dvw",
+                    fontFamily: "Open Sans, sans-serif",
+                    fontWeight: "400",
+                    color: "#666",
+                  }}
+                >
+                  Shipping to: {selectedAddress.name}, {selectedAddress.addressLine1},{" "}
+                  {selectedAddress.city}, {selectedAddress.state} {selectedAddress.zipcode}
+                </p>
+              </div>
+            )}
+            
+            {isAddressOpen && (
+              addressLoading ? (
+                <div style={{ margin: "0.75rem 0" }}>
+                  <p style={{ color: "#666" }}>Loading addresses...</p>
+                </div>
+              ) : addresses.length === 0 ? (
+                <div style={{ margin: "0.75rem 0" }}>
+                  <p style={{ color: "#666" }}>No addresses found. Please add a shipping address.</p>
+                  <button
+                    onClick={() => {
+                      setIsCartOpen(false);
+                      navigate("/account/my-profile", { state: { openTab: "Address" } });
+                    }}
+                    style={{
+                      padding: "0.5rem 1rem",
+                      backgroundColor: "#28a745",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "0.5rem",
+                      cursor: "pointer",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    Add New Address
+                  </button>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: window.innerWidth <= 768 ? "1fr" : "repeat(2, 1fr)",
+                    gap: "0.75rem",
+                    margin: "0.75rem 0",
+                    borderTop: "1px solid #e0e0e0",
+                    paddingTop: "0.75rem",
+                  }}
+                >
+                  {addresses.map((addr) => (
+                    <div
+                      key={addr._id}
+                      style={{
+                        border: selectedAddressId === addr._id ? "2px solid #28a745" : "1px solid #e0e0e0",
+                        borderRadius: "0.5rem",
+                        padding: "0.75rem",
+                        cursor: "pointer",
+                        backgroundColor: selectedAddressId === addr._id ? "rgba(40, 167, 69, 0.1)" : "#ffffff",
+                      }}
+                      onClick={() => setSelectedAddressId(addr._id)}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h3 style={{ fontSize: "1.1rem", fontWeight: "600", color: "#333" }}>
+                          {addr.title || addr.name}
+                        </h3>
+                        {addr.isDefault && (
+                          <span
+                            style={{
+                              backgroundColor: "#6c757d",
+                              padding: "0.2rem 0.5rem",
+                              fontSize: "0.8rem",
+                              borderRadius: "0.75rem",
+                              color: "#ffffff",
+                              fontWeight: "600",
+                            }}
+                          >
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ margin: "0.5rem 0" }}>
+                        <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.2rem 0" }}>
+                          {addr.addressLine1}
+                        </p>
+                        <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.2rem 0" }}>
+                          {addr.city}, {addr.state}, {addr.country} - {addr.zipcode}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+          {/* Coupon Section */}
           {memoizedCartItems.length > 0 && (
             <CouponSection
               couponCode={couponCode}
@@ -1894,6 +1606,7 @@ export const Navbar = () => {
             />
           )}
 
+          {/* Order Summary and Checkout */}
           {memoizedCartItems.length > 0 && (
             <div
               style={{
@@ -1917,217 +1630,81 @@ export const Navbar = () => {
               >
                 Order Summary
               </h3>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                    fontFamily: "Open Sans, sans-serif",
-                    fontWeight: "400",
-                    color: "#666",
-                  }}
-                >
-                  Subtotal
-                </span>
-                <span
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                    fontFamily: "Roboto, sans-serif",
-                    fontWeight: "500",
-                  }}
-                >
-                  ${totalCartPrice}
-                </span>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <span style={{ color: "#666" }}>Subtotal</span>
+                <span>${totalCartPrice}</span>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                    fontFamily: "Open Sans, sans-serif",
-                    fontWeight: "400",
-                    color: "#666",
-                  }}
-                >
-                  Shipping fee
-                </span>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <span style={{ color: "#666" }}>Shipping fee</span>
                 {shippingLoading ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <div className="spinner small-spinner"></div>
-                    <span
-                      style={{
-                        fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                        fontFamily: "Open Sans, sans-serif",
-                        fontWeight: "400",
-                        color: "#666",
-                      }}
-                    >
-                      Calculating...
-                    </span>
-                  </div>
+                  <span style={{ color: "#666" }}>Calculating...</span>
                 ) : (
-                  <span
-                    style={{
-                      fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                      fontFamily: "Roboto, sans-serif",
-                      fontWeight: "500",
-                    }}
-                  >
-                    ${shippingCost.toFixed(2)}
-                  </span>
+                  <span>${shippingCost.toFixed(2)}</span>
                 )}
               </div>
+              
               {couponDiscount > 0 && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                      fontFamily: "Open Sans, sans-serif",
-                      fontWeight: "400",
-                      color: "#666",
-                    }}
-                  >
-                    Coupon Discount ({couponCode})
-                  </span>
-                  <span
-                    style={{
-                      fontSize: window.innerWidth <= 768 ? "3vw" : "1dvw",
-                      fontFamily: "Roboto, sans-serif",
-                      fontWeight: "500",
-                      color: "#28a745",
-                    }}
-                  >
-                    -${couponDiscount.toFixed(2)}
-                  </span>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                  <span style={{ color: "#666" }}>Coupon Discount ({couponCode})</span>
+                  <span style={{ color: "#28a745" }}>-${couponDiscount.toFixed(2)}</span>
                 </div>
               )}
+              
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
                   paddingTop: "0.5rem",
                   borderTop: "1px solid #e0e0e0",
+                  fontWeight: "600",
                 }}
               >
-                <span
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "3.2vw" : "1.1dvw",
-                    fontFamily: "Roboto, sans-serif",
-                    fontWeight: "600",
-                  }}
-                >
-                  Total (Incl. Shipping)
-                </span>
-                <span
-                  style={{
-                    fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.3dvw",
-                    fontFamily: "Roboto, sans-serif",
-                    fontWeight: "700",
-                    color: "#28a745",
-                  }}
-                >
-                  ${totalWithShipping}
-                </span>
+                <span>Total (Incl. Shipping)</span>
+                <span style={{ color: "#28a745", fontSize: "1.2rem" }}>${totalWithShipping}</span>
               </div>
+              
               <button
-                type="button"
+                onClick={handleCheckout}
+                disabled={loading || memoizedCartItems.length === 0 || !selectedAddressId || addressLoading}
                 style={{
-                  borderRadius: "8px",
-                  fontFamily: "Roboto, sans-serif",
-                  fontWeight: "700",
-                  fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.2dvw",
                   width: "100%",
                   backgroundColor:
-                    loading ||
-                      memoizedCartItems.length === 0 ||
-                      !selectedAddressId ||
-                      addressLoading
+                    loading || memoizedCartItems.length === 0 || !selectedAddressId || addressLoading
                       ? "#28a74580"
                       : "#28a745",
                   color: "#ffffff",
                   padding: "0.75rem",
                   marginTop: "1rem",
                   cursor:
-                    loading ||
-                      memoizedCartItems.length === 0 ||
-                      !selectedAddressId ||
-                      addressLoading
+                    loading || memoizedCartItems.length === 0 || !selectedAddressId || addressLoading
                       ? "not-allowed"
                       : "pointer",
                   border: "none",
-                  transition: "background-color 0.2s, transform 0.1s",
+                  borderRadius: "8px",
+                  fontSize: "1.1rem",
+                  fontWeight: "700",
                 }}
-                onClick={() => {
-                  console.log("[DEBUG] Checkout button clicked - State check:");
-                  console.log("- loading:", loading);
-                  console.log("- cart items:", memoizedCartItems.length);
-                  console.log("- selectedAddressId:", selectedAddressId);
-                  console.log("- addressLoading:", addressLoading);
-                  console.log("- addresses:", addresses);
-                  
-                  if (!selectedAddressId) {
-                    showToast("Please select a shipping address first", "error");
-                    setIsAddressOpen(true);
-                    return;
-                  }
-                  
-                  handleCheckout();
-                }}
-                disabled={
-                  loading ||
-                  memoizedCartItems.length === 0 ||
-                  !selectedAddressId ||
-                  addressLoading
-                }
-                onMouseEnter={(e) =>
-                  !loading &&
-                  memoizedCartItems.length > 0 &&
-                  selectedAddressId &&
-                  !addressLoading &&
-                  ((e.currentTarget.style.backgroundColor = "#218838"),
-                    (e.currentTarget.style.transform = "translateY(-1px)"))
-                }
-                onMouseLeave={(e) =>
-                  !loading &&
-                  memoizedCartItems.length > 0 &&
-                  selectedAddressId &&
-                  !addressLoading &&
-                  ((e.currentTarget.style.backgroundColor = "#28a745"),
-                    (e.currentTarget.style.transform = "translateY(0)"))
-                }
               >
-                {loading ? "Processing..." : 
-                 !selectedAddressId ? "Select Address First" : 
-                 "Proceed to Checkout"}
+                {loading
+                  ? "Processing..."
+                  : !selectedAddressId
+                  ? "Select Address First"
+                  : "Proceed to Checkout"}
               </button>
+              
               {selectedData.length > 0 && (
                 <button
-                  type="button"
+                  onClick={() => {
+                    selectedData.forEach(itemId => {
+                      const item = memoizedCartItems.find(cartItem => cartItem._id === itemId);
+                      if (item) handleRemoveItem(item);
+                    });
+                    setSelectedData([]);
+                  }}
+                  disabled={loading}
                   style={{
-                    borderRadius: "8px",
-                    fontFamily: "Roboto, sans-serif",
-                    fontWeight: "700",
-                    fontSize: window.innerWidth <= 768 ? "3.5vw" : "1.2dvw",
                     width: "100%",
                     backgroundColor: loading ? "#dc354580" : "#dc3545",
                     color: "#ffffff",
@@ -2135,22 +1712,12 @@ export const Navbar = () => {
                     marginTop: "0.5rem",
                     cursor: loading ? "not-allowed" : "pointer",
                     border: "none",
-                    transition: "background-color 0.2s, transform 0.1s",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    fontWeight: "600",
                   }}
-                  onClick={handleRemoveSelected}
-                  disabled={loading}
-                  onMouseEnter={(e) =>
-                    !loading &&
-                    ((e.currentTarget.style.backgroundColor = "#c0392b"),
-                      (e.currentTarget.style.transform = "translateY(-1px)"))
-                  }
-                  onMouseLeave={(e) =>
-                    !loading &&
-                    ((e.currentTarget.style.backgroundColor = "#dc3545"),
-                      (e.currentTarget.style.transform = "translateY(0)"))
-                  }
                 >
-                  Remove Selected
+                  Remove Selected Items
                 </button>
               )}
             </div>
@@ -2159,7 +1726,6 @@ export const Navbar = () => {
       </div>
     );
   };
-
   return (
     <>
       <nav className="navbar-swanson">
@@ -2173,8 +1739,15 @@ export const Navbar = () => {
               <a href="/products"><ShoppingBag size={16} /> Products</a>
               <a href="/blogs"><FileText size={16} /> Blogs</a>
               <a href="/contact"><Mail size={16} /> Contact</a>
-              <button className="wholesale-btn" onClick={() => window.open(import.meta.env.VITE_RETAIL_URL, "_blank")}><Building2 size={16} /> Retail</button>
-              <button onClick={() => navigate("/feedback")}><MessageSquare size={16} /> Feedback</button>
+              <button 
+                className="wholesale-btn" 
+                onClick={() => window.open(import.meta.env.VITE_RETAIL_URL, "_blank")}
+              >
+                <Building2 size={16} /> Retail
+              </button>
+              <button onClick={() => navigate("/feedback")}>
+                <MessageSquare size={16} /> Feedback
+              </button>
             </div>
           </div>
         </div>
@@ -2189,18 +1762,15 @@ export const Navbar = () => {
             </button>
 
             <div className="navbar-swanson__logo">
-              <img
-                onClick={() => navigate("/")}
-                src={Logo}
-                alt="Wholesale Retailer"
-                title="Go to Homepage"
-              />
+              <Link to="/">
+                <img src={Logo} alt="Logo" />
+              </Link>
             </div>
 
             <div className="navbar-swanson__search" ref={searchRef}>
               <input
                 type="text"
-                placeholder="What can we help you find?"
+                placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -2218,10 +1788,19 @@ export const Navbar = () => {
                   }
                 }}
               />
-              <button className="navbar-swanson__search-btn" aria-label="Search products" type="button">
+              <button 
+                className="navbar-swanson__search-btn" 
+                aria-label="Search products" 
+                type="button"
+                onClick={() => {
+                  if (searchQuery.trim()) {
+                    navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                    setShowSuggestions(false);
+                  }
+                }}
+              >
                 <Search size={20} />
               </button>
-
               {showSuggestions && searchSuggestions.length > 0 && (
                 <div className="navbar-swanson__suggestions">
                   {searchSuggestions.map((product) => (
@@ -2243,7 +1822,6 @@ export const Navbar = () => {
                 </div>
               )}
             </div>
-
             <div className="navbar-swanson__icons">
               <button
                 className="navbar-swanson__icon"
@@ -2311,7 +1889,6 @@ export const Navbar = () => {
             </div>
           </div>
         </div>
-
         {isMobileMenuOpen && (
           <div className="navbar-swanson__mobile-menu">
             <div className="mobile-menu-wrapper">
@@ -2323,7 +1900,13 @@ export const Navbar = () => {
                   </button>
                 </div>
 
-                <button className="mobile-menu-retail" onClick={() => { window.open(import.meta.env.VITE_RETAIL_URL, "_blank"); setIsMobileMenuOpen(false); }}>
+                <button 
+                  className="mobile-menu-retail" 
+                  onClick={() => { 
+                    window.open(import.meta.env.VITE_RETAIL_URL, "_blank"); 
+                    setIsMobileMenuOpen(false); 
+                  }}
+                >
                   <Building2 size={18} /> Retail
                 </button>
 
@@ -2344,14 +1927,17 @@ export const Navbar = () => {
                 <a href="/contact" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
                   <Mail size={18} /> Contact
                 </a>
-                <button className="mobile-menu-utility" onClick={() => { navigate("/feedback"); setIsMobileMenuOpen(false); }}>
+                <button 
+                  className="mobile-menu-utility" 
+                  onClick={() => { navigate("/feedback"); setIsMobileMenuOpen(false); }}
+                >
                   <MessageSquare size={18} /> Feedback
                 </button>
               </div>
             </div>
           </div>
         )}
-
+        
         <div className="navbar-swanson__mobile-search" ref={searchRef}>
           <input
             type="text"
@@ -2373,7 +1959,15 @@ export const Navbar = () => {
               }
             }}
           />
-          <button className="navbar-swanson__mobile-search-btn">
+          <button 
+            className="navbar-swanson__mobile-search-btn"
+            onClick={() => {
+              if (searchQuery.trim()) {
+                navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                setShowSuggestions(false);
+              }
+            }}
+          >
             <Search size={20} />
           </button>
 
