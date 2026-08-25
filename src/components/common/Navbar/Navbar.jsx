@@ -1101,6 +1101,27 @@ export const Navbar = () => {
       try {
         console.log("[DEBUG] Removing item from cart:", item.product.name);
         
+        const token = localStorage.getItem("userToken");
+        
+        // Delete from backend first
+        if (token) {
+          try {
+            await axiosInstance.delete("/api/user/delete-cart", {
+              data: {
+                productId: item.product._id
+              },
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'X-Website-Role': 'wholesaler'
+              }
+            });
+            console.log("[DEBUG] Item deleted from backend cart");
+          } catch (apiError) {
+            console.log("[DEBUG] Backend delete failed, continuing with local:", apiError.message);
+          }
+        }
+        
+        // Update local state
         const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
         const updatedLocalCart = localCart.filter(cartItem => cartItem.product?._id !== item.product?._id);
         localStorage.setItem("localCart", JSON.stringify(updatedLocalCart));
