@@ -91,6 +91,7 @@ export const ProductLists = () => {
   // No demo products - using API only
   const sampleProducts = useMemo(() => [], []);
 
+  // Fetch products on mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -157,6 +158,42 @@ export const ProductLists = () => {
         setProducts([]);
       } finally {
         setLoading(false);
+      }
+    };
+
+    fetchProducts();
+    
+    // Fetch wishlist if user is logged in
+    const fetchWishlist = async () => {
+      try {
+        const token = localStorage.getItem("userToken");
+        if (!token) {
+          setWishlistItems([]);
+          return;
+        }
+
+        const response = await axiosInstance.get('/api/auth/wishlist', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const wishlistIds = (response.data.wishlist || []).map(item => item._id);
+        setWishlistItems(wishlistIds);
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+        setWishlistItems([]);
+      }
+    };
+
+    fetchWishlist();
+
+    // Listen for wishlist updates
+    const handleWishlistUpdate = () => {
+      fetchWishlist();
+    };
+
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+    return () => window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+  }, []);
       }
     };
 
@@ -330,18 +367,39 @@ export const ProductLists = () => {
       setAddingToWishlist((s) => ({ ...s, [productId]: true }));
       
       const isInWishlist = wishlistItems.includes(productId);
+      const token = localStorage.getItem("userToken");
       
-      // Simulate API call
-      setTimeout(() => {
+      if (!token) {
+        showToast("Please log in to add to wishlist", "error");
+        setAddingToWishlist((s) => ({ ...s, [productId]: false }));
+        return;
+      }
+      
+      try {
         if (isInWishlist) {
+          // Remove from wishlist
+          await axiosInstance.delete(`/api/auth/wishlist/${productId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           setWishlistItems((prev) => prev.filter((id) => id !== productId));
           showToast("Removed from wishlist", "success");
         } else {
+          // Add to wishlist
+          await axiosInstance.post(
+            "/api/auth/wishlist",
+            { productId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
           setWishlistItems((prev) => [...prev, productId]);
           showToast("Added to wishlist", "success");
         }
+        window.dispatchEvent(new Event("wishlistUpdated"));
+      } catch (error) {
+        console.error("Wishlist error:", error);
+        showToast("Failed to update wishlist", "error");
+      } finally {
         setAddingToWishlist((s) => ({ ...s, [productId]: false }));
-      }, 500);
+      }
     },
     [wishlistItems, showToast]
   );
