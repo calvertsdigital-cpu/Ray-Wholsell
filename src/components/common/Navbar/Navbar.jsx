@@ -473,6 +473,12 @@ export const Navbar = () => {
     useEffect(() => {
       console.log("[DEBUG] Cart modal opened, starting backend-first cart load");
       
+      // Clear old localStorage cart data on component mount
+      if (!initialCartFetched.current) {
+        localStorage.removeItem("localCart");
+        console.log("[DEBUG] Cleared old localStorage cart data");
+      }
+      
       let isMounted = true;
       
       // Listen for cart updates from other components
