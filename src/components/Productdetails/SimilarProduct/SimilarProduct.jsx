@@ -118,7 +118,10 @@ export const SimilarProduct = ({ similarProducts = [], getImageUrl }) => {
           websiteRole: 'wholesaler',
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'X-Website-Role': 'wholesaler'
+          },
         }
       );
 

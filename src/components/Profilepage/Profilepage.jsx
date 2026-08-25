@@ -58,10 +58,12 @@ const getStatusDisplayText = (order) => {
   
   if (displayStatus === 'refunded') {
     return 'Refunded';
+  } else if (displayStatus === 'pending_review') {
+    return 'Pending Review';
   } else if (order.status === 'refund_requested') {
     return 'Refund Requested';
   } else {
-    return order.status.charAt(0).toUpperCase() + order.status.slice(1);
+    return order.status.charAt(0).toUpperCase() + order.status.slice(1).replace(/_/g, ' ');
   }
 };
 
@@ -71,9 +73,10 @@ const getStatusClasses = (order) => {
   
   if (displayStatus === 'refunded') {
     return 'bg-blue-100 text-blue-700';
+  } else if (displayStatus === 'pending_review') {
+    return 'bg-purple-100 text-purple-700';
   } else if (order.status === 'refund_requested') {
     return 'bg-yellow-100 text-yellow-700';
-  } else if (order.status === 'completed') {
     return 'bg-green-100 text-green-700';
   } else {
     return 'bg-gray-100 text-gray-700';
@@ -354,6 +357,10 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
         return;
       }
 
+      // Check if this is a new Order (has orderNumber) or old Purchase (has purchaseId)
+      const selectedOrder = orders.find(o => (o._id === selectedOrderForRefund || o.purchaseId === selectedOrderForRefund));
+      const isNewOrder = selectedOrder && selectedOrder.orderNumber;
+
       const response = await axiosInstance.post(
         '/api/user/request-refund',
         {
@@ -373,10 +380,29 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
       setRefundReason('');
       
       // Refresh orders to show updated status
-      const ordersResponse = await axiosInstance.get('/api/user/all-purchases?websiteRole=wholesaler', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setOrders(ordersResponse.data.purchases || []);
+      const [purchasesResponse, ordersResponse] = await Promise.allSettled([
+        axiosInstance.get('/api/user/all-purchases?websiteRole=wholesaler', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axiosInstance.get('/api/orders/my-orders', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      ]);
+
+      let allOrders = [];
+      
+      if (purchasesResponse.status === 'fulfilled') {
+        const purchases = purchasesResponse.value.data.purchases || [];
+        allOrders = [...allOrders, ...purchases];
+      }
+      
+      if (ordersResponse.status === 'fulfilled') {
+        const newOrders = ordersResponse.value.data.orders || [];
+        allOrders = [...allOrders, ...newOrders];
+      }
+
+      allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setOrders(allOrders);
 
     } catch (error) {
       console.error('Refund request error:', error);
@@ -468,18 +494,40 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
           return;
         }
 
-        const response = await axiosInstance.get('/api/user/all-purchases?websiteRole=wholesaler', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Fetch both old purchases and new orders
+        const [purchasesResponse, ordersResponse] = await Promise.allSettled([
+          axiosInstance.get('/api/user/all-purchases?websiteRole=wholesaler', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axiosInstance.get('/api/orders/my-orders', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ]);
 
-        const purchases = response.data.purchases || [];
-        setOrders(purchases);
+        let allOrders = [];
+        
+        // Add purchases from legacy API
+        if (purchasesResponse.status === 'fulfilled') {
+          const purchases = purchasesResponse.value.data.purchases || [];
+          allOrders = [...allOrders, ...purchases];
+        }
+        
+        // Add new orders
+        if (ordersResponse.status === 'fulfilled') {
+          const newOrders = ordersResponse.value.data.orders || [];
+          allOrders = [...allOrders, ...newOrders];
+        }
+
+        // Sort by date (newest first)
+        allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        setOrders(allOrders);
         
         // Extract review aggregates from backend response
         const aggregates = {};
-        purchases.forEach(purchase => {
-          const key = purchase.purchaseId || purchase._id;
-          aggregates[key] = purchase.reviewAggregate || { totalReviews: 0, averageRating: 0 };
+        allOrders.forEach(order => {
+          const key = order.purchaseId || order._id;
+          aggregates[key] = order.reviewAggregate || { totalReviews: 0, averageRating: 0 };
         });
         setReviewAggregates(aggregates);
       } catch (err) {
@@ -1646,6 +1694,11 @@ const WishlistTab = ({ onOpenCart = null }) => {
       await axiosInstance.post('/api/user/add-to-cart', {
         productId: product._id,
         quantity: 1,
+        websiteRole: 'wholesaler'
+      }, {
+        headers: {
+          'X-Website-Role': 'wholesaler'
+        }
       });
 
       const cartItem = {

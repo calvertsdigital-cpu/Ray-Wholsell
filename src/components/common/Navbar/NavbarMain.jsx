@@ -87,17 +87,44 @@ export const Navbar = () => {
 
   const updateCartCount = useCallback(async () => {
     try {
+      // First try localStorage (for demo mode and immediate feedback)
+      const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+      const localCartCount = localCart.length;
+      
+      // Update count immediately from localStorage
+      if (localCartCount >= 0) {
+        setCartItemCount(localCartCount);
+      }
+
+      // Then try to sync with backend API (if available and user is logged in)
       const token = localStorage.getItem("userToken");
-      if (!token) return;
-      const response = await axiosInstance.get("/api/user/get-cart", {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'X-Website-Role': 'wholesaler'
-        },
-      });
-      setCartItemCount(response.data.cart.items.length);
+      if (token) {
+        try {
+          const response = await axiosInstance.get("/api/user/get-cart", {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'X-Website-Role': 'wholesaler'
+            },
+          });
+          const backendCount = response.data.cart.items.length;
+          
+          // Use backend count if different from localStorage
+          if (backendCount !== localCartCount) {
+            setCartItemCount(backendCount);
+          }
+        } catch (apiError) {
+          // Keep using localStorage count if API fails
+          setCartItemCount(localCartCount);
+        }
+      } else {
+        // No token, use localStorage only
+        setCartItemCount(localCartCount);
+      }
     } catch (error) {
-      console.error("Error fetching cart count:", error);
+      console.error("Error in updateCartCount:", error);
+      // Fallback to localStorage
+      const fallbackCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+      setCartItemCount(fallbackCart.length);
     }
   }, []);
 

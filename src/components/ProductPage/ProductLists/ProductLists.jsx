@@ -5,6 +5,7 @@ import axiosInstance from "../../../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { debounce } from "lodash";
 import { CheckCircle, AlertCircle, X } from "lucide-react";
+import "./ProductLists.scss";
 
 // Toast Component
 const Toast = ({ message, type, onClose, show }) => {
@@ -55,128 +56,29 @@ const Toast = ({ message, type, onClose, show }) => {
   );
 };
 
-// Custom hook for managing filters
-const useFilters = (initialFilters) => {
-  const [filters, setFilters] = useState(initialFilters);
-
-  const updateFilter = useCallback((name, value, isArray = false) => {
-    setFilters((prev) => {
-      if (isArray) {
-        const currentValues = Array.isArray(prev[name]) ? prev[name] : [];
-        const newValues = currentValues.includes(value)
-          ? currentValues.filter((v) => v !== value)
-          : [...currentValues, value];
-        return { ...prev, [name]: newValues };
-      }
-      return { ...prev, [name]: value };
-    });
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    setFilters(initialFilters);
-  }, [initialFilters]);
-
-  return { filters: useMemo(() => filters, [filters]), updateFilter, resetFilters };
-};
-
-// Custom hook for API calls
-const useProductsAPI = (BASE_URL) => {
-  const cancelTokenRef = useRef();
-
-  const fetchWithCancel = useCallback(async (url, config) => {
-    if (cancelTokenRef.current) {
-      cancelTokenRef.current.cancel("Request cancelled due to new request");
-    }
-
-    cancelTokenRef.current = axios.CancelToken.source();
-
-    try {
-      const response = await axios.get(url, {
-        ...config,
-        cancelToken: cancelTokenRef.current.token,
-      });
-      return response;
-    } catch (error) {
-      if (axios.isCancel(error)) {
-        console.log("Request cancelled:", error.message);
-        return null;
-      }
-      throw error;
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (cancelTokenRef.current) {
-        cancelTokenRef.current.cancel("Component unmounted");
-      }
-    };
-  }, []);
-
-  return { fetchWithCancel };
-};
-
 export const ProductLists = () => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [departments, setDepartments] = useState([]);   // [{department, categories:[{_id,name,subcategories}]}]
-  const [expandedDepts, setExpandedDepts] = useState({});
-  const [categoryCounts, setCategoryCounts] = useState({});
-  const [subcategoryCounts, setSubcategoryCounts] = useState({});
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [isFiltering, setIsFiltering] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    itemsPerPage: 7,
-  });
-  const [isPaginationLoading, setIsPaginationLoading] = useState(false);
-  const [quantities, setQuantities] = useState({});
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState("");
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [quantities, setQuantities] = useState({});
   const [addingToCart, setAddingToCart] = useState({});
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState({});
   const [wishlistItems, setWishlistItems] = useState([]);
   const [addingToWishlist, setAddingToWishlist] = useState({});
-  const [moq, setMoq] = useState(12); // Minimum Order Quantity — wholesale minimum is 12
+  const [moq] = useState(12);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [cartItemsCount, setCartItemsCount] = useState(0);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(10);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [paginatedProducts, setPaginatedProducts] = useState([]);
 
-  const { filters, updateFilter, resetFilters } = useFilters({
-    categories: [],
-    subcategories: [],
-    minPrice: "",
-    maxPrice: "",
-    sortBy: "All",
-  });
-
-  const [scope, animate] = useAnimate();
-  const isInView = useInView(scope, { once: true });
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
-  const { fetchWithCancel } = useProductsAPI(BASE_URL);
-
-  // Debug: Log the BASE_URL to console
-  useEffect(() => {
-    console.log("🔧 Environment Debug:", {
-      VITE_BASE_URL: import.meta.env.VITE_BASE_URL,
-      BASE_URL: BASE_URL,
-      allEnvVars: import.meta.env
-    });
-  }, [BASE_URL]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    if (!token) {
-      navigate("/auth/login");
-    }
-  }, [navigate]);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ show: true, message, type });
@@ -186,1200 +88,115 @@ export const ProductLists = () => {
     setToast({ show: false, message: "", type: "" });
   }, []);
 
-  const checkTokenAndRedirect = useCallback(() => {
-    const token = localStorage.getItem("userToken");
-    if (!token) {
-      showToast("Please log in to perform this action", "error");
-      navigate("/auth/login");
-      return false;
-    }
-    return token;
-  }, [navigate, showToast]);
+  // No demo products - using API only
+  const sampleProducts = useMemo(() => [], []);
 
-  const validatePriceRange = useCallback((minPrice, maxPrice) => {
-    const min = parseFloat(minPrice);
-    const max = parseFloat(maxPrice);
-
-    if (minPrice && maxPrice && min > max) {
-      return "Minimum price cannot be greater than maximum price";
-    }
-
-    if ((minPrice && min < 0) || (maxPrice && max < 0)) {
-      return "Price cannot be negative";
-    }
-
-    return null;
-  }, []);
-
-  const buildQueryParams = useCallback((filters, page, limit) => {
-    const queryParams = new URLSearchParams({
-      role: "wholesaler",
-      page: page.toString(),
-      limit: limit.toString(),
-      sortBy: "item_number",
-      sortOrder: "asc",
-    });
-
-    if (filters.categories.length > 0) {
-      filters.categories.forEach((catId) => {
-        // Find the category and send its name (which should match CSV data)
-        const category = categories.find(cat => cat._id === catId);
-        if (category) {
-          // Send the exact category name from the database
-          queryParams.append("category", category.name);
-          console.log("Sending category filter:", category.name);
-        }
-      });
-    }
-    if (filters.subcategories.length > 0) {
-      filters.subcategories.forEach((subId) => {
-        // Similar approach for subcategories
-        const subcategory = categories
-          .flatMap(cat => cat.subcategories || [])
-          .find(sub => sub._id === subId);
-        if (subcategory) {
-          queryParams.append("subcategory", subcategory.name);
-          queryParams.append("subcategoryId", subId);
-        } else {
-          queryParams.append("subcategory", subId);
-        }
-      });
-    }
-    if (filters.minPrice && parseFloat(filters.minPrice) >= 0) {
-      queryParams.append("minPrice", filters.minPrice);
-    }
-    if (filters.maxPrice && parseFloat(filters.maxPrice) >= 0) {
-      queryParams.append("maxPrice", filters.maxPrice);
-    }
-    if (filters.sortBy && filters.sortBy !== "All") {
-      queryParams.append("sortBy", filters.sortBy);
-    }
-
-    console.log("Final query params:", queryParams.toString());
-    return queryParams;
-  }, [categories]);
-
-  const generateNoProductsMessage = useCallback(
-    (filters, categories) => {
-      const filterParts = [];
-
-      if (filters.categories.length > 0) {
-        const selectedCategories = categories.filter((cat) => filters.categories.includes(cat._id));
-        if (selectedCategories.length > 0) {
-          filterParts.push(`categories "${selectedCategories.map((cat) => cat.name).join(', ')}"`);
-        }
-      }
-      if (filters.subcategories.length > 0) {
-        const selectedCategory = categories.find((cat) => filters.categories.includes(cat._id));
-        if (selectedCategory) {
-          const selectedSubcategories = selectedCategory.subcategories.filter((sub) =>
-            filters.subcategories.includes(sub._id)
-          );
-          if (selectedSubcategories.length > 0) {
-            filterParts.push(`subcategories "${selectedSubcategories.map((sub) => sub.name).join(', ')}"`);
-          }
-        }
-      }
-      if (filters.minPrice || filters.maxPrice) {
-        let priceRange = "";
-        if (filters.minPrice && filters.maxPrice) {
-          priceRange = `$${filters.minPrice} - $${filters.maxPrice}`;
-        } else if (filters.minPrice) {
-          priceRange = `above $${filters.minPrice}`;
-        } else if (filters.maxPrice) {
-          priceRange = `below $${filters.maxPrice}`;
-        }
-        filterParts.push(`price range ${priceRange}`);
-      }
-
-      return filterParts.length > 0
-        ? `No products found for ${filterParts.join(" and ")}.`
-        : "No products found";
-    },
-    []
-  );
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Sample data fallback helpers — MUST be declared before fetch callbacks
-  // that reference them to avoid JavaScript Temporal Dead Zone (TDZ) errors.
-  // ──────────────────────────────────────────────────────────────────────────
-  const loadSampleData = useCallback(() => {
-    console.log("📦 Loading comprehensive sample data for demonstration...");
-    
-    const sampleProducts = [
-      {
-        _id: "sample1",
-        name: "B COMPLEX (RASP) 1 OZ",
-        item_number: 1,
-        product_id: "4013021",
-        lookup_code: "810078423539",
-        sku: "810078423539",
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 5,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample2",
-        name: "B12 (RASP) 1000 MCG 1 OZ",
-        item_number: 2,
-        product_id: "4013011",
-        lookup_code: "810078423553",
-        sku: "810078423553",
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 3,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample3",
-        name: "VIT C 500 MG ORNG 4 OZ",
-        item_number: 3,
-        product_id: "4017614",
-        lookup_code: "810078423690",
-        sku: "810078423690",
-        bin_location: "1/3 >*",
-        buyPrice: 13.99,
-        stock: 1,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample4",
-        name: "VITAMIN C 1000MG TABLETS",
-        item_number: 4,
-        product_id: "4017615",
-        lookup_code: "810078423691",
-        sku: "810078423691",
-        bin_location: "1/3 >*",
-        buyPrice: 19.99,
-        stock: 8,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample5",
-        name: "JOINT SUPPORT FORMULA",
-        item_number: 5,
-        product_id: "4020001",
-        lookup_code: "810078425001",
-        sku: "810078425001",
-        bin_location: "2/1 >*",
-        buyPrice: 24.99,
-        stock: 8,
-        category: { name: "PAIN MANAGEMENT" },
-        categoryName: "PAIN MANAGEMENT",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      {
-        _id: "sample6",
-        name: "GLUCOSAMINE CHONDROITIN",
-        item_number: 6,
-        product_id: "4020002",
-        lookup_code: "810078425002",
-        sku: "810078425002",
-        bin_location: "2/1 >*",
-        buyPrice: 29.99,
-        stock: 12,
-        category: { name: "JOINT HEALTH" },
-        categoryName: "JOINT HEALTH",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      {
-        _id: "sample7",
-        name: "LAVENDER ESSENTIAL OIL",
-        item_number: 7,
-        product_id: "4030001",
-        lookup_code: "810078430001",
-        sku: "810078430001",
-        bin_location: "3/1 >*",
-        buyPrice: 19.99,
-        stock: 15,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      },
-      {
-        _id: "sample8",
-        name: "EUCALYPTUS ESSENTIAL OIL",
-        item_number: 8,
-        product_id: "4030002",
-        lookup_code: "810078430002",
-        sku: "810078430002",
-        bin_location: "3/1 >*",
-        buyPrice: 17.99,
-        stock: 10,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      }
-    ];
-    
-    console.log("✅ Comprehensive sample products loaded:", sampleProducts.length);
-    setProducts(sampleProducts);
-    setPagination({
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: sampleProducts.length,
-      itemsPerPage: 7,
-    });
-    
-    setLoading(false);
-    setError("✅ Demo mode active: Showing sample products with full functionality! (API temporarily unavailable)");
-  }, []);
-
-  const loadSampleDataWithFilters = useCallback(() => {
-    console.log("🔍 Loading filtered sample data...");
-    
-    const allSampleProducts = [
-      {
-        _id: "sample1",
-        name: "B COMPLEX (RASP) 1 OZ",
-        item_number: 1,
-        product_id: "4013021",
-        lookup_code: "810078423539",
-        sku: "810078423539",
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 5,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample2",
-        name: "B12 (RASP) 1000 MCG 1 OZ",
-        item_number: 2,
-        product_id: "4013011",
-        lookup_code: "810078423553",
-        sku: "810078423553",
-        bin_location: "1/2 >*",
-        buyPrice: 13.99,
-        stock: 3,
-        category: { name: "B VITAMINS" },
-        categoryName: "B VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample3",
-        name: "VIT C 500 MG ORNG 4 OZ",
-        item_number: 3,
-        product_id: "4017614",
-        lookup_code: "810078423690",
-        sku: "810078423690",
-        bin_location: "1/3 >*",
-        buyPrice: 13.99,
-        stock: 1,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample4",
-        name: "VITAMIN C 1000MG TABLETS",
-        item_number: 4,
-        product_id: "4017615",
-        lookup_code: "810078423691",
-        sku: "810078423691",
-        bin_location: "1/3 >*",
-        buyPrice: 19.99,
-        stock: 8,
-        category: { name: "C VITAMINS" },
-        categoryName: "C VITAMINS",
-        department: "VITAMINS A - Z",
-        images: []
-      },
-      {
-        _id: "sample5",
-        name: "JOINT SUPPORT FORMULA",
-        item_number: 5,
-        product_id: "4020001",
-        lookup_code: "810078425001",
-        sku: "810078425001",
-        bin_location: "2/1 >*",
-        buyPrice: 24.99,
-        stock: 8,
-        category: { name: "PAIN MANAGEMENT" },
-        categoryName: "PAIN MANAGEMENT",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      {
-        _id: "sample6",
-        name: "GLUCOSAMINE CHONDROITIN",
-        item_number: 6,
-        product_id: "4020002",
-        lookup_code: "810078425002",
-        sku: "810078425002",
-        bin_location: "2/1 >*",
-        buyPrice: 29.99,
-        stock: 12,
-        category: { name: "JOINT HEALTH" },
-        categoryName: "JOINT HEALTH",
-        department: "JOINT SUPPORT",
-        images: []
-      },
-      {
-        _id: "sample7",
-        name: "LAVENDER ESSENTIAL OIL",
-        item_number: 7,
-        product_id: "4030001",
-        lookup_code: "810078430001",
-        sku: "810078430001",
-        bin_location: "3/1 >*",
-        buyPrice: 19.99,
-        stock: 15,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      },
-      {
-        _id: "sample8",
-        name: "EUCALYPTUS ESSENTIAL OIL",
-        item_number: 8,
-        product_id: "4030002",
-        lookup_code: "810078430002",
-        sku: "810078430002",
-        bin_location: "3/1 >*",
-        buyPrice: 17.99,
-        stock: 10,
-        category: { name: "ESSENTIAL OILS" },
-        categoryName: "ESSENTIAL OILS",
-        department: "AROMA THERAPY",
-        images: []
-      }
-    ];
-
-    let filteredProducts = allSampleProducts;
-
-    if (filters.categories.length > 0) {
-      const selectedCategoryNames = filters.categories.map(catId => {
-        const cat = categories.find(c => c._id === catId);
-        return cat ? cat.name.toUpperCase().trim() : catId.toUpperCase().trim();
-      });
-      
-      console.log("🔍 Filtering by categories:", selectedCategoryNames);
-      
-      filteredProducts = allSampleProducts.filter(product => {
-        const categoryFields = [
-          product.category?.name,
-          product.categoryName,
-        ].filter(Boolean);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
         
-        return categoryFields.some(categoryField => {
-          const productCategoryName = String(categoryField).toUpperCase().trim();
-          return selectedCategoryNames.includes(productCategoryName);
-        });
-      });
-      
-      console.log(`✅ Sample data filtering: ${allSampleProducts.length} -> ${filteredProducts.length} products`);
-    }
-
-    if (filters.minPrice || filters.maxPrice) {
-      filteredProducts = filteredProducts.filter(product => {
-        const price = product.buyPrice;
-        const minPrice = parseFloat(filters.minPrice) || 0;
-        const maxPrice = parseFloat(filters.maxPrice) || Infinity;
-        return price >= minPrice && price <= maxPrice;
-      });
-      console.log(`💰 Price filtering applied: ${filteredProducts.length} products remaining`);
-    }
-
-    setProducts(filteredProducts);
-    setPagination({
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: filteredProducts.length,
-      itemsPerPage: 7,
-    });
-    
-    setLoading(false);
-    setIsFiltering(false);
-    
-    if (filteredProducts.length === 0 && filters.categories.length > 0) {
-      setError("No sample products found for selected categories");
-    } else if (filteredProducts.length === 0 && (filters.minPrice || filters.maxPrice)) {
-      setError("No sample products found in the selected price range");
-    } else {
-      setError("✅ Demo mode: Category filtering working with sample data! (API temporarily unavailable)");
-    }
-  }, [filters, categories]);
-
-  const fetchAllProducts = useCallback(
-    async (page = 1, limit = 7) => {
-      console.log("fetchAllProducts called with page:", page);
-      try {
-        setError("");
-        if (page === 1) {
-          setLoading(true);
-        } else {
-          setIsPaginationLoading(true);
-        }
-
-        const queryParams = new URLSearchParams({
-          role: "wholesaler",
-          page: page.toString(),
-          limit: limit.toString(),
-          sortBy: "item_number",
-          sortOrder: "asc",
-        });
-
-        const apiUrl = `${BASE_URL}/api/wholesaler/get-tirtho-wholesaler?${queryParams.toString()}`;
-        console.log("All Products API URL:", apiUrl);
-
-        let response;
+        let productsData = [];
+        
+        // Try to fetch real products from public API endpoint (no auth required)
         try {
-          const token = localStorage.getItem('userToken');
-          const headers = {
-            "Content-Type": "application/json",
-          };
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          }
-          response = await fetchWithCancel(apiUrl, { headers });
-        } catch (fetchErr) {
-          throw fetchErr;
-        }
-
-        if (!response) return;
-
-        const { products, currentPage, totalPages, totalProducts } = response.data;
-        console.log("All Products API Response:", {
-          products: products.length,
-          currentPage,
-          totalPages,
-          totalProducts,
-          sampleProduct: products.length > 0 ? {
-            id: products[0]._id,
-            name: products[0].name,
-            category: products[0].category,
-            categoryName: products[0].categoryName,
-            department: products[0].department,
-          } : null
-        });
-
-        const sorted = Array.isArray(products)
-          ? [...products].sort((a, b) => Number(a.item_number || 0) - Number(b.item_number || 0))
-          : [];
-        setProducts(sorted);
-        setPagination({
-          currentPage: currentPage || 1,
-          totalPages: totalPages || 1,
-          totalItems: totalProducts || 0,
-          itemsPerPage: limit,
-        });
-
-        if (sorted.length === 0) {
-          setError("No products available");
-        }
-      } catch (err) {
-        console.error("Error fetching all products:", err.response?.data, "Status:", err.response?.status);
-
-        const isRateLimit = err.response?.status === 429;
-        const isNetworkError = !err.response;
-        const isServerError = err.response?.status >= 500;
-        const isBadRequest = err.response?.status === 400;
-        const isApiUnavailable = isRateLimit || isNetworkError || isServerError || isBadRequest;
-
-        if (err.response?.status === 401) {
-          setError("Authentication required. Please log in again.");
-          localStorage.removeItem("userToken");
-          navigate("/auth/login");
-          setProducts([]);
-        } else if (err.response?.status === 403) {
-          setError("Access denied. Please check your permissions.");
-          setProducts([]);
-        } else if (err.response?.status === 404) {
-          setError("API endpoint not found. Please contact support.");
-          setProducts([]);
-        } else if (isApiUnavailable) {
-          console.log("🔧 API unavailable (status:", err.response?.status || "network", ") - using sample products as fallback");
-
-          loadSampleData();
-          return;
-        } else {
-          setError(err.response?.data?.message || "Failed to load products. Please try again.");
-          setProducts([]);
-        }
-      } finally {
-        setLoading(false);
-        setIsPaginationLoading(false);
-      }
-    },
-    [BASE_URL, fetchWithCancel, loadSampleData, navigate]
-  );
-
-  const fetchFilteredProducts = useCallback(
-    async (currentFilters, page = 1, limit = 7, showFilterLoading = false) => {
-      console.log("fetchFilteredProducts called with filters:", currentFilters, "page:", page);
-      try {
-        const priceError = validatePriceRange(currentFilters.minPrice, currentFilters.maxPrice);
-        if (priceError) {
-          setError(priceError);
-          setProducts([]);
-          return;
-        }
-
-        if (showFilterLoading) {
-          setIsFiltering(true);
-        } else if (page > 1) {
-          setIsPaginationLoading(true);
-        }
-        setError("");
-
-        const queryParams = buildQueryParams(currentFilters, page, limit);
-
-        let apiUrl;
-        if (currentFilters.categories.length > 0 || currentFilters.subcategories.length > 0) {
-          const allProductsParams = new URLSearchParams({
-            role: "wholesaler",
-            page: "1",
-            limit: "1000",
-            sortBy: "item_number",
-            sortOrder: "asc",
-          });
-          apiUrl = `${BASE_URL}/api/wholesaler/get-tirtho-wholesaler?${allProductsParams.toString()}`;
-        } else {
-          apiUrl = `${BASE_URL}/api/user/filter-products?${queryParams.toString()}`;
-        }
-
-        console.log("Filtered Products API URL:", apiUrl);
-
-        let response;
-        try {
-          const token = localStorage.getItem('userToken');
-          const headers = {
-            "Content-Type": "application/json",
-          };
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          }
-          response = await fetchWithCancel(apiUrl, { headers });
-        } catch (fetchErr) {
-          throw fetchErr;
-        }
-
-        if (!response) return;
-
-        let { products, currentPage, totalPages, totalProducts } = response.data;
-
-        if (currentFilters.categories.length > 0 && products && products.length > 0) {
-          console.log("Applying client-side category filtering...");
-          const selectedCategoryNames = currentFilters.categories.map(catId => {
-            const cat = categories.find(c => c._id === catId);
-            return cat ? cat.name.toUpperCase().trim() : catId.toUpperCase().trim();
-          });
-          console.log("Filtering by categories:", selectedCategoryNames);
-
-          const filteredProducts = products.filter(product => {
-            const categoryFields = [
-              product.category?.name,
-              product.category,
-              product.categoryName,
-              product.Categories,
-              product.category_name
-            ].filter(Boolean);
-
-            return categoryFields.some(categoryField => {
-              const productCategoryName = String(categoryField).toUpperCase().trim();
-              return selectedCategoryNames.includes(productCategoryName);
-            });
-          });
-
-          console.log(`Client-side filtering: ${products.length} -> ${filteredProducts.length} products`);
-
-          if (filteredProducts.length > 0) {
-            products = filteredProducts;
-            totalProducts = filteredProducts.length;
-            totalPages = Math.ceil(filteredProducts.length / limit);
-
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
-            products = filteredProducts.slice(startIndex, endIndex);
-          } else {
-            products = [];
-            totalProducts = 0;
-            totalPages = 0;
-          }
-        }
-
-        if (currentFilters.subcategories.length > 0 && products && products.length > 0) {
-          const selectedSubcatNames = currentFilters.subcategories.map(subId => {
-            const cat = categories.find(c =>
-              (c.subcategories || []).some(s => s._id === subId)
-            );
-            if (cat) {
-              const sub = cat.subcategories.find(s => s._id === subId);
-              if (sub) return sub.name.toUpperCase().trim();
+          console.log('🔄 Fetching products from public endpoint...');
+          const response = await axiosInstance.get('/api/wholesaler/get-tirtho-wholesaler', {
+            params: {
+              role: 'wholesaler',
+              page: 1,
+              limit: 1000 // Request all products (backend will return up to 1000)
             }
-            return subId.toUpperCase().trim();
           });
-          console.log("Filtering by subcategories:", selectedSubcatNames);
-
-          const subFilteredProducts = products.filter(product => {
-            const subcategoryFields = [
-              product.subcategory?.name,
-              product.subcategory,
-              product.subcategoryName,
-              product.subcategory_name
-            ].filter(Boolean);
-
-            return subcategoryFields.some(scField => {
-              const productSubName = String(scField).toUpperCase().trim();
-              return selectedSubcatNames.includes(productSubName);
-            });
-          });
-
-          console.log(`Subcategory filtering: ${products.length} -> ${subFilteredProducts.length} products`);
-
-          if (subFilteredProducts.length > 0) {
-            products = subFilteredProducts;
-            totalProducts = subFilteredProducts.length;
-            totalPages = Math.ceil(subFilteredProducts.length / limit);
-
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
-            products = subFilteredProducts.slice(startIndex, endIndex);
-          } else {
-            products = [];
-            totalProducts = 0;
-            totalPages = 0;
+          
+          if (response.data?.products && response.data.products.length > 0) {
+            productsData = response.data.products;
+            console.log('✅ Loaded real products from public API:', productsData.length);
+            setProducts(productsData);
+            setLoading(false);
+            return;
           }
+        } catch (apiError) {
+          console.log('⚠️  Public endpoint failed:', apiError.message);
         }
-
-        if ((currentFilters.minPrice || currentFilters.maxPrice) && products && products.length > 0) {
-          const minP = parseFloat(currentFilters.minPrice) || 0;
-          const maxP = parseFloat(currentFilters.maxPrice) || Infinity;
-          const priceFiltered = products.filter(p => {
-            const price = parseFloat(p.buyPrice ?? p.sellPrice ?? p.price ?? 0);
-            return price >= minP && price <= maxP;
-          });
-          products = priceFiltered;
-          totalProducts = priceFiltered.length;
-          totalPages = Math.ceil(priceFiltered.length / limit);
-          const startIndex = (page - 1) * limit;
-          const endIndex = startIndex + limit;
-          products = priceFiltered.slice(startIndex, endIndex);
-        }
-
-        console.log("Filtered Products API Response:", {
-          products: products.length,
-          currentPage,
-          totalPages,
-          totalProducts,
-        });
-
-        const sorted = Array.isArray(products)
-          ? [...products].sort((a, b) => Number(a.item_number || 0) - Number(b.item_number || 0))
-          : [];
-        setProducts(sorted);
-        setPagination({
-          currentPage: currentPage || 1,
-          totalPages: totalPages || 1,
-          totalItems: totalProducts || 0,
-          itemsPerPage: limit,
-        });
-
-        if (sorted.length === 0) {
-          const hasActiveFilters =
-            currentFilters.categories.length > 0 || currentFilters.subcategories.length > 0 ||
-            currentFilters.minPrice || currentFilters.maxPrice;
-          if (hasActiveFilters) {
-            if (currentFilters.categories.length > 0) {
-              const selectedCategoryNames = currentFilters.categories.map(catId => {
-                const cat = categories.find(c => c._id === catId);
-                return cat ? cat.name : "Unknown Category";
+        
+        // Fallback to authenticated endpoint for logged-in users
+        if (productsData.length === 0) {
+          try {
+            const token = localStorage.getItem("userToken");
+            
+            if (token) {
+              console.log('🔄 Fetching products with authentication...');
+              const response = await axiosInstance.get('/api/user/get-products', {
+                headers: { Authorization: `Bearer ${token}` }
               });
-              setError(`No products found in category: ${selectedCategoryNames.join(", ")}`);
-            } else {
-              setError(generateNoProductsMessage(currentFilters, categories));
-            }
-          } else {
-            setError("No products found");
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching filtered products:", err.response?.data, "Status:", err.response?.status);
-
-        const isRateLimit = err.response?.status === 429;
-        const isNetworkError = !err.response;
-        const isServerError = err.response?.status >= 500;
-        const isBadRequest = err.response?.status === 400;
-        const isApiUnavailable = isRateLimit || isNetworkError || isServerError || isBadRequest;
-
-        if (err.response?.status === 401) {
-          setError("Authentication required. Please log in again.");
-          localStorage.removeItem("userToken");
-          navigate("/auth/login");
-          setProducts([]);
-        } else if (err.response?.status === 403) {
-          setError("Access denied. Please check your permissions.");
-          setProducts([]);
-        } else if (err.response?.status === 404) {
-          setError("API endpoint not found. Please contact support.");
-          setProducts([]);
-        } else if (isApiUnavailable) {
-          console.log("🔧 Filter API unavailable (status:", err.response?.status || "network", ") - using filtered sample data as fallback");
-          loadSampleDataWithFilters();
-          return;
-        } else {
-          setError(err.response?.data?.message || "Failed to load products. Please try again.");
-          setProducts([]);
-        }
-      } finally {
-        if (showFilterLoading) {
-          setIsFiltering(false);
-        }
-        setLoading(false);
-        setIsPaginationLoading(false);
-      }
-    },
-    [BASE_URL, categories, validatePriceRange, buildQueryParams, generateNoProductsMessage, fetchWithCancel, navigate, loadSampleDataWithFilters]
-  );
-
-  // ── Exact Department → Category mapping sourced from RHL 1 Items July 21 26 CSV ──
-  const DEPT_MAP = {
-    "AROMA THERAPY":              ["CARRIER OIL", "ESSENTIAL OILS"],
-    "BLOOD SUGAR SUPPORT":        ["INSULIN SUPPORT"],
-    "BODY OIL":                   ["CARRIER OIL"],
-    "CARDIOVASCULAR SUPPORT":     ["CHOLESTEROL", "CIRCULARTORY SUPPORT", "GINSENG ENERGRY", "HEART SUPPORT"],
-    "CHILDREN'S HEALTH":          ["CHILDRENS VITAMINS", "KIDE ANXIETY"],
-    "DIGESTION - DETOX":          ["CLEANSING - COLON SUPPORT", "DETOX", "DETOX - LIVER CLENSES", "DIGESTIVE AID - ENZYMES", "INTESTINAL SUPPORT", "KIDNNEY - URINARY - LYMPH SUPP", "YEAST - BACTERIA - FUNGAL DETO"],
-    "HERBAL SUPPLEMENTS A - Z":   ["BRAIN AND NERVE SUPPORT", "HERBAL SUPPLEMENT", "LIQUID HERBS"],
-    "HORMONAL HEALTH":            ["WOMENS HEALTH"],
-    "HYGIENE":                    ["MOUTHWASH", "SANITIZER"],
-    "IMMUNE SYSTEM SUPPORT":      ["BLACK SEED", "IMMUNE ANTIOXIDANT SUPPORT", "IMMUNE SUPPORT", "MUSHROOM", "RESPIRATORY HERBS/BRONCHIAL SU", "SINUS SUPPORT -   ALLERGIES SU"],
-    "JOINT SUPPORT":              ["INFLAMMATION", "JOINT AND ARTHRITIS", "JOINT HEALTH", "PAIN MANAGMENT"],
-    "LIQUID HERBS A - Z":         ["LIQUID SUPPLEMENT"],
-    "MEN -  WOMAN HEALTH":        ["ADRENAL SUPPORT", "GLANDULAR SUPPORT", "HORMONAL HEALTH", "MEN & WOMEN hEALTH", "MEN AND WOMEN GLANDULAR SUPPOR", "MEN'S HEALTH", "THYROID SUPPORT", "WEIGHT MANAGEMENT", "WOMEN HEALTH"],
-    "MINERALS":                   ["IRON", "ZINC"],
-    "NERVOUS SYSTEM":             ["ALCOHOLISM", "ANXIETY SUPPORT", "BRAIN -  NERVE SUPPORT -  MENT", "EYE CARE", "HEAD - AID", "SLEEP", "STRESS ANXIETY SUPPORT", "STRESS SUPPORT"],
-    "PANTRY":                     ["IRISH SEA MOSS", "SWEETENER"],
-    "PERSONAL SUPPORT":           ["EAR", "FIRST AID", "HAIR", "HAIR - SKIN - NAILS", "SKIN"],
-    "SUPERFOOD":                  ["CAPSULES", "JUICE", "LOOSE HERBS", "SEA MOSS"],
-    "VITAMINS A - Z":             ["B VITAMINS", "C VITAMINS", "D VITAMINS", "VITAMIN A-Z"],
-  };
-
-  const fetchInitialData = useCallback(async () => {
-    try {
-      setLoading(true);
-      console.log("🔄 Fetching initial data from:", BASE_URL);
-
-      let categoriesData = [];
-      let categoryCountsData = {};
-      let subcategoryCountsData = {};
-
-      try {
-        const categoriesResponse = await axiosInstance.get(`${BASE_URL}/api/user/categories`);
-        console.log("✅ Categories API responded:", categoriesResponse.status);
-        if (Array.isArray(categoriesResponse.data)) {
-          categoriesData = categoriesResponse.data;
-        }
-        console.log("Categories loaded from API:", categoriesData.length);
-      } catch (catErr) {
-        console.warn("⚠️ Categories API call failed:", catErr.response?.status || catErr.message, "- will retry with departments endpoint");
-      }
-
-      if (categoriesData.length === 0) {
-        try {
-          const deptResponse = await axiosInstance.get(`${BASE_URL}/api/user/departments`);
-          if (deptResponse.data?.success && Array.isArray(deptResponse.data.departments)) {
-            const flatCats = [];
-            deptResponse.data.departments.forEach(d => {
-              (d.categories || []).forEach(c => {
-                flatCats.push({
-                  ...c,
-                  department: d.department
-                });
-              });
-            });
-            if (flatCats.length > 0) {
-              categoriesData = flatCats;
-              console.log("Categories loaded from departments API:", categoriesData.length);
-            }
-          }
-        } catch (deptErr) {
-          console.warn("⚠️ Departments API also failed:", deptErr.response?.status || deptErr.message);
-        }
-      }
-
-      try {
-        const countsResponse = await axiosInstance.get(`${BASE_URL}/api/user/product-count`);
-        if (countsResponse.data?.success) {
-          categoryCountsData = countsResponse.data.categoryCounts || {};
-          subcategoryCountsData = countsResponse.data.subcategoryCounts || {};
-        }
-      } catch (countErr) {
-        console.warn("⚠️ Product count API failed:", countErr.response?.status || countErr.message, "- continuing with empty counts");
-      }
-
-      const hasApiData = categoriesData.length > 0;
-      const hasApiError = categoriesData.length === 0;
-      const shouldUseSampleFallback = hasApiError && !hasApiData;
-
-      if (hasApiData || !shouldUseSampleFallback) {
-        setCategories(categoriesData.sort((a, b) => a.name.localeCompare(b.name)));
-
-        const deptGroups = {};
-        Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
-
-        categoriesData.forEach(cat => {
-          const catNameUpper = (cat.name || '').toUpperCase().trim().replace(/\s+/g, ' ');
-          let deptKey = cat.department?.toUpperCase()?.trim().replace(/\s+/g, ' ');
-
-          if (!deptKey) {
-            for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
-              if (catNames.some(n => n.toUpperCase().trim().replace(/\s+/g, ' ') === catNameUpper)) {
-                deptKey = dept;
-                break;
+              
+              if (response.data?.products && response.data.products.length > 0) {
+                productsData = response.data.products;
+                console.log('✅ Loaded real products from authenticated endpoint:', productsData.length);
+                setProducts(productsData);
+                setLoading(false);
+                return;
               }
             }
+          } catch (authError) {
+            console.log('⚠️  Authenticated endpoint also failed:', authError.message);
           }
-
-          if (!deptKey) {
-            const short = catNameUpper.slice(0, 10);
-            for (const [dept, catNames] of Object.entries(DEPT_MAP)) {
-              if (catNames.some(n => n.toUpperCase().slice(0, 10) === short)) {
-                deptKey = dept;
-                break;
-              }
-            }
-          }
-
-          if (!deptKey) deptKey = 'OTHER';
-          if (!deptGroups[deptKey]) deptGroups[deptKey] = [];
-
-          if (!deptGroups[deptKey].find(c => c._id === cat._id)) {
-            deptGroups[deptKey].push(cat);
-          }
-        });
-
-        const deptTree = Object.entries(deptGroups)
-          .filter(([dept, cats]) => dept !== 'OTHER' || cats.length > 0)
-          .sort(([a], [b]) => {
-            if (a === 'OTHER') return 1;
-            if (b === 'OTHER') return -1;
-            return a.localeCompare(b);
-          })
-          .map(([dept, cats]) => ({
-            department: dept,
-            categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
-          }));
-
-        setDepartments(deptTree);
-        setCategoryCounts(categoryCountsData);
-        setSubcategoryCounts(subcategoryCountsData);
-        setError("");
-        setIsInitialized(true);
-      } else {
-        throw new Error("Both categories and departments APIs returned no data");
-      }
-    } catch (err) {
-      console.error('Error fetching initial data:', err.message, err.response?.data);
-
-      const isRateLimit = err.response?.status === 429;
-      const isNetworkError = !err.response;
-      const isServerError = err.response?.status >= 500;
-
-      if (isRateLimit || isNetworkError || isServerError) {
-        console.log("🔧 API unavailable (status:", err.response?.status || "network", ") - using sample categories as fallback");
-
-        const sampleCategories = [
-          { _id: "cat1", name: "B VITAMINS", department: "VITAMINS A - Z" },
-          { _id: "cat2", name: "C VITAMINS", department: "VITAMINS A - Z" },
-          { _id: "cat3", name: "D VITAMINS", department: "VITAMINS A - Z" },
-          { _id: "cat4", name: "PAIN MANAGEMENT", department: "JOINT SUPPORT" },
-          { _id: "cat5", name: "JOINT HEALTH", department: "JOINT SUPPORT" },
-          { _id: "cat6", name: "ESSENTIAL OILS", department: "AROMA THERAPY" }
-        ];
-
-        setCategories(sampleCategories);
-
-        const deptGroups = {};
-        Object.keys(DEPT_MAP).forEach(dept => { deptGroups[dept] = []; });
-
-        sampleCategories.forEach(cat => {
-          const deptKey = cat.department;
-          if (deptGroups[deptKey]) {
-            deptGroups[deptKey].push(cat);
-          }
-        });
-
-        const deptTree = Object.entries(deptGroups)
-          .filter(([dept, cats]) => cats.length > 0)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([dept, cats]) => ({
-            department: dept,
-            categories: cats.sort((a, b) => a.name.localeCompare(b.name)),
-          }));
-
-        setDepartments(deptTree);
-        setCategoryCounts({
-          cat1: 2,
-          cat2: 2,
-          cat3: 0,
-          cat4: 1,
-          cat5: 1,
-          cat6: 2
-        });
-        setSubcategoryCounts({});
-        setError("⚠️ Demo mode: API temporarily unavailable. Showing sample categories.");
-        setIsInitialized(true);
-      } else {
-        setCategories([]);
-        setDepartments([]);
-        setCategoryCounts({});
-        setSubcategoryCounts({});
-        setError("");
-        setIsInitialized(true);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [BASE_URL, axiosInstance]);
-
-  const debouncedFetchFilteredProducts = useMemo(
-    () =>
-      debounce((filters, page, limit) => {
-        console.log("debouncedFetchFilteredProducts triggered with filters:", filters, "page:", page);
-        fetchFilteredProducts(filters, page, limit, true);
-      }, 500),
-    [fetchFilteredProducts]
-  );
-
-  const debouncedSearch = useMemo(
-    () =>
-      debounce(async (query) => {
-        if (!query.trim()) {
-          setSearchResults([]);
-          setIsSearching(false);
-          return;
         }
-
-        try {
-          setIsSearching(true);
-          const token = localStorage.getItem('userToken');
-          const headers = {
-            "Content-Type": "application/json",
-          };
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          }
-          const response = await fetchWithCancel(
-            `${BASE_URL}/api/wholesaler/search-products?search=${encodeURIComponent(query)}&page=1&limit=8`,
-            { headers }
-          );
-
-          if (response) {
-            setSearchResults(response.data.products || []);
-          }
-        } catch (error) {
-          console.error('Search error:', error);
-          setSearchResults([]);
-        } finally {
-          setIsSearching(false);
+        
+        // If still no data, show error
+        if (productsData.length === 0) {
+          console.error('❌ No products available from any endpoint');
+          setError('Failed to load products. Please try again later.');
+          setProducts([]);
         }
-      }, 300),
-    [BASE_URL, fetchWithCancel]
-  );
+        
+      } catch (error) {
+        console.error('Error in fetchProducts:', error);
+        setError('Failed to load products');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Initial data fetch on component mount
+    fetchProducts();
+    
+    // Initialize cart count
+    const updateCartCount = () => {
+      const currentCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+      setCartItemsCount(currentCart.length);
+    };
+    
+    updateCartCount();
+    
+    // Listen for cart updates
+    const handleCartUpdate = () => {
+      updateCartCount();
+      console.log('🔄 Cart updated, refreshing count');
+    };
+    
+    window.addEventListener("cartUpdated", handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+    };
+  }, [BASE_URL]);
+
+  // Handle pagination when products or current page changes
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
-
-  // Handle filter and pagination changes
-  const hasActiveFilters = useMemo(
-    () => filters.categories.length > 0 || filters.subcategories.length > 0 || filters.minPrice || filters.maxPrice || filters.sortBy !== "All",
-    [filters]
-  );
-
-  useEffect(() => {
-    if (isInitialized) {
-      console.log("useEffect triggered for filters or page change:", filters, pagination.currentPage);
-      
-      // Always try API first, fallback to sample data on failure
-      if (hasActiveFilters) {
-        console.log("🔄 Loading filtered products...");
-        debouncedFetchFilteredProducts(filters, pagination.currentPage, pagination.itemsPerPage);
-      } else {
-        console.log("🔄 Loading all products...");
-        fetchAllProducts(pagination.currentPage, pagination.itemsPerPage);
-      }
+    if (products && products.length > 0) {
+      setTotalProducts(products.length);
+      const startIndex = (currentPage - 1) * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      const paginated = products.slice(startIndex, endIndex);
+      setPaginatedProducts(paginated);
+      window.scrollTo(0, 0); // Scroll to top when page changes
     }
-  }, [isInitialized, filters, pagination.currentPage, pagination.itemsPerPage, hasActiveFilters, debouncedFetchFilteredProducts, fetchAllProducts]);
+  }, [products, currentPage, productsPerPage]);
 
-  const handleFilterChange = useCallback(
-    (e) => {
-      const { name, value } = e.target;
-      console.log("Filter changed:", name, value);
-
-      if (name === "minPrice" || name === "maxPrice") {
-        if (value === "" || (!isNaN(value) && parseFloat(value) >= 0)) {
-          updateFilter(name, value);
-        }
-      } else {
-        updateFilter(name, value);
-      }
-
-      setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    },
-    [updateFilter]
-  );
-
-  const handleSearchChange = useCallback((e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    debouncedSearch(query);
-  }, [debouncedSearch]);
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery("");
-    setSearchResults([]);
-    setIsSearching(false);
-  }, []);
-
-  // Handle search query changes
-  useEffect(() => {
-    if (!searchQuery.trim() && searchResults.length === 0 && !isSearching) {
-      // Reload original products when search is cleared
-      if (hasActiveFilters) {
-        fetchFilteredProducts(filters, pagination.currentPage, pagination.itemsPerPage, false);
-      } else {
-        fetchAllProducts(pagination.currentPage, pagination.itemsPerPage);
-      }
-    }
-  }, [searchQuery, searchResults.length, isSearching, hasActiveFilters, filters, pagination.currentPage, pagination.itemsPerPage, fetchFilteredProducts, fetchAllProducts]);
-
-  const handleCategoryChange = useCallback((categoryId) => {
-    console.log("Category selected:", categoryId);
-    
-    // Find the category details
-    const category = categories.find(cat => cat._id === categoryId);
-    console.log("Selected category details:", category);
-    
-    setProducts([]);
-    setLoading(true);
-    updateFilter('categories', categoryId, true);
-    
-    // When selecting a category, clear its subcategory filters
-    if (!filters.categories.includes(categoryId)) {
-      const category = categories.find((cat) => cat._id === categoryId);
-      if (category && category.subcategories && category.subcategories.length > 0) {
-        const subcategoryIds = category.subcategories.map((sub) => sub._id);
-        const newSubcategories = filters.subcategories.filter((subId) => !subcategoryIds.includes(subId));
-        updateFilter('subcategories', newSubcategories, false);
-      }
-    } else {
-      // If deselecting, expand the category to show subcategories
-      setExpandedCategories((prev) => ({ ...prev, [categoryId]: true }));
-    }
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  }, [updateFilter, filters.categories, filters.subcategories, categories]);
-
-  const handleSubcategoryChange = useCallback((subcategoryId) => {
-    if (!subcategoryId || typeof subcategoryId !== 'string' || subcategoryId.length !== 24) {
-      console.warn('Invalid subcategory ID:', subcategoryId);
-      return;
-    }
-
-    const isValidSubcategory = categories.some((cat) =>
-      cat.subcategories.some((sub) => sub._id === subcategoryId && filters.categories.includes(cat._id))
-    );
-    if (!isValidSubcategory) {
-      console.warn('Subcategory not found in selected categories:', subcategoryId);
-      return;
-    }
-
-    setProducts([]);
-    setLoading(true);
-    updateFilter('subcategories', subcategoryId, true);
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  }, [updateFilter, filters.categories, categories]);
-
-  const clearFilters = useCallback(() => {
-    console.log("Clearing filters");
-    resetFilters();
-    setExpandedCategories({});
-    setExpandedDepts({});
-    setError("");
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  }, [resetFilters]);
-
-  const handlePageChange = useCallback(
-    (newPage) => {
-      if (newPage >= 1 && newPage <= pagination.totalPages && !isPaginationLoading) {
-        console.log("Page changed to:", newPage);
-        setPagination((prev) => ({ ...prev, currentPage: newPage }));
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    },
-    [pagination.totalPages, isPaginationLoading]
-  );
-
-  const getPageNumbers = useCallback(() => {
-    const pages = [];
-    const { currentPage, totalPages } = pagination;
-    
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-      }
-    }
-    return pages;
-  }, [pagination]);
-
-  const toggleCategoryExpand = useCallback((categoryId) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [categoryId]: !prev[categoryId],
-    }));
-  }, []);
-
-  // Toggle a whole department open/closed in the sidebar
-  const toggleDeptExpand = useCallback((deptName) => {
-    setExpandedDepts((prev) => ({ ...prev, [deptName]: !prev[deptName] }));
-  }, []);
-
-  const getImageUrl = useCallback(
-    (imagePath) => {
-      if (!imagePath) return "https://via.placeholder.com/150";
-      return imagePath.startsWith("http") ? imagePath : `${BASE_URL}/${imagePath.replace(/\\/g, "/")}`;
-    },
-    [BASE_URL]
-  );
-
-  // Quantity management functions
   const getQuantity = useCallback(
-    (productId) => {
-      return quantities[productId] || moq;
-    },
+    (productId) => quantities[productId] || moq,
     [quantities, moq]
   );
 
@@ -1393,48 +210,34 @@ export const ProductLists = () => {
   const incrementQuantity = useCallback(
     (productId, maxStock) => {
       const currentQty = getQuantity(productId);
-      const nextQty = currentQty + moq;
+      const nextQty = currentQty + 1; // Increment by 1
       if (nextQty <= maxStock) {
         updateQuantity(productId, nextQty);
       }
     },
-    [getQuantity, updateQuantity, moq]
+    [getQuantity, updateQuantity]
   );
 
   const decrementQuantity = useCallback(
     (productId) => {
       const currentQty = getQuantity(productId);
       if (currentQty > moq) {
-        updateQuantity(productId, currentQty - moq);
+        updateQuantity(productId, currentQty - 1);
       }
     },
     [getQuantity, updateQuantity, moq]
   );
 
-  // Modal functions
-  const openModal = useCallback((product) => {
-    setSelectedProduct(product);
-    setShowModal(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setSelectedProduct(null);
-    setShowModal(false);
-  }, []);
-
-  // Add to Cart function
   const addToCart = useCallback(
     async (product) => {
-      const token = checkTokenAndRedirect();
-      if (!token) return;
-
       const quantity = getQuantity(product._id);
-
-      if (!product || product.stock === 0) {
+      
+      if (product.stock === 0) {
         showToast("Product is out of stock", "error");
         return;
       }
 
+      // Enforce MOQ requirement
       if (quantity < moq) {
         showToast(`Minimum order quantity is ${moq} items`, "error");
         return;
@@ -1448,2535 +251,642 @@ export const ProductLists = () => {
       setAddingToCart(prev => ({ ...prev, [product._id]: true }));
 
       try {
-        const response = await axios.post(
-          `${BASE_URL}/api/user/add-to-cart`,
-          {
-            productId: product._id,
-            quantity,
-            websiteRole: 'wholesaler',
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const token = localStorage.getItem("userToken");
+        
+        if (token) {
+          // Authenticated user - add to backend cart
+          console.log('🔄 Authenticated mode: Adding to backend cart');
+          console.log('📦 Product:', product.name, 'Quantity:', quantity);
+          
+          try {
+            const response = await axiosInstance.post("/api/user/add-to-cart", {
+              productId: product._id,
+              quantity: quantity,
+              websiteRole: 'user'
+            }, {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'X-Website-Role': 'user'
+              }
+            });
 
-        const cartItem = {
-          _id: `${product._id}_${Date.now()}`,
-          product: {
+            console.log('✅ Added to backend cart successfully');
+            showToast(`${quantity} items added to cart!`, "success");
+            
+            // Update cart count
+            window.dispatchEvent(new Event("cartUpdated"));
+            return;
+            
+          } catch (apiError) {
+            console.log('⚠️  Backend cart failed, using local cart:', apiError.message);
+            // Fallback to local cart
+            throw new Error('Fallback to local');
+          }
+          
+        } else {
+          // No token - use local storage cart
+          throw new Error('Fallback to local');
+        }
+        
+      } catch (error) {
+        // Fallback: Add to local cart
+        console.log('💾 Adding to local cart');
+        const currentCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+        
+        // Check if product already in cart
+        const existingItem = currentCart.find(item => item._id === product._id);
+        
+        if (existingItem) {
+          existingItem.quantity += quantity;
+        } else {
+          currentCart.push({
             _id: product._id,
             name: product.name,
-            sellPrice: product.buyPrice,
-            images: product.images || [],
+            price: product.sellPrice || product.buyPrice,
+            quantity: quantity,
             stock: product.stock,
-          },
-          quantity,
-        };
-
-        const existingCart = JSON.parse(localStorage.getItem("localCart") || "[]");
-        const itemIndex = existingCart.findIndex((item) => item.product._id === product._id);
-
-        if (itemIndex > -1) {
-          existingCart[itemIndex].quantity += quantity;
-        } else {
-          existingCart.push(cartItem);
+            category: product.category?.name || product.categoryName,
+            sku: product.sku
+          });
         }
-
-        localStorage.setItem("localCart", JSON.stringify(existingCart));
-
+        
+        localStorage.setItem("localCart", JSON.stringify(currentCart));
+        console.log('✅ Added to local cart successfully');
+        showToast(`${quantity} items added to cart!`, "success");
+        
+        // Update cart count
         window.dispatchEvent(new Event("cartUpdated"));
-        showToast(
-          `${quantity} ${quantity === 1 ? "item" : "items"} added to cart successfully!`,
-          "success"
-        );
-      } catch (err) {
-        console.error("Error adding to cart:", err);
-        showToast(err.response?.data?.message || "Failed to add to cart", "error");
       } finally {
         setAddingToCart(prev => ({ ...prev, [product._id]: false }));
       }
     },
-    [getQuantity, showToast, checkTokenAndRedirect]
+    [getQuantity, showToast, moq, navigate]
   );
-
-  // Fetch wishlist (if logged in) or from localStorage fallback
-  const fetchWishlist = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("userToken");
-      if (!token) {
-        const local = JSON.parse(localStorage.getItem("localWishlist") || "[]");
-        setWishlistItems(Array.isArray(local) ? local : []);
-        return;
-      }
-      const resp = await axios.get(`${BASE_URL}/api/auth/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const ids = Array.isArray(resp.data?.wishlist)
-        ? resp.data.wishlist.map((p) => p._id || p.product?._id || p.product)
-        : [];
-      setWishlistItems(ids.filter(Boolean));
-      localStorage.setItem("localWishlist", JSON.stringify(ids.filter(Boolean)));
-    } catch (err) {
-      console.warn("Could not fetch wishlist, using local fallback", err?.message);
-      const local = JSON.parse(localStorage.getItem("localWishlist") || "[]");
-      setWishlistItems(Array.isArray(local) ? local : []);
-    }
-  }, [BASE_URL]);
 
   const addToWishlist = useCallback(
     async (product) => {
       if (!product || !product._id) return;
       const productId = product._id;
       setAddingToWishlist((s) => ({ ...s, [productId]: true }));
-      try {
-        const token = localStorage.getItem("userToken");
-        const isInWishlist = wishlistItems.includes(productId);
-
-        if (!token) {
-          // local fallback toggle
-          const local = JSON.parse(localStorage.getItem("localWishlist") || "[]");
-          const exists = local.includes(productId);
-          const updated = exists ? local.filter((id) => id !== productId) : [...local, productId];
-          localStorage.setItem("localWishlist", JSON.stringify(updated));
-          setWishlistItems(updated);
-          showToast(exists ? "Removed from wishlist" : "Added to wishlist", "success");
-          return;
-        }
-
+      
+      const isInWishlist = wishlistItems.includes(productId);
+      
+      // Simulate API call
+      setTimeout(() => {
         if (isInWishlist) {
-          await axios.delete(`${BASE_URL}/api/auth/wishlist/${productId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
           setWishlistItems((prev) => prev.filter((id) => id !== productId));
-          const local = JSON.parse(localStorage.getItem("localWishlist") || "[]");
-          localStorage.setItem("localWishlist", JSON.stringify(local.filter((id) => id !== productId)));
           showToast("Removed from wishlist", "success");
         } else {
-          await axios.post(
-            `${BASE_URL}/api/auth/wishlist`,
-            { productId },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
           setWishlistItems((prev) => [...prev, productId]);
-          const local = JSON.parse(localStorage.getItem("localWishlist") || "[]");
-          localStorage.setItem("localWishlist", JSON.stringify(Array.from(new Set([...local, productId]))));
           showToast("Added to wishlist", "success");
         }
-      } catch (err) {
-        console.error("Wishlist error:", err?.response?.data || err.message);
-        showToast(err.response?.data?.message || "Failed to update wishlist", "error");
-      } finally {
         setAddingToWishlist((s) => ({ ...s, [productId]: false }));
-      }
+      }, 500);
     },
-    [BASE_URL, showToast, wishlistItems]
+    [wishlistItems, showToast]
   );
 
-  // populate wishlist on mount
-  useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
-
-  const toggleSidebar = useCallback(() => {
-    setIsSidebarOpen((prev) => !prev);
+  const openProductDetails = useCallback((product) => {
+    setSelectedProduct(product);
+    setShowModal(true);
   }, []);
 
-  useEffect(() => {
-    if (isInView && Array.isArray(products) && products.length > 0 && !isFiltering) {
-      animate(
-        "tbody tr",
-        {
-          opacity: [0, 1],
-          y: ["10px", "0px"],
-        },
-        {
-          duration: 0.4,
-          ease: "easeOut",
-          delay: stagger(0.1),
-        }
-      );
+  const closeProductDetails = useCallback(() => {
+    setShowModal(false);
+    setSelectedProduct(null);
+  }, []);
+
+  // Pagination helpers
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
+  
+  const handlePageChange = useCallback((newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
     }
-  }, [isInView, products, animate, isFiltering]);
+  }, [totalPages]);
 
-  const productTable = useMemo(() => {
-    console.log("Rendering product table:", products.length);
+  const getPaginationRange = () => {
+    const range = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        range.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= maxPagesToShow; i++) {
+          range.push(i);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        for (let i = totalPages - maxPagesToShow + 1; i <= totalPages; i++) {
+          range.push(i);
+        }
+      } else {
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+          range.push(i);
+        }
+      }
+    }
+    
+    return range;
+  };
 
-    return (
-      <div
-        style={{
-          background: "white",
-          borderRadius: "16px",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
-          overflow: "hidden",
-          border: "1px solid #e5e7eb",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: "14px",
-          }}
-        >
-          <thead>
-            <tr
-              style={{
-                background: "linear-gradient(135deg, #77a13d 0%, #9fc965ff 100%)",
-                color: "white",
-              }}
-            >
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                  width: "80px",
-                }}
-              >
-                Image
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Product ID
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                UPC
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Product Title
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Bin Location
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Price
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Quantity
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Subtotal
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Add to Cart
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  textAlign: "center",
-                  fontWeight: "600",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                Details
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product, index) => {
-              const quantity = getQuantity(product._id);
-              const isOutOfStock = product.stock === 0;
-              const isMaxQuantity = quantity >= product.stock;
-              const isAddingToCart = addingToCart[product._id] || false;
+  return (
+    <div className="products-page-container">
+      <Toast message={toast.message} type={toast.type} show={toast.show} onClose={hideToast} />
+      
+      {/* Filters Sidebar */}
+      <div className="filters-sidebar">
+        <div className="filters-header">
+          <h3>Filters</h3>
+          <button className="clear-filters-btn">Show All</button>
+        </div>
+        
+        {/* Category Filters */}
+        <div className="filter-section">
+          <h4>Product Categories</h4>
+          <div className="filter-options">
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              B Vitamins
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              C Vitamins
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              Omega Supplements
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              Minerals
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              Probiotics
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              Herbal Supplements
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              Multivitamins
+            </label>
+            <label className="filter-option">
+              <input type="checkbox" />
+              <span className="checkmark"></span>
+              Collagen
+            </label>
+          </div>
+        </div>
 
-              return (
-                <tr
-                  key={product._id}
-                  style={{
-                    borderBottom: "1px solid #f3f4f6",
-                    transition: "background-color 0.2s ease",
-                    backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    opacity: 0,
-                    transform: "translateY(10px)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f0f9ff";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#fafafa" : "white";
-                  }}
-                >
-                  <td style={{ padding: "8px", textAlign: "center", width: "80px" }}>
-                    <img
-                      src={product.images?.[0] ? getImageUrl(product.images[0]) : `/${((index % 7) + 1)}.png`}
-                      alt={product.name}
-                      onError={(e) => { e.target.src = `/${((index % 7) + 1)}.png`; }}
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        border: "1px solid #e5e7eb",
-                      }}
-                    />
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      color: "#6b7280",
-                      fontFamily: "monospace",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {(product.item_number !== undefined && product.item_number !== null) ? product.item_number : (product.product_id || "N/A")}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      color: "#6b7280",
-                      fontFamily: "monospace",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {product.lookup_code || product.sku || "N/A"}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      fontWeight: "500",
-                      color: "#1f2937",
-                      maxWidth: "200px",
-                    }}
-                  >
-                    {product.name}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      color: "#6b7280",
-                      fontSize: "12px",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {product.bin_location || "N/A"}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      fontWeight: "700",
-                      fontSize: "16px",
-                      background: "linear-gradient(135deg, #e97717, #77a13d)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    ${product.buyPrice.toFixed(2)}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <button
-                        onClick={() => decrementQuantity(product._id)}
-                        disabled={quantity <= moq || isAddingToCart}
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                          borderRadius: "6px",
-                          border: "1px solid #d1d5db",
-                          background: quantity <= moq || isAddingToCart ? "#f3f4f6" : "white",
-                          color: quantity <= moq || isAddingToCart ? "#9ca3af" : "#374151",
-                          cursor: quantity <= moq || isAddingToCart ? "not-allowed" : "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "18px",
-                          fontWeight: "bold",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        -
-                      </button>
-                      <span
-                        style={{
-                          minWidth: "40px",
-                          textAlign: "center",
-                          fontWeight: "600",
-                          fontSize: "16px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {quantity}
+        {/* Price Range Filter */}
+        <div className="filter-section">
+          <h4>Price Range</h4>
+          <div className="price-filter">
+            <div className="price-input-group">
+              <div className="price-input-wrapper">
+                <label>Min ($)</label>
+                <input type="number" placeholder="0" className="price-input" />
+              </div>
+              <div className="price-input-wrapper">
+                <label>Max ($)</label>
+                <input type="number" placeholder="1000" className="price-input" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sort Options */}
+        <div className="filter-section">
+          <h4>Sort By</h4>
+          <select className="sort-select">
+            <option value="default">Default</option>
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="price-asc">Price Low to High</option>
+            <option value="price-desc">Price High to Low</option>
+            <option value="stock-asc">Stock Low to High</option>
+            <option value="stock-desc">Stock High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="main-content">
+        {/* Search Section */}
+        <div className="search-section">
+          <div className="search-input-container">
+            <svg className="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search products by name, SKU, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="loading-section">
+            <div className="loading-content">
+              <div className="loading-spinner"></div>
+              <p className="loading-text">Loading products...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="error-section">
+            <div className="error-content">
+              <p className="error-text">❌ {error}</p>
+              <button className="retry-btn" onClick={() => window.location.reload()}>Retry</button>
+            </div>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="empty-section">
+            <div className="empty-content">
+              <p className="empty-text">No products available at the moment.</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Results Header */}
+            <div className="results-header">
+              <div className="results-info">
+                <span className="results-count">
+                  Showing {(currentPage - 1) * productsPerPage + 1}-{Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} Products
+                </span>
+                <div className="cart-status">
+                  <span className="cart-items-count">
+                    Cart: {cartItemsCount} items
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Products Table */}
+            <div className="products-table-container">
+          <table className="products-table">
+            <thead>
+              <tr>
+                <th className="col-image">Image</th>
+                <th className="col-product">Product ID</th>
+                <th className="col-upc">UPC</th>
+                <th className="col-title">Product Title</th>
+                <th className="col-location">Bin Location</th>
+                <th className="col-price">Price</th>
+                <th className="col-quantity">Quantity</th>
+                <th className="col-subtotal">Subtotal</th>
+                <th className="col-actions">Add to Cart</th>
+                <th className="col-details">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedProducts.map((product, index) => {
+                const quantity = getQuantity(product._id);
+                const isOutOfStock = product.stock === 0;
+                const isMaxQuantity = quantity >= product.stock;
+                const isAddingToCart = addingToCart[product._id] || false;
+                const isInWishlist = wishlistItems.includes(product._id);
+                const subtotal = (product.buyPrice * quantity).toFixed(2);
+
+                return (
+                  <tr key={product._id} className={`product-row ${isOutOfStock ? 'out-of-stock' : ''}`}>
+                    {/* Product Image */}
+                    <td className="col-image">
+                      <div className="product-image-wrapper">
+                        <img
+                          src={`/${((index % 7) + 1)}.png`}
+                          alt={product.name}
+                          className="product-image"
+                        />
+                        <button
+                          onClick={() => addToWishlist(product)}
+                          disabled={addingToWishlist[product._id]}
+                          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                          className={`wishlist-btn ${isInWishlist ? 'active' : ''}`}
+                        >
+                          <svg fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+
+                    {/* Product ID */}
+                    <td className="col-product">
+                      <span className="product-id">
+                        {product.item_number || product.product_id || "N/A"}
                       </span>
-                      <button
-                        onClick={() => incrementQuantity(product._id, product.stock)}
-                        disabled={isMaxQuantity || isOutOfStock || isAddingToCart}
-                        title={isMaxQuantity ? "No stock available" : ""}
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                          borderRadius: "6px",
-                          border: "1px solid #d1d5db",
-                          background: isMaxQuantity || isOutOfStock || isAddingToCart ? "#f3f4f6" : "white",
-                          color: isMaxQuantity || isOutOfStock || isAddingToCart ? "#9ca3af" : "#374151",
-                          cursor: isMaxQuantity || isOutOfStock || isAddingToCart ? "not-allowed" : "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "18px",
-                          fontWeight: "bold",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#6b7280",
-                        marginTop: "4px",
-                      }}
-                    >
-                      Stock: {product.stock} | MOQ: {moq}
-                    </div>
-                    <div
-                      className="mobile-subtotal-display"
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "700",
-                        marginTop: "8px",
-                        background: "linear-gradient(135deg, #e97717, #77a13d)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      Subtotal: ${(product.buyPrice * quantity).toFixed(2)}
-                    </div>
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "center",
-                      fontWeight: "700",
-                      fontSize: "16px",
-                      background: "linear-gradient(135deg, #e97717, #77a13d)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    ${(product.buyPrice * quantity).toFixed(2)}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                    </td>
+
+                    {/* UPC */}
+                    <td className="col-upc">
+                      <span className="upc-code">
+                        {product.lookup_code || product.sku || "N/A"}
+                      </span>
+                    </td>
+
+                    {/* Product Title */}
+                    <td className="col-title">
+                      <div className="product-title-info">
+                        <h3 className="product-name">{product.name}</h3>
+                        <div className="product-category">
+                          {product.category?.name || product.categoryName || product.department || "General"}
+                        </div>
+                        {isOutOfStock && <span className="stock-status out-of-stock">Out of Stock</span>}
+                        {!isOutOfStock && <span className="stock-status in-stock">Stock: {product.stock}</span>}
+                      </div>
+                    </td>
+
+                    {/* Bin Location */}
+                    <td className="col-location">
+                      <span className="bin-location">
+                        {product.bin_location || "N/A"}
+                      </span>
+                    </td>
+
+                    {/* Price */}
+                    <td className="col-price">
+                      <span className="price">${product.buyPrice.toFixed(2)}</span>
+                    </td>
+
+                    {/* Quantity Controls */}
+                    <td className="col-quantity">
+                      <div className="quantity-controls">
+                        <button
+                          onClick={() => decrementQuantity(product._id)}
+                          disabled={quantity <= moq || isAddingToCart}
+                          className="quantity-btn decrease"
+                        >
+                          −
+                        </button>
+                        <span className="quantity-display">{quantity}</span>
+                        <button
+                          onClick={() => incrementQuantity(product._id, product.stock)}
+                          disabled={isMaxQuantity || isOutOfStock || isAddingToCart}
+                          className="quantity-btn increase"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="quantity-info">
+                        <span>MOQ: {moq}</span>
+                      </div>
+                    </td>
+
+                    {/* Subtotal */}
+                    <td className="col-subtotal">
+                      <span className="subtotal">${subtotal}</span>
+                    </td>
+
+                    {/* Add to Cart */}
+                    <td className="col-actions">
                       <button
                         onClick={() => addToCart(product)}
                         disabled={isOutOfStock || isAddingToCart}
-                        style={{
-                          background: isOutOfStock || isAddingToCart
-                            ? "#f3f4f6"
-                            : "linear-gradient(135deg, #77a13d, #9fc965ff)",
-                          color: isOutOfStock || isAddingToCart ? "#9ca3af" : "white",
-                          border: "none",
-                          padding: "8px 12px",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          cursor: isOutOfStock || isAddingToCart ? "not-allowed" : "pointer",
-                          transition: "all 0.2s ease",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
+                        className={`buy-now-btn ${isOutOfStock ? 'disabled' : ''}`}
                       >
-                        {isOutOfStock ? "Out of Stock" : isAddingToCart ? "Adding..." : "Buy Now"}
+                        {isOutOfStock ? "Out of Stock" : isAddingToCart ? "Adding..." : "BUY NOW"}
                       </button>
+                    </td>
 
-                      {/* Wishlist button placed next to Buy Now */}
-                      <button
-                        onClick={() => addToWishlist(product)}
-                        disabled={addingToWishlist[product._id]}
-                        title={wishlistItems.includes(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                        style={{
-                          background: wishlistItems.includes(product._id) ? '#fff1f2' : '#fff',
-                          border: wishlistItems.includes(product._id) ? '1px solid #ef4444' : '1px solid #d1d5db',
-                          color: wishlistItems.includes(product._id) ? '#ef4444' : '#374151',
-                          borderRadius: 8,
-                          padding: '8px 10px',
-                          cursor: addingToWishlist[product._id] ? 'not-allowed' : 'pointer',
-                          fontWeight: 700,
-                        }}
+                    {/* Details */}
+                    <td className="col-details">
+                      <button 
+                        className="details-btn"
+                        onClick={() => openProductDetails(product)}
                       >
-                        {addingToWishlist[product._id] ? 'Saving...' : (wishlistItems.includes(product._id) ? '♥' : '♡')}
+                        Details
                       </button>
-                    </div>
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="pagination-container">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-btn pagination-prev"
+            >
+              ← Previous
+            </button>
+
+            <div className="pagination-pages">
+              {currentPage > 1 && totalPages > 5 && (
+                <>
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    className="pagination-number"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      <span style={{ fontWeight: '700', fontSize: '12px' }}>Details</span>
-                      <button
-                        onClick={() => openModal(product)}
-                        style={{
-                          background: "transparent",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "8px",
-                          padding: "8px",
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = "#f3f4f6";
-                          e.target.style.borderColor = "#77a13d";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = "transparent";
-                          e.target.style.borderColor = "#d1d5db";
-                        }}
-                      >
-                        👁️
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
-  }, [products, getQuantity, incrementQuantity, decrementQuantity, addToCart, openModal, addingToCart, wishlistItems, addingToWishlist, moq]);
-
-  return (
-    <div className="container">
-      <button
-        onClick={toggleSidebar}
-        className="mobile-hamburger"
-      >
-        <svg
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          style={{
-            width: '24px',
-            height: '24px',
-            transform: isSidebarOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-            transition: 'transform 0.3s ease'
-          }}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-      {isSidebarOpen && <div className="sidebar-overlay" onClick={toggleSidebar} />}
-      <Toast message={toast.message} type={toast.type} show={toast.show} onClose={hideToast} />
-      <div className="sidebar">
-        <div className="sidebar-content">
-          <div className="filters-header">
-            <h3>Filters</h3>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="clear-filters"
-                >
-                  Clear All
-                </button>
+                    1
+                  </button>
+                  {currentPage > 3 && <span className="pagination-ellipsis">...</span>}
+                </>
               )}
-              <button
-                onClick={() => {
-                  clearFilters();
-                  fetchAllProducts(1, 7);
-                }}
-                style={{
-                  background: "rgba(255,255,255,0.15)",
-                  color: "white",
-                  padding: "0.375rem 0.625rem",
-                  borderRadius: "0.375rem",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "0.75rem",
-                  fontWeight: "600",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseOver={(e) => e.target.style.background = "rgba(255,255,255,0.25)"}
-                onMouseOut={(e) => e.target.style.background = "rgba(255,255,255,0.15)"}
-              >
-                Show All
+
+              {getPaginationRange().map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`pagination-number ${page === currentPage ? 'active' : ''}`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {currentPage < totalPages - 2 && totalPages > 5 && (
+                <>
+                  <span className="pagination-ellipsis">...</span>
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    className="pagination-number"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="pagination-btn pagination-next"
+            >
+              Next →
+            </button>
+
+            <span className="pagination-info">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
+        )}
+        </>
+        )}
+      </div>
+
+      {/* Product Details Modal */}
+      {showModal && selectedProduct && (
+        <div className="modal-overlay" onClick={closeProductDetails}>
+          <div className="product-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Product Details</h2>
+              <button className="close-modal-btn" onClick={closeProductDetails}>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
-          </div>
-
-          {/* Active Filters Display */}
-          {(filters.categories.length > 0 || filters.subcategories.length > 0 || filters.minPrice || filters.maxPrice) && (
-            <div style={{
-              background: "rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              padding: "12px",
-              marginBottom: "1rem",
-              border: "1px solid rgba(255,255,255,0.2)"
-            }}>
-              <div style={{
-                fontSize: "12px",
-                color: "rgba(255,255,255,0.8)",
-                marginBottom: "8px",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                fontWeight: "600"
-              }}>
-                Active Filters ({filters.categories.length + filters.subcategories.length + (filters.minPrice ? 1 : 0) + (filters.maxPrice ? 1 : 0)})
+            
+            <div className="modal-content">
+              <div className="product-image-section">
+                <img
+                  src={`/${((products.findIndex(p => p._id === selectedProduct._id) % 7) + 1)}.png`}
+                  alt={selectedProduct.name}
+                  className="modal-product-image"
+                />
+                <div className="image-actions">
+                  <button
+                    onClick={() => addToWishlist(selectedProduct)}
+                    disabled={addingToWishlist[selectedProduct._id]}
+                    className={`modal-wishlist-btn ${wishlistItems.includes(selectedProduct._id) ? 'active' : ''}`}
+                  >
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    {wishlistItems.includes(selectedProduct._id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                  </button>
+                </div>
               </div>
               
-              {/* Selected Categories */}
-              {filters.categories.length > 0 && (
-                <div style={{ marginBottom: "6px" }}>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "4px" }}>Categories:</div>
-                  {departments.flatMap(dept => 
-                    dept.categories
-                      .filter(cat => filters.categories.includes(cat._id))
-                      .map(cat => (
-                        <span
-                          key={cat._id}
-                          style={{
-                            display: "inline-block",
-                            background: "#77a13d",
-                            color: "white",
-                            fontSize: "10px",
-                            padding: "2px 6px",
-                            borderRadius: "10px",
-                            marginRight: "4px",
-                            marginBottom: "2px",
-                            cursor: "pointer"
-                          }}
-                          onClick={() => handleCategoryChange(cat._id)}
-                          title={`Click to remove • Department: ${dept.department}`}
-                        >
-                          {cat.name} ×
-                        </span>
-                      ))
-                  )}
-                </div>
-              )}
-
-              {/* Selected Subcategories */}
-              {filters.subcategories.length > 0 && (
-                <div style={{ marginBottom: "6px" }}>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "4px" }}>Subcategories:</div>
-                  {categories
-                    .flatMap(cat => cat.subcategories || [])
-                    .filter(sub => filters.subcategories.includes(sub._id))
-                    .map(sub => (
-                      <span
-                        key={sub._id}
-                        style={{
-                          display: "inline-block",
-                          background: "#9fc965",
-                          color: "white",
-                          fontSize: "10px",
-                          padding: "2px 6px",
-                          borderRadius: "10px",
-                          marginRight: "4px",
-                          marginBottom: "2px",
-                          cursor: "pointer"
-                        }}
-                        onClick={() => handleSubcategoryChange(sub._id)}
-                        title="Click to remove"
-                      >
-                        {sub.name} ×
-                      </span>
-                    ))
-                  }
-                </div>
-              )}
-
-              {/* Price Range */}
-              {(filters.minPrice || filters.maxPrice) && (
-                <div style={{ marginBottom: "4px" }}>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "4px" }}>Price:</div>
-                  <span style={{
-                    display: "inline-block",
-                    background: "rgba(255,255,255,0.2)",
-                    color: "white",
-                    fontSize: "10px",
-                    padding: "2px 6px",
-                    borderRadius: "10px"
-                  }}>
-                    {filters.minPrice && filters.maxPrice 
-                      ? `$${filters.minPrice} - $${filters.maxPrice}`
-                      : filters.minPrice 
-                      ? `> $${filters.minPrice}`
-                      : `< $${filters.maxPrice}`
-                    }
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ─── Department → Category → Subcategory filter sidebar ─────── */}
-          <div className="filter-section dept-filter-section">
-            {/* Fallback: flat category list shown when no departments seeded yet */}
-            {departments.length === 0 && !loading && categories.length > 0 && (
-              <>
-                <h4 style={{ color: "#fff", marginBottom: "8px", fontSize: "13px", letterSpacing: ".8px" }}>
-                  Categories
-                </h4>
-                {categories.map((category) => {
-                  const cid   = String(category._id);
-                  const count = categoryCounts[cid];
-                  if (count !== undefined && count === 0) return null;
-                  return (
-                    <div key={cid} className="dept-category-item">
-                      <label className="filter-option">
-                        <input
-                          type="checkbox"
-                          checked={filters.categories.includes(cid)}
-                          onChange={() => handleCategoryChange(cid)}
-                          disabled={isFiltering}
-                        />
-                        <span className="cat-label">
-                          {category.name}
-                          {count > 0 && <span className="cat-count">{count}</span>}
-                        </span>
-                      </label>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-
-            {/* Primary: department accordion */}
-            {departments.length === 0 && !loading && (
-              <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'12px', padding:'8px 0' }}>
-                Loading departments…
-              </p>
-            )}
-            {departments.map((deptObj) => {
-              const deptName = deptObj.department;
-              const isOpen   = !!expandedDepts[deptName];
-              const cats     = deptObj.categories || [];
-
-              // Always show the department header — even if cats is empty
-              // (clicking will still expand, just show empty state)
-              const deptTotal = cats.reduce((s, cat) =>
-                s + (categoryCounts[String(cat._id)] || 0), 0);
-              const isActive = cats.some(cat =>
-                filters.categories.includes(String(cat._id)));
-
-              // Show ALL categories — don't hide based on count
-              // (products may exist but counts API may not match)
-              const catsToShow = [...cats].sort((a, b) =>
-                a.name.localeCompare(b.name));
-
-              return (
-                <div key={deptName} className="dept-group">
-                  <button
-                    className={"dept-header" + (isOpen ? " dept-header--open" : "") + (isActive ? " dept-header--active" : "")}
-                    onClick={() => toggleDeptExpand(deptName)}
-                    aria-expanded={isOpen}
-                    type="button"
-                    style={{ 
-                      opacity: deptTotal === 0 && !isActive ? 0.5 : 1,
-                      background: isActive ? "rgba(119, 161, 61, 0.3)" : undefined,
-                      borderLeft: isActive ? "4px solid #77a13d" : undefined
-                    }}
-                  >
-                    <span className="dept-name">{deptName}</span>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
-                      {deptTotal > 0 && (
-                        <span style={{
-                          fontSize:'10px', background:'rgba(0,0,0,0.25)', color:'white',
-                          borderRadius:'10px', padding:'1px 7px', fontWeight:600,
-                        }}>{deptTotal}</span>
-                      )}
-                      <svg
-                        className="dept-chevron"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                        style={{ width:14, height:14, transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition:"transform 0.2s ease" }}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </button>
-
-                  {isOpen && (
-                    <div className="dept-cats">
-                      {catsToShow.map((cat) => {
-                        const catId   = String(cat._id);
-                        const count   = categoryCounts[catId] || 0;
-                        const checked = filters.categories.includes(catId);
-                        const hasSubs = cat.subcategories && cat.subcategories.length > 0;
-                        const subOpen = !!expandedCategories[catId];
-
-                        return (
-                          <div key={catId} className="dept-category-item">
-                            <div className="cat-row">
-                              <label className="filter-option">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => handleCategoryChange(catId)}
-                                  disabled={isFiltering}
-                                />
-                                <span className="cat-label" style={{
-                                  fontWeight: checked ? "700" : "400",
-                                  color: checked ? "#fff" : "rgba(255,255,255,0.9)"
-                                }}>
-                                  {cat.name}
-                                  {count > 0 && <span className="cat-count">{count}</span>}
-                                  {checked && <span style={{marginLeft: "4px", fontSize: "10px"}}>✓</span>}
-                                </span>
-                              </label>
-                              {hasSubs && (
-                                <svg
-                                  onClick={() => toggleCategoryExpand(catId)}
-                                  className="plus-icon"
-                                  fill="none"
-                                  stroke="#ffffff"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth="2"
-                                  style={{
-                                    transform: subOpen ? "rotate(45deg)" : "rotate(0deg)",
-                                    transition: "transform 0.2s",
-                                    cursor: "pointer",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                </svg>
-                              )}
-                            </div>
-                            
-                            {/* Debug info for categories */}
-                            {process.env.NODE_ENV === 'development' && (
-                              <div style={{fontSize: '8px', color: '#ccc', marginLeft: '20px'}}>
-                                ID: {catId} | Name: {cat.name}
-                              </div>
-                            )}
-                            
-                            {hasSubs && subOpen && (
-                              <div className="subcategory-list">
-                                {cat.subcategories
-                                  .sort((a, b) => a.name.localeCompare(b.name))
-                                  .map((sub) => {
-                                    const subId    = String(sub._id);
-                                    const subCount = subcategoryCounts[subId] || 0;
-                                    if (subCount === 0 && Object.keys(subcategoryCounts).length > 0) return null;
-                                    return (
-                                      <label key={subId} className="filter-option">
-                                        <input
-                                          type="checkbox"
-                                          checked={filters.subcategories.includes(subId)}
-                                          onChange={() => handleSubcategoryChange(subId)}
-                                          disabled={!checked || isFiltering}
-                                        />
-                                        <span>
-                                          {sub.name}
-                                          {subCount > 0 && <span className="cat-count">{subCount}</span>}
-                                        </span>
-                                      </label>
-                                    );
-                                  })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Fallback: if departments have no categories (API mismatch), show flat list */}
-            {departments.length > 0 &&
-              departments.every(d => d.categories.length === 0) &&
-              categories.length > 0 && (
-                <div>
-                  <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'10px', textTransform:'uppercase',
-                    letterSpacing:'.6px', marginBottom:8, marginTop:4 }}>All Categories</p>
-                  {categories
-                    .filter(cat => (categoryCounts[cat._id] || 0) > 0 || true)
-                    .map(cat => (
-                      <div key={cat._id} style={{ padding:'2px 0' }}>
-                        <label className="filter-option">
-                          <input
-                            type="checkbox"
-                            checked={filters.categories.includes(cat._id)}
-                            onChange={() => handleCategoryChange(cat._id)}
-                            disabled={isFiltering}
-                          />
-                          <span style={{ fontSize:'12px' }}>
-                            {cat.name}
-                            {categoryCounts[cat._id] > 0 && (
-                              <span className="cat-count">{categoryCounts[cat._id]}</span>
-                            )}
-                          </span>
-                        </label>
-                      </div>
-                    ))
-                  }
-                </div>
-              )
-            }
-          </div>
-
-          <div className="filter-section">
-            <h4>Price Range</h4>
-            <div className="price-inputs">
-              <div>
-                <label>Min ($)</label>
-                <input
-                  name="minPrice"
-                  placeholder="0"
-                  type="number"
-                  min="0"
-                  value={filters.minPrice}
-                  onChange={handleFilterChange}
-                />
-              </div>
-              <div>
-                <label>Max ($)</label>
-                <input
-                  name="maxPrice"
-                  placeholder="1000"
-                  type="number"
-                  min="0"
-                  value={filters.maxPrice}
-                  onChange={handleFilterChange}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="filter-section">
-            <h4>Sort By</h4>
-            <select
-              name="sortBy"
-              value={filters.sortBy}
-              onChange={handleFilterChange}
-            >
-              <option value="All">Default</option>
-              <option value="createdAt-desc">Newest</option>
-              <option value="createdAt-asc">Oldest</option>
-              <option value="buyPrice-asc">Price: Low to High</option>
-              <option value="buyPrice-desc">Price: High to Low</option>
-            </select>
-          </div>
-        </div> {/* Close sidebar-content */}
-      </div> {/* Close sidebar */}
-      
-      <div ref={scope} className="main-content">
-        <div className="search-container">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search products by name"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="search-input"
-            />
-            {searchQuery && (
-              <button onClick={clearSearch} className="clear-search">
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-        {(loading || isFiltering || isSearching) && (
-          <div className="loader">
-            <div className="spinner" />
-            <div style={{marginTop: "12px", color: "#77a13d", fontWeight: "600", fontSize: "14px"}}>
-              {isFiltering ? "Filtering products by category..." : 
-               isSearching ? "Searching products..." : 
-               "Loading products..."}
-            </div>
-          </div>
-        )}
-        {!loading && !isFiltering && error && (
-          <div className="error-message">
-            <p>{error}</p>
-            {hasActiveFilters && (
-              <button onClick={clearFilters}>Clear Filters</button>
-            )}
-          </div>
-        )}
-        {!loading && !isFiltering && Array.isArray(products) && products.length === 0 && !error && (
-          <div className="no-products">No products available</div>
-        )}
-        {!loading && !isFiltering && !isSearching && searchQuery && searchResults.length === 0 && (
-          <div className="no-products">
-            No products found for "{searchQuery}"
-          </div>
-        )}
-        {!loading && !isFiltering && !isSearching && ((searchQuery && searchResults.length > 0) || (!searchQuery && Array.isArray(products) && products.length > 0)) && (
-          <>
-            <div className="products-info">
-              <p>
-                {searchQuery
-                  ? `Found ${searchResults.length} products for "${searchQuery}"`
-                  : `Showing ${products.length} of ${pagination.totalItems} Products`
-                }
-                {!searchQuery && filters.categories.length > 0 && (
-                  <span style={{ 
-                    marginLeft: '12px', 
-                    color: '#77a13d', 
-                    fontWeight: '700',
-                    background: 'rgba(119, 161, 61, 0.1)',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    fontSize: '12px'
-                  }}>
-                    FILTERED BY: {filters.categories.map(catId => {
-                      const cat = categories.find(c => c._id === catId);
-                      return cat ? cat.name : 'Unknown';
-                    }).join(', ')}
-                  </span>
-                )}
-              </p>
-            </div>
-            {searchQuery ? (
-              <div
-                style={{
-                  background: "white",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
-                  overflow: "hidden",
-                  border: "1px solid #e5e7eb",
-                }}
-              >
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "14px",
-                  }}
-                >
-                  <thead>
-                    <tr
-                      style={{
-                        background: "linear-gradient(135deg, #77a13d 0%, #9fc965ff 100%)",
-                        color: "white",
-                      }}
-                    >
-                      <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)", width: "80px" }}>Image</th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product ID</th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>UPC</th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Product Title</th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Bin Location</th>
-                      <th style={{ padding: "16px", textAlign: "left", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Price</th>
-                      <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Quantity</th>
-                      <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Subtotal</th>
-                      <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Add to Cart</th>
-                      <th style={{ padding: "16px", textAlign: "center", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchResults.map((product, index) => {
-                      const quantity = getQuantity(product._id);
-                      const isOutOfStock = product.stock === 0;
-                      const isMaxQuantity = quantity >= product.stock;
-                      const isAddingToCart = addingToCart[product._id] || false;
-
-                      return (
-                        <tr
-                          key={product._id}
-                          style={{
-                            borderBottom: "1px solid #f3f4f6",
-                            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                          }}
-                        >
-                          <td style={{ padding: "8px", textAlign: "center", width: "80px" }}>
-                            <img
-                              src={product.images?.[0] ? getImageUrl(product.images[0]) : `/${((index % 7) + 1)}.png`}
-                              alt={product.name}
-                              onError={(e) => { e.target.src = `/${((index % 7) + 1)}.png`; }}
-                              style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px", border: "1px solid #e5e7eb" }}
-                            />
-                          </td>
-                          <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
-                            {(product.item_number !== undefined && product.item_number !== null) ? product.item_number : (product.product_id || "N/A")}
-                          </td>
-                          <td style={{ padding: "16px", color: "#6b7280", fontFamily: "monospace", fontSize: "12px" }}>
-                            {product.lookup_code || product.sku || "N/A"}
-                          </td>
-                          <td style={{ padding: "16px", fontWeight: "500", color: "#1f2937", maxWidth: "200px" }}>
-                            {product.name}
-                          </td>
-                          <td style={{ padding: "16px", color: "#6b7280", fontSize: "12px", fontStyle: "italic" }}>
-                            {product.bin_location || "N/A"}
-                          </td>
-                          <td style={{ padding: "16px", fontWeight: "700", fontSize: "16px", background: "linear-gradient(135deg, #e97717, #77a13d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                            ${product.buyPrice.toFixed(2)}
-                          </td>
-                          <td style={{ padding: "16px", textAlign: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                              <button
-                                onClick={() => decrementQuantity(product._id)}
-                                disabled={quantity <= moq || isAddingToCart}
-                                style={{
-                                  width: "32px", height: "32px", borderRadius: "6px", border: "1px solid #d1d5db",
-                                  background: quantity <= moq || isAddingToCart ? "#f3f4f6" : "white",
-                                  color: quantity <= moq || isAddingToCart ? "#9ca3af" : "#374151",
-                                  cursor: quantity <= moq || isAddingToCart ? "not-allowed" : "pointer",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  fontSize: "18px", fontWeight: "bold"
-                                }}
-                              >
-                                -
-                              </button>
-                              <span style={{ minWidth: "40px", textAlign: "center", fontWeight: "600", fontSize: "16px", color: "#1f2937" }}>
-                                {quantity}
-                              </span>
-                              <button
-                                onClick={() => incrementQuantity(product._id, product.stock)}
-                                disabled={isMaxQuantity || isOutOfStock || isAddingToCart}
-                                style={{
-                                  width: "32px", height: "32px", borderRadius: "6px", border: "1px solid #d1d5db",
-                                  background: isMaxQuantity || isOutOfStock || isAddingToCart ? "#f3f4f6" : "white",
-                                  color: isMaxQuantity || isOutOfStock || isAddingToCart ? "#9ca3af" : "#374151",
-                                  cursor: isMaxQuantity || isOutOfStock || isAddingToCart ? "not-allowed" : "pointer",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  fontSize: "18px", fontWeight: "bold"
-                                }}
-                              >
-                                +
-                              </button>
-                            </div>
-                            <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>
-                              Stock: {product.stock} | MOQ: {moq}
-                            </div>
-                          </td>
-                          <td style={{ padding: "16px", textAlign: "center", fontWeight: "700", fontSize: "16px", background: "linear-gradient(135deg, #e97717, #77a13d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                            ${(product.buyPrice * quantity).toFixed(2)}
-                          </td>
-                          <td style={{ padding: "16px", textAlign: "center" }}>
-                            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
-                              <button
-                                onClick={() => addToCart(product)}
-                                disabled={isOutOfStock || isAddingToCart}
-                                style={{
-                                  background: isOutOfStock || isAddingToCart ? "#f3f4f6" : "linear-gradient(135deg, #77a13d, #9fc965ff)",
-                                  color: isOutOfStock || isAddingToCart ? "#9ca3af" : "white",
-                                  border: "none", padding: "8px 12px", borderRadius: "8px",
-                                  fontSize: "12px", fontWeight: "600",
-                                  cursor: isOutOfStock || isAddingToCart ? "not-allowed" : "pointer",
-                                  textTransform: "uppercase", letterSpacing: "0.5px"
-                                }}
-                              >
-                                {isOutOfStock ? "Out of Stock" : isAddingToCart ? "Adding..." : "Buy Now"}
-                              </button>
-                              <button
-                                onClick={() => addToWishlist(product)}
-                                disabled={addingToWishlist[product._id]}
-                                title={wishlistItems.includes(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                                style={{
-                                  background: wishlistItems.includes(product._id) ? '#fff1f2' : '#fff',
-                                  border: wishlistItems.includes(product._id) ? '1px solid #ef4444' : '1px solid #d1d5db',
-                                  color: wishlistItems.includes(product._id) ? '#ef4444' : '#374151',
-                                  borderRadius: 8, padding: '8px 10px',
-                                  cursor: addingToWishlist[product._id] ? 'not-allowed' : 'pointer',
-                                  fontWeight: 700
-                                }}
-                              >
-                                {addingToWishlist[product._id] ? 'Saving...' : (wishlistItems.includes(product._id) ? '♥' : '♡')}
-                              </button>
-                            </div>
-                          </td>
-                          <td style={{ padding: "16px", textAlign: "center" }}>
-                            <button
-                              onClick={() => openModal(product)}
-                              style={{
-                                background: "transparent", border: "1px solid #d1d5db", borderRadius: "8px",
-                                padding: "8px", cursor: "pointer", display: "flex",
-                                alignItems: "center", justifyContent: "center", margin: "0 auto"
-                              }}
-                            >
-                              👁️
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              productTable
-            )}
-            {!searchQuery && pagination.totalPages > 1 && (
-              <nav className="pagination" aria-label="Product pagination">
-                {isPaginationLoading && (
-                  <div className="pagination-loader">
-                    <div className="pagination-spinner" />
-                    <span>Loading...</span>
-                  </div>
-                )}
-                <button
-                  disabled={pagination.currentPage === 1 || isFiltering || isPaginationLoading}
-                  onClick={() => handlePageChange(1)}
-                  aria-label="Go to first page"
-                  className="pagination-btn"
-                >
-                  First
-                </button>
-                <button
-                  disabled={pagination.currentPage === 1 || isFiltering || isPaginationLoading}
-                  onClick={() => handlePageChange(pagination.currentPage - 1)}
-                  aria-label="Go to previous page"
-                  className="pagination-btn"
-                >
-                  Previous
-                </button>
-                <div className="page-numbers">
-                  {getPageNumbers().map((page, index) => (
-                    page === '...' ? (
-                      <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
+              <div className="product-details-section">
+                <div className="product-header">
+                  <h3 className="modal-product-name">{selectedProduct.name}</h3>
+                  <div className="stock-status-modal">
+                    {selectedProduct.stock === 0 ? (
+                      <span className="stock-badge out-of-stock">Out of Stock</span>
                     ) : (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        disabled={isPaginationLoading}
-                        className={`page-number ${pagination.currentPage === page ? 'active' : ''}`}
-                        aria-label={`Go to page ${page}`}
-                        aria-current={pagination.currentPage === page ? 'page' : undefined}
-                      >
-                        {page}
-                      </button>
-                    )
-                  ))}
+                      <span className="stock-badge in-stock">In Stock ({selectedProduct.stock} available)</span>
+                    )}
+                  </div>
                 </div>
-                <button
-                  disabled={pagination.currentPage === pagination.totalPages || isFiltering || isPaginationLoading}
-                  onClick={() => handlePageChange(pagination.currentPage + 1)}
-                  aria-label="Go to next page"
-                  className="pagination-btn"
-                >
-                  Next
-                </button>
-                <button
-                  disabled={pagination.currentPage === pagination.totalPages || isFiltering || isPaginationLoading}
-                  onClick={() => handlePageChange(pagination.totalPages)}
-                  aria-label="Go to last page"
-                  className="pagination-btn"
-                >
-                  Last
-                </button>
-              </nav>
-            )}
-          </>
-        )}
-      </div> {/* Close main-content */}
-      
-      {showModal && selectedProduct && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 99999999,
-            padding: "20px",
-          }}
-          onClick={closeModal}
-        >
-          <div
-            style={{
-              background: "white",
-              borderRadius: "16px",
-              padding: "32px",
-              maxWidth: "600px",
-              width: "100%",
-              maxHeight: "80vh",
-              overflow: "auto",
-              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-              position: "relative",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={closeModal}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "transparent",
-                border: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-                color: "#6b7280",
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = "#f3f4f6";
-                e.target.style.color = "#ef4444";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = "transparent";
-                e.target.style.color = "#6b7280";
-              }}
-            >
-              ×
-            </button>
-            <div>
-              <h2
-                style={{
-                  fontSize: "24px",
-                  fontWeight: "700",
-                  color: "#1f2937",
-                  marginBottom: "24px",
-                  paddingRight: "40px",
-                }}
-              >
-                {selectedProduct.name}
-              </h2>
-              <div
-                style={{
-                  display: "grid",
-                  gap: "20px",
-                }}
-              >
-                {selectedProduct.description && (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        color: "#77a13d",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      Description
-                    </h3>
-                    <p
-                      style={{
-                        color: "#374151",
-                        lineHeight: "1.6",
-                        margin: 0,
-                      }}
-                    >
-                      {selectedProduct.description}
-                    </p>
+                
+                <div className="product-info-grid">
+                  <div className="info-item">
+                    <label>Product ID:</label>
+                    <span>{selectedProduct.item_number || selectedProduct.product_id || "N/A"}</span>
                   </div>
-                )}
-                {selectedProduct.ingredient && (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        color: "#77a13d",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      Ingredients
-                    </h3>
-                    <p
-                      style={{
-                        color: "#374151",
-                        lineHeight: "1.6",
-                        margin: 0,
-                      }}
-                    >
-                      {selectedProduct.ingredient}
-                    </p>
+                  
+                  <div className="info-item">
+                    <label>UPC Code:</label>
+                    <span>{selectedProduct.lookup_code || selectedProduct.sku || "N/A"}</span>
                   </div>
-                )}
-                {selectedProduct.disclaimer && (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        color: "#e97717",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      Disclaimer
-                    </h3>
-                    <p
-                      style={{
-                        color: "#374151",
-                        lineHeight: "1.6",
-                        margin: 0,
-                        padding: "12px",
-                        background: "#fef2f2",
-                        borderRadius: "8px",
-                        border: "1px solid #fee2e2",
-                        fontSize: "14px",
-                      }}
-                    >
-                      {selectedProduct.disclaimer}
-                    </p>
+                  
+                  <div className="info-item">
+                    <label>Category:</label>
+                    <span>{selectedProduct.category?.name || selectedProduct.categoryName || selectedProduct.department || "General"}</span>
                   </div>
-                )}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                    gap: "16px",
-                    padding: "16px",
-                    background: "#f9fafb",
-                    borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
-                  }}
-                >
-                  {/* Product ID */}
-                  {(selectedProduct.item_number || selectedProduct.product_id) && (
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                        Product ID
-                      </span>
-                      <span style={{ fontSize: "15px", fontWeight: "700", color: "#1f2937", fontFamily: "monospace" }}>
-                        {selectedProduct.item_number || selectedProduct.product_id}
-                      </span>
-                    </div>
-                  )}
-                  {/* UPC */}
-                  {(selectedProduct.lookup_code || selectedProduct.sku) && (
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                        UPC
-                      </span>
-                      <span style={{ fontSize: "15px", fontWeight: "600", color: "#374151", fontFamily: "monospace" }}>
-                        {selectedProduct.lookup_code || selectedProduct.sku}
-                      </span>
-                    </div>
-                  )}
-                  {/* Bin Location */}
-                  {selectedProduct.bin_location && (
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                        Bin Location
-                      </span>
-                      <span style={{ fontSize: "15px", fontWeight: "700", color: "#77a13d", display: "flex", alignItems: "center", gap: 4 }}>
-                        📍 {selectedProduct.bin_location}
-                      </span>
-                    </div>
-                  )}
-                  {/* Price */}
-                  <div>
-                    <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                      Wholesale Price
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "20px",
-                        fontWeight: "700",
-                        background: "linear-gradient(135deg, #e97717, #77a13d)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
+                  
+                  <div className="info-item">
+                    <label>Bin Location:</label>
+                    <span>{selectedProduct.bin_location || "N/A"}</span>
+                  </div>
+                  
+                  <div className="info-item">
+                    <label>Department:</label>
+                    <span>{selectedProduct.department || "N/A"}</span>
+                  </div>
+                  
+                  <div className="info-item">
+                    <label>Available Stock:</label>
+                    <span>{selectedProduct.stock} units</span>
+                  </div>
+                </div>
+                
+                <div className="pricing-section">
+                  <div className="price-display">
+                    <label>Unit Price:</label>
+                    <span className="modal-price">${selectedProduct.buyPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="moq-info">
+                    <label>Minimum Order Quantity:</label>
+                    <span>{moq} units</span>
+                  </div>
+                </div>
+                
+                <div className="quantity-section">
+                  <label>Select Quantity:</label>
+                  <div className="modal-quantity-controls">
+                    <button
+                      onClick={() => decrementQuantity(selectedProduct._id)}
+                      disabled={getQuantity(selectedProduct._id) <= moq}
+                      className="modal-quantity-btn decrease"
                     >
-                      ${selectedProduct.buyPrice.toFixed(2)}
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="modal-quantity-display">{getQuantity(selectedProduct._id)}</span>
+                    <button
+                      onClick={() => incrementQuantity(selectedProduct._id, selectedProduct.stock)}
+                      disabled={getQuantity(selectedProduct._id) >= selectedProduct.stock || selectedProduct.stock === 0}
+                      className="modal-quantity-btn increase"
+                    >
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="subtotal-display">
+                    <label>Subtotal:</label>
+                    <span className="modal-subtotal">
+                      ${(selectedProduct.buyPrice * getQuantity(selectedProduct._id)).toFixed(2)}
                     </span>
                   </div>
-                  {/* Stock */}
-                  <div>
-                    <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                      Stock
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        color: selectedProduct.stock > 0 ? "#10b981" : "#ef4444",
-                      }}
-                    >
-                      {selectedProduct.stock > 0 ? `${selectedProduct.stock} units` : "Out of Stock"}
-                    </span>
-                  </div>
-                  {/* Department */}
-                  <div>
-                    <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                      Department
-                    </span>
-                    <span style={{ fontSize: "14px", fontWeight: "600", color: "#77a13d", lineHeight: 1.4 }}>
-                      {selectedProduct.category?.name || "Unknown"}
-                      {selectedProduct.subcategory?.name && ` / ${selectedProduct.subcategory.name}`}
-                    </span>
-                  </div>
-                  {/* Brand */}
-                  {selectedProduct.brand?.name && (
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.4px", fontWeight: 600 }}>
-                        Brand
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                        {selectedProduct.brand.name}
-                      </span>
-                    </div>
-                  )}
+                </div>
+                
+                <div className="modal-actions">
+                  <button
+                    onClick={() => {
+                      addToCart(selectedProduct);
+                      closeProductDetails();
+                    }}
+                    disabled={selectedProduct.stock === 0 || addingToCart[selectedProduct._id]}
+                    className={`modal-add-to-cart ${selectedProduct.stock === 0 ? 'disabled' : ''}`}
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h1m0 0h4a1 1 0 001-1m-6 0V13m0 10V13m0 0h6" />
+                    </svg>
+                    {selectedProduct.stock === 0 ? "Out of Stock" : addingToCart[selectedProduct._id] ? "Adding..." : "BUY NOW"}
+                  </button>
+                  
+                  <button className="modal-close-btn" onClick={closeProductDetails}>
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      <style>
-        {`
-          .container {
-            display: flex;
-            min-height: 100vh;
-          }
-
-          /* ── Department accordion styles ── */
-          .dept-group {
-            margin-bottom: 2px;
-          }
-          .dept-header {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 8px;
-            background: transparent;
-            border: none;
-            border-left: 3px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: left;
-            transition: background 0.2s, border-color 0.2s;
-            gap: 6px;
-          }
-          .dept-header:hover {
-            background: rgba(255,255,255,0.12);
-          }
-          .dept-header--open {
-            background: rgba(255,255,255,0.1);
-          }
-          .dept-header--active {
-            background: rgba(255,255,255,0.2) !important;
-            border-left-color: white !important;
-          }
-          .dept-name {
-            font-size: 11.5px;
-            font-weight: 600;
-            color: white;
-            letter-spacing: 0.3px;
-            line-height: 1.3;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-            text-transform: uppercase;
-          }
-          .dept-cats {
-            padding-left: 10px;
-            padding-top: 2px;
-            padding-bottom: 4px;
-          }
-          .dept-category-item {
-            margin-bottom: 1px;
-          }
-          .cat-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1px 0;
-          }
-          .cat-label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            color: white;
-          }
-          .cat-count {
-            font-size: 10px;
-            opacity: 0.65;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            padding: 0 5px;
-            line-height: 1.6;
-          }
-
-          .container {
-            display: flex;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
-            flex-direction: row;
-            width: 100%;
-            max-width: 100vw;
-            margin: 0 auto;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-          }
-
-          .mobile-hamburger {
-            position: fixed;
-            left: ${isSidebarOpen ? 'calc(18rem - 50px)' : '0'};
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1001;
-            background: ${isSidebarOpen ? 'rgba(255,255,255,0.2)' : '#77a13d'};
-            color: white;
-            border: none;
-            border-radius: ${isSidebarOpen ? '8px' : '0 8px 8px 0'};
-            padding: 0.5rem;
-            cursor: pointer;
-            display: none;
-            transition: all 0.3s ease;
-            width: 40px;
-            height: 40px;
-            align-items: center;
-            justify-content: center;
-          }
-
-          .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-            display: none;
-          }
-
-          .sidebar {
-          // margin-top:5rem;
-            width: 18rem;
-            background: linear-gradient(135deg, #77a13d 0%, #9fc965ff 100%);
-            box-shadow: 0.25rem 0 1.5rem rgba(0,0,0,0.1);
-            overflow-y: auto;
-            max-height: 120vh;
-            position: sticky;
-            top: 0;
-            transition: transform 0.3s ease;
-            padding: 1rem;
-          }
-
-          .sidebar-content {
-            padding: 1rem;
-            padding-top: 6rem;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-          }
-
-          .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-          }
-
-          .filters-header h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: white;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-
-          .clear-filters {
-            background: rgba(255,255,255,0.95);
-            color: #7c3aed;
-            padding: 0.375rem 0.625rem;
-            border-radius: 0.375rem;
-            border: none;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-          }
-
-          .clear-filters:hover {
-            background: white;
-          }
-
-          .filter-section {
-            margin-bottom: 1rem;
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 0.5rem;
-          }
-
-          .filter-section h4 {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 0.5rem;
-          }
-
-          .category-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.25rem 0;
-          }
-
-          .plus-icon {
-            width: 1rem;
-            height: 1rem;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-          }
-
-          /* ── Department accordion ─────────────────────────── */
-          .dept-filter-section { padding-bottom: 4px; }
-          .dept-group { margin-bottom: 3px; }
-          .dept-header {
-            display: flex; align-items: center; justify-content: space-between;
-            width: 100%; background: rgba(255,255,255,0.12); border: none;
-            border-radius: 6px; padding: 8px 10px; color: #fff;
-            font-size: 11px; font-weight: 700; letter-spacing: 0.7px;
-            text-transform: uppercase; cursor: pointer; text-align: left;
-            transition: background 0.15s ease; margin-bottom: 2px;
-          }
-          .dept-header:hover, .dept-header--open { background: rgba(255,255,255,0.24); }
-          .dept-name { flex: 1; line-height: 1.35; }
-          .dept-chevron { width: 14px; height: 14px; flex-shrink: 0; }
-          .dept-cats {
-            padding: 4px 0 6px 10px;
-            border-left: 2px solid rgba(255,255,255,0.2);
-            margin-left: 8px; margin-bottom: 4px;
-          }
-          .dept-category-item { margin-bottom: 2px; }
-          .cat-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-          .cat-label { display: flex; align-items: center; gap: 5px; flex: 1; font-size: 13px; }
-          .cat-count {
-            background: rgba(255,255,255,0.22); border-radius: 10px;
-            padding: 1px 6px; font-size: 10px; font-weight: 700;
-            color: #fff; min-width: 20px; text-align: center;
-          }
-
-          .subcategory-list {
-            margin-left: 1rem;
-            margin-top: 0.25rem;
-            max-height: ${expandedCategories ? '500px' : '0'};
-            opacity: ${expandedCategories ? '1' : '0'};
-            transition: max-height 0.3s ease, opacity 0.3s ease;
-            overflow: hidden;
-          }
-
-          .subcategory-list .filter-option input {
-            width: 0.75rem;
-            height: 0.75rem;
-          }
-
-          .subcategory-list .filter-option span {
-            font-size: 0.75rem;
-            color: white;
-          }
-
-          .subcategory-list .filter-option input:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-          }
-
-          .filter-option {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            border-radius: 0.375rem;
-          }
-
-          .filter-option:hover {
-            background: rgba(255,255,255,0.1);
-          }
-
-          .filter-option input[type="checkbox"] {
-            appearance: none;
-            width: 0.875rem;
-            height: 0.875rem;
-            border: 2px solid rgba(255,255,255,0.6);
-            border-radius: 3px;
-            background: transparent;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s ease;
-            accent-color: #77a13d;
-          }
-
-          .filter-option input[type="checkbox"]:checked {
-            background: #77a13d;
-            border-color: #77a13d;
-          }
-
-          .filter-option input[type="checkbox"]:checked::after {
-            content: "✓";
-            position: absolute;
-            top: -2px;
-            left: 1px;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-          }
-
-          .filter-option span {
-            font-size: 0.8125rem;
-            color: white;
-            font-weight: 400;
-            user-select: none;
-          }
-
-          .price-inputs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
-          }
-
-          .price-inputs div {
-            flex: 1;
-          }
-
-          .price-inputs label {
-            display: block;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 0.25rem;
-          }
-
-          .price-inputs input {
-            width: 100%;
-            padding: 0.375rem 0.625rem;
-            border-radius: 0.375rem;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 0.875rem;
-          }
-
-          .price-inputs input::placeholder {
-            color: rgba(255,255,255,0.6);
-          }
-
-          .filter-section select {
-            width: 100%;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 0.875rem;
-          }
-
-          .filter-section select option {
-            background: #374151;
-            color: white;
-          }
-
-          .main-content {
-            flex: 1;
-            padding: 1.5rem;
-            max-width: calc(100vw - 18rem);
-          }
-
-          .search-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-          }
-
-          .search-bar {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-          }
-
-          .search-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-          }
-
-          .search-input:focus {
-            outline: none;
-            border-color: #77a13d;
-            box-shadow: 0 4px 12px rgba(119, 161, 61, 0.2);
-          }
-
-          .clear-search {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #f3f4f6;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #6b7280;
-            transition: all 0.2s ease;
-          }
-
-          .clear-search:hover {
-            background: #e5e7eb;
-            color: #374151;
-          }
-
-          .loader {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2.5rem;
-          }
-
-          .spinner {
-            width: 2.5rem;
-            height: 2.5rem;
-            border: 0.25rem solid #f3f4f6;
-            border-top: 0.25rem solid #77a13d;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-
-          .error-message {
-            background: #fef2f2;
-            padding: 1.5rem;
-            text-align: center;
-            border-radius: 0.5rem;
-            border: 1px solid #fee2e2;
-          }
-
-          .error-message p {
-            color: #dc2626;
-            font-size: 1rem;
-            margin: 0 0 0.5rem 0;
-          }
-
-          .error-message button {
-            background: #ef4444;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-size: 0.875rem;
-          }
-
-          .no-products {
-            background: white;
-            padding: 1.5rem;
-            text-align: center;
-            font-size: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e5e7eb;
-          }
-
-          .products-info {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: white;
-            font-size: 0.875rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e5e7eb;
-          }
-
-          .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-            align-items: center;
-            padding: 1rem;
-            background: white;
-            border-radius: 0.5rem;
-            border: 1px solid #e5e7eb;
-            flex-wrap: wrap;
-            position: relative;
-          }
-
-          .pagination-loader {
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            font-size: 14px;
-            color: #77a13d;
-            font-weight: 600;
-          }
-
-          .pagination-spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #f3f4f6;
-            border-top: 2px solid #77a13d;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          }
-
-          .pagination-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-            background: white;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-          }
-
-          .pagination-btn:hover:not(:disabled) {
-            background: #77a13d;
-            color: white;
-            border-color: #77a13d;
-          }
-
-          .pagination-btn:disabled {
-            background: #f3f4f6;
-            cursor: not-allowed;
-            opacity: 0.5;
-          }
-
-          .page-numbers {
-            display: flex;
-            gap: 0.25rem;
-            align-items: center;
-          }
-
-          .page-number {
-            min-width: 40px;
-            height: 40px;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-            background: white;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-
-          .page-number:hover:not(:disabled) {
-            background: #f0f9ff;
-            border-color: #77a13d;
-          }
-
-          .page-number.active {
-            background: linear-gradient(135deg, #77a13d, #9fc965ff);
-            color: white;
-            border-color: #77a13d;
-          }
-
-          .page-number:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-          }
-
-          .pagination-ellipsis {
-            padding: 0 0.5rem;
-            color: #6b7280;
-            font-weight: 600;
-          }
-
-          table {
-            table-layout: auto;
-          }
-
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-
-          .sidebar::-webkit-scrollbar {
-            width: 0.375rem;
-          }
-
-          .sidebar::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-            border-radius: 0.1875rem;
-          }
-
-          .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
-            border-radius: 0.1875rem;
-          }
-
-          .filter-section::-webkit-scrollbar {
-            width: 0.375rem;
-          }
-
-          .filter-section::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-            border-radius: 0.1875rem;
-          }
-
-          .filter-section::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
-            border-radius: 0.1875rem;
-          }
-
-          @media (max-width: 1024px) {
-            .container {
-              flex-direction: column;
-            }
-
-            .sidebar {
-              width: 100%;
-              max-width: 20rem;
-              position: fixed;
-              transform: ${isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)'};
-              z-index: 1000;
-              height: 100vh;
-              margin-top:3rem;
-            }
-
-            .mobile-hamburger {
-              display: flex;
-            }
-
-            .sidebar-overlay {
-              display: ${isSidebarOpen ? 'block' : 'none'};
-            }
-
-            .main-content {
-              max-width: 100vw;
-              padding: 1rem;
-            }
-
-            .search-bar {
-              max-width: 100%;
-            }
-
-            .search-input {
-              font-size: 14px;
-              padding: 10px 14px;
-            }
-
-            table {
-              font-size: 0.8125rem;
-            }
-
-            th, td {
-              padding: 0.75rem;
-            }
-
-            td div[style*="maxWidth"] {
-              max-width: 150px;
-            }
-
-            td button[style*="padding: 8px 16px"] {
-              padding: 0.375rem 0.75rem;
-              font-size: 0.75rem;
-            }
-
-            td button[style*="padding: 8px"] {
-              padding: 0.25rem;
-            }
-
-            td span[style*="minWidth"] {
-              min-width: 30px;
-              font-size: 0.875rem;
-            }
-
-            td button[style*="width: 32px"] {
-              width: 28px;
-              height: 28px;
-              font-size: 0.875rem;
-            }
-          }
-
-          @media (max-width: 640px) {
-            table {
-              font-size: 0.75rem;
-            }
-
-            th, td {
-              padding: 0.5rem;
-            }
-
-            td div[style*="maxWidth"] {
-              max-width: 120px;
-            }
-
-            td button[style*="padding: 8px 16px"] {
-              padding: 0.25rem 0.5rem;
-              font-size: 0.6875rem;
-            }
-
-            td span[style*="minWidth"] {
-              min-width: 24px;
-              font-size: 0.75rem;
-            }
-
-            td button[style*="width: 32px"] {
-              width: 24px;
-              height: 24px;
-              font-size: 0.75rem;
-            }
-
-            .filters-header h3 {
-              font-size: 1.125rem;
-            }
-
-            .filter-section h4 {
-              font-size: 0.8125rem;
-            }
-
-            .filter-option span {
-              font-size: 0.75rem;
-            }
-
-            .price-inputs input {
-              font-size: 0.8125rem;
-            }
-
-            .filter-section select {
-              font-size: 0.8125rem;
-            }
-
-            .pagination {
-              gap: 0.25rem;
-              padding: 0.75rem;
-            }
-
-            .pagination-btn {
-              padding: 0.375rem 0.75rem;
-              font-size: 0.75rem;
-            }
-
-            .page-number {
-              min-width: 32px;
-              height: 32px;
-              font-size: 0.75rem;
-            }
-
-            .pagination-loader {
-              font-size: 12px;
-              padding: 6px 12px;
-            }
-
-            .pagination-spinner {
-              width: 14px;
-              height: 14px;
-            }
-          }
-
-          @media (max-width: 768px) {
-            .main-content {
-              padding: 0.75rem;
-            }
-
-            .sidebar {
-              max-width: 16rem;
-            }
-
-            table {
-              display: block;
-              border: none;
-            }
-
-            thead {
-              display: none;
-            }
-
-            tbody {
-              display: block;
-            }
-
-            tr {
-              display: block;
-              margin-bottom: 1.25rem;
-              background: white;
-              border-radius: 16px;
-              box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-              padding: 0;
-              border: 1px solid #e5e7eb;
-              overflow: hidden;
-            }
-
-            tr:hover {
-              box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
-            }
-
-            td {
-              display: block !important;
-              padding: 1.25rem 1rem !important;
-              border: none !important;
-              border-bottom: 1px solid #e5e7eb !important;
-              background: transparent !important;
-            }
-
-            td:last-child {
-              border-bottom: none !important;
-            }
-
-            td::before {
-              content: attr(data-label);
-              display: block;
-              font-weight: 700;
-              color: #374151;
-              font-size: 0.6875rem;
-              text-transform: uppercase;
-              letter-spacing: 0.8px;
-              margin-bottom: 0.75rem;
-              line-height: 1.3;
-              padding-bottom: 0.25rem;
-            }
-
-            td:nth-child(1) { display: none !important; }
-            td:nth-child(2)::before { content: "Product ID"; }
-            td:nth-child(3) { display: none !important; }
-            td:nth-child(4)::before { content: "Product"; }
-            td:nth-child(5)::before { content: "Bin Location"; }
-            td:nth-child(6)::before { content: "Price"; }
-            td:nth-child(7)::before { content: "Quantity"; }
-            td:nth-child(8)::before { content: "Subtotal"; }
-            td:nth-child(9)::before { content: ""; display: none; }
-            td:nth-child(10)::before { content: ""; display: none; }
-
-            /* td:nth-child(1) = Image — hidden on mobile */
-            td:nth-child(2) {
-              background: #f9fafb !important;
-              font-family: 'Courier New', monospace !important;
-              font-size: 0.875rem !important;
-              color: #6b7280 !important;
-              font-weight: 600 !important;
-              letter-spacing: 0.5px;
-              word-break: break-all !important;
-              overflow-wrap: break-word !important;
-              padding: 1.25rem 1rem !important;
-            }
-
-            /* td:nth-child(3) = UPC — hidden on mobile */
-
-            td:nth-child(4) {
-              padding: 1.25rem 1rem !important;
-              font-size: 1.0625rem !important;
-              font-weight: 600 !important;
-              color: #111827 !important;
-            }
-
-            td:nth-child(5) {
-              padding: 1rem !important;
-              background: #f0f9ff !important;
-              font-size: 0.875rem !important;
-              color: #6b7280 !important;
-              font-style: italic !important;
-            }
-
-            td:nth-child(6) {
-              padding: 1rem !important;
-              background: #f9fafb !important;
-            }
-
-            td:nth-child(6) * {
-              font-size: 1.25rem !important;
-              font-weight: 700 !important;
-              background: linear-gradient(135deg, #e97717, #77a13d) !important;
-              -webkit-background-clip: text !important;
-              -webkit-text-fill-color: transparent !important;
-              background-clip: text !important;
-            }
-
-            td:nth-child(7) {
-              padding: 1rem !important;
-              background: white !important;
-            }
-
-            td:nth-child(7) > div:first-of-type {
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              gap: 10px !important;
-              margin-bottom: 0.5rem !important;
-            }
-
-            td:nth-child(7) button {
-              width: 40px !important;
-              height: 40px !important;
-              min-width: 40px !important;
-              flex-shrink: 0 !important;
-              font-size: 1.125rem !important;
-            }
-
-            td:nth-child(7) span {
-              font-size: 1rem !important;
-              font-weight: 600 !important;
-              min-width: 45px !important;
-              text-align: center !important;
-            }
-
-            td:nth-child(7) > div:last-child {
-              font-size: 0.6875rem !important;
-              color: #6b7280 !important;
-              text-align: center !important;
-            }
-
-            td:nth-child(7) .mobile-subtotal-display {
-              display: block !important;
-              font-size: 1rem !important;
-              font-weight: 700 !important;
-              margin-top: 0.75rem !important;
-              text-align: center !important;
-            }
-
-            td:nth-child(8) {
-              padding: 1rem !important;
-              background: #f0fdf4 !important;
-            }
-
-            td:nth-child(8) * {
-              font-size: 1.25rem !important;
-              font-weight: 700 !important;
-              background: linear-gradient(135deg, #e97717, #77a13d) !important;
-              -webkit-background-clip: text !important;
-              -webkit-text-fill-color: transparent !important;
-              background-clip: text !important;
-            }
-
-            td:nth-child(9) {
-              padding: 1rem !important;
-              background: white !important;
-            }
-
-            td:nth-child(9) > div {
-              display: flex !important;
-              flex-direction: row !important;
-              gap: 0.5rem !important;
-              align-items: center !important;
-            }
-
-            td:nth-child(9) button:first-child {
-              flex: 1 !important;
-              padding: 0.75rem !important;
-              font-size: 0.875rem !important;
-            }
-
-            td:nth-child(9) button:nth-child(2) {
-              width: 48px !important;
-              height: 48px !important;
-              padding: 0 !important;
-              font-size: 1.25rem !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              flex-shrink: 0 !important;
-            }
-
-            td:nth-child(10) {
-              padding: 1rem !important;
-              border-bottom: none !important;
-              background: #f9fafb !important;
-              text-align: center !important;
-              display: flex !important;
-              flex-direction: column-reverse !important;
-              align-items: center !important;
-            }
-
-            td:nth-child(10) button {
-              width: 48px !important;
-              height: 48px !important;
-              padding: 0 !important;
-              font-size: 1.5rem !important;
-              border-radius: 8px !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              margin: 0 !important;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
