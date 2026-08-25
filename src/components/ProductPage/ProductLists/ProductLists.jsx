@@ -266,7 +266,7 @@ export const ProductLists = () => {
             }, {
               headers: { 
                 Authorization: `Bearer ${token}`,
-                'X-Website-Role': 'user'
+                'X-Website-Role': 'wholesaler'
               }
             });
 

@@ -203,7 +203,7 @@ export const Navbar = () => {
             const response = await axiosInstance.get("/api/user/get-cart", {
               headers: {
                 Authorization: `Bearer ${token}`,
-                'X-Website-Role': 'user'
+                'X-Website-Role': 'wholesaler'
               },
             });
             const backendCart = response.data.cart;
@@ -512,7 +512,7 @@ export const Navbar = () => {
               const response = await axiosInstance.get("/api/user/get-cart", {
                 headers: {
                   Authorization: `Bearer ${token}`,
-                  'X-Website-Role': 'user'
+                  'X-Website-Role': 'wholesaler'
                 },
               });
               
