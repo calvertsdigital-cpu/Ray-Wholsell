@@ -262,7 +262,7 @@ export const ProductLists = () => {
             const response = await axiosInstance.post("/api/user/add-to-cart", {
               productId: product._id,
               quantity: quantity,
-              websiteRole: 'user'
+              websiteRole: 'wholesaler'
             }, {
               headers: { 
                 Authorization: `Bearer ${token}`,
