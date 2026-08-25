@@ -1035,6 +1035,10 @@ export const Navbar = () => {
         // Show success message
         showToast(`Order created successfully! Order #${orderResponse.data.orderNumber}`, "success");
         
+        // Clear cart after successful checkout
+        setCartItems([]);
+        localStorage.removeItem("localCart");
+        
         // Wait 3 seconds before closing cart so user can see success message
         setTimeout(() => {
           setIsCartOpen(false);
