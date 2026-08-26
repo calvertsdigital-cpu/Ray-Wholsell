@@ -26,6 +26,7 @@ import {
   Loader,
 } from "lucide-react";
 import "./Profilepage.scss";
+import "./MyOrdersStyles.css";
 import ProfileImg from "../../assets/images/bg/ProfileImg.png";
 import prodImg from "../../assets/images/bg/prod-img.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";

@@ -1,0 +1,345 @@
+/* Modern Professional My Orders Styling */
+
+.my-orders-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%) !important;
+  min-height: 100vh;
+  padding: 2rem !important;
+}
+
+.my-orders-container h2 {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin-bottom: 0.5rem !important;
+  letter-spacing: -0.5px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem !important;
+}
+
+/* Order Item Card */
+.order-item {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  margin-bottom: 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden;
+}
+
+.order-item:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-2px);
+}
+
+/* Order Header */
+.order-item > div:first-child {
+  background: linear-gradient(135deg, #f8fafb 0%, #eef2f5 100%) !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 1.5rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  flex-wrap: wrap !important;
+  gap: 1.5rem !important;
+}
+
+.order-item h3 {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.order-item > div:first-child > p {
+  color: #6b7280 !important;
+  font-size: 0.95rem !important;
+}
+
+/* Status Badge */
+.order-item span.bg-blue-100,
+.order-item span.bg-green-100,
+.order-item span.bg-yellow-100,
+.order-item span.bg-red-100,
+.order-item span.bg-purple-100 {
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  white-space: nowrap;
+}
+
+/* Order Details Grid */
+.order-item > div:nth-child(2) {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 1.5rem !important;
+  padding: 1.5rem !important;
+}
+
+.order-item > div:nth-child(2) > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.order-item > div:nth-child(2) p:first-child {
+  color: #6b7280 !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.order-item > div:nth-child(2) p:last-child {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+}
+
+.order-item > div:nth-child(2) p:last-child.text-\[var\(--color-seconday\)\] {
+  color: var(--color-seconday) !important;
+}
+
+/* Items Preview */
+.items-preview {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+  padding: 1.5rem !important;
+  border-top: 1px solid #f3f4f6 !important;
+}
+
+.items-preview > div {
+  display: flex !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;
+  width: 100%;
+}
+
+.items-preview img {
+  width: 60px !important;
+  height: 60px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.items-preview img:hover {
+  transform: scale(1.05);
+  border-color: var(--color-seconday);
+}
+
+/* Button Styling */
+.order-item button {
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.order-item button.bg-\[var\(--color-seconday\)\] {
+  background-color: var(--color-seconday) !important;
+  color: white !important;
+}
+
+.order-item button.bg-\[var\(--color-seconday\)\]:hover {
+  opacity: 0.9 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.order-item button.bg-green-600 {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.order-item button.bg-green-600:hover {
+  background-color: #059669 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+}
+
+.order-item button.bg-blue-600 {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.order-item button.bg-blue-600:hover {
+  background-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+}
+
+.order-item button.bg-red-600 {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.order-item button.bg-red-600:hover {
+  background-color: #dc2626 !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Invoice Dropdown */
+.invoice-dropdown-menu {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  z-index: 20 !important;
+  min-width: 180px !important;
+  overflow: hidden;
+}
+
+.invoice-dropdown-menu button {
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  text-align: left !important;
+  color: #374151 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transition: background-color 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.invoice-dropdown-menu button:hover {
+  background-color: #f9fafb !important;
+  color: var(--color-seconday) !important;
+}
+
+.invoice-dropdown-menu button:first-child {
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+/* Pagination Controls */
+.flex.justify-center.gap-2 {
+  margin-top: 2rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap;
+  padding: 1rem 0;
+}
+
+.flex.justify-center.gap-2 button {
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  border: none !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  min-width: 40px;
+}
+
+.flex.justify-center.gap-2 button[disabled] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.flex.justify-center.gap-2 button.bg-\[var\(--color-seconday\)\] {
+  background-color: var(--color-seconday) !important;
+  color: white !important;
+}
+
+.flex.justify-center.gap-2 button.bg-\[var\(--color-seconday\)\]:hover:not([disabled]) {
+  background-color: var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.flex.justify-center.gap-2 button.bg-gray-200 {
+  background-color: #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.flex.justify-center.gap-2 button.bg-gray-200:hover {
+  background-color: #d1d5db !important;
+}
+
+/* Refund/Review Sections */
+.order-item .mt-3 {
+  margin-top: 1.5rem !important;
+  padding-top: 1.5rem !important;
+  border-top: 1px solid #f3f4f6 !important;
+}
+
+.order-item span.bg-yellow-100 {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.order-item span.bg-yellow-100 .animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .my-orders-container {
+    padding: 1rem !important;
+  }
+
+  .my-orders-container h2 {
+    font-size: 1.75rem !important;
+  }
+
+  .order-item {
+    margin-bottom: 1rem !important;
+  }
+
+  .order-item > div:first-child {
+    flex-direction: column;
+    gap: 1rem !important;
+  }
+
+  .order-item > div:nth-child(2) {
+    grid-template-columns: 1fr !important;
+    padding: 1rem !important;
+  }
+
+  .items-preview {
+    padding: 1rem !important;
+  }
+
+  .flex.justify-center.gap-2 button {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+/* No Orders Message */
+.orders-list > p {
+  text-align: center !important;
+  padding: 3rem 1rem !important;
+  color: #6b7280 !important;
+  font-size: 1.1rem !important;
+}
+
