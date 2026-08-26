@@ -181,7 +181,7 @@ export const Profilepage = () => {
               <h3 className="font-semibold text-lg">Order Summary</h3>
               <p><strong>Order ID:</strong> {modalOrderData._id}</p>
               <p><strong>Status:</strong> {getStatusDisplayText(modalOrderData)}</p>
-              <p><strong>Total:</strong> ₹{modalOrderData.total}</p>
+              <p><strong>Total:</strong> ${modalOrderData.total.toFixed(2)}</p>
               <p><strong>Payment ID:</strong> {modalOrderData.paymentIntentId}</p>
               <p><strong>Purchase ID:</strong> {modalOrderData.purchaseId}</p>
             </div>
@@ -748,7 +748,7 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
                 </div>
                 <div className="flex flex-col gap-2 my-3">
                   <p className="text-sm sm:text-[1.2dvw] paraFont font-normal">
-                    Total: ₹{order.total.toFixed(2)}
+                    Total: ${order.total.toFixed(2)}
                   </p>
                   <p className="text-sm sm:text-[1.2dvw] paraFont font-normal">
                     Status: <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClasses(order)}`}>
