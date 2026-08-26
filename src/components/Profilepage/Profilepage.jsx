@@ -60,6 +60,8 @@ const getStatusDisplayText = (order) => {
     return 'Refunded';
   } else if (displayStatus === 'pending_review') {
     return 'Pending Review';
+  } else if (displayStatus === 'confirmed') {
+    return 'Awaiting Payment';
   } else if (order.status === 'refund_requested') {
     return 'Refund Requested';
   } else {
@@ -75,6 +77,8 @@ const getStatusClasses = (order) => {
     return 'bg-blue-100 text-blue-700';
   } else if (displayStatus === 'pending_review') {
     return 'bg-purple-100 text-purple-700';
+  } else if (displayStatus === 'confirmed') {
+    return 'bg-orange-100 text-orange-700';
   } else if (order.status === 'refund_requested') {
     return 'bg-yellow-100 text-yellow-700';
     return 'bg-green-100 text-green-700';
@@ -727,6 +731,18 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
                         <Check size={12} />
                         Refunded
                       </span>
+                    )}
+                    {order.status === 'confirmed' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Navigate to payment or proceed to checkout
+                          navigate('/checkout', { state: { orderId: order._id } });
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 py-1 px-3 rounded-md mainFont font-semibold cursor-pointer text-white flex justify-center items-center gap-2 text-xs sm:text-[0.9dvw] transition-colors"
+                      >
+                        <Wallet size={14} /> Pay Now
+                      </button>
                     )}
                   </div>
                 </div>
