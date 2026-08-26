@@ -119,10 +119,15 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
   // Items Table - optimized for landscape layout
   const tableStartY = Math.max(billToY, shipToY) + 15;
   
+  // Use confirmedItems if available (after admin confirmation), otherwise use original items
+  const itemsToDisplay = order.confirmedItems && order.confirmedItems.length > 0 
+    ? order.confirmedItems 
+    : order.items;
+
   // Prepare table data with proper formatting (avoid currency symbol issues)
-  const tableData = order.items.map((item, index) => [
+  const tableData = itemsToDisplay.map((item, index) => [
     (index + 1).toString(),
-    item.product?.name || 'Product',
+    item.name || item.product?.name || 'Product',
     item.quantity.toString(),
     `$${(item.price || 0).toFixed(2)}`,
     `$${((item.price || 0) * item.quantity).toFixed(2)}`
@@ -182,8 +187,12 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
     tableLineWidth: 0
   });
   
-  // Calculate totals
-  const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // Calculate totals using confirmed items if available
+  const itemsForCalc = order.confirmedItems && order.confirmedItems.length > 0 
+    ? order.confirmedItems 
+    : order.items;
+  
+  const subtotal = itemsForCalc.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const tax = order.tax || 0;
   const shipping = order.shippingCost || 0;
   const total = order.total || subtotal + tax + shipping;

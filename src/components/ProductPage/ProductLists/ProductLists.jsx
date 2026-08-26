@@ -194,12 +194,9 @@ export const ProductLists = () => {
     window.addEventListener('wishlistUpdated', handleWishlistUpdate);
     return () => window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
   }, []);
-      }
-    };
 
-    fetchProducts();
-    
-    // Initialize cart count
+  // Initialize cart count and listen for updates
+  useEffect(() => {
     const updateCartCount = () => {
       const currentCart = JSON.parse(localStorage.getItem("localCart") || "[]");
       setCartItemsCount(currentCart.length);
