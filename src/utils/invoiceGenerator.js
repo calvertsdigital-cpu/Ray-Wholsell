@@ -47,7 +47,8 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
   // Invoice Details (optimized for landscape)
   doc.setFontSize(Math.min(10, contentWidth / 20));
   doc.setTextColor(0, 0, 0);
-  const invoiceNumber = order.paymentIntentId || `INV-${order._id.slice(-8).toUpperCase()}`;
+  // Use orderNumber (new orders) → purchaseId (legacy) → paymentIntentId (Stripe) → _id fallback
+  const invoiceNumber = order.orderNumber || order.purchaseId || order.paymentIntentId || `INV-${order._id.slice(-8).toUpperCase()}`;
   const invoiceDate = new Date(order.createdAt).toLocaleDateString();
   
   const invoiceDetailsX = pageWidth - margin - 70;
@@ -68,38 +69,41 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
   let billToY = 70;
   let shipToY = 70;
   
-  if (order.address && !order.address.message) {
+  if ((order.address && !order.address.message) || order.deliveryAddress) {
+    // Get the correct address object based on order type
+    const addressObj = order.deliveryAddress || order.address;
+    
     // Bill To section
-    doc.text(order.address.name || 'Customer', margin, billToY);
+    doc.text(addressObj.name || 'Customer', margin, billToY);
     billToY += 7;
-    doc.text(order.address.addressLine1, margin, billToY);
+    doc.text(addressObj.addressLine1 || '', margin, billToY);
     billToY += 7;
-    if (order.address.addressLine2) {
-      doc.text(order.address.addressLine2, margin, billToY);
+    if (addressObj.addressLine2) {
+      doc.text(addressObj.addressLine2, margin, billToY);
       billToY += 7;
     }
-    doc.text(`${order.address.city}, ${order.address.state} ${order.address.zipcode}`, margin, billToY);
+    doc.text(`${addressObj.city || ''}, ${addressObj.state || ''} ${addressObj.zipcode || ''}`, margin, billToY);
     billToY += 7;
-    doc.text(order.address.country, margin, billToY);
+    doc.text(addressObj.country || '', margin, billToY);
     billToY += 7;
-    doc.text(`Phone: ${order.address.contactNumber}`, margin, billToY);
-    if (order.address.email) {
+    doc.text(`Phone: ${addressObj.contactNumber || ''}`, margin, billToY);
+    if (addressObj.email) {
       billToY += 7;
-      doc.text(`Email: ${order.address.email}`, margin, billToY);
+      doc.text(`Email: ${addressObj.email}`, margin, billToY);
     }
     
     // Ship To section (same as bill to)
-    doc.text(order.address.name || 'Customer', shipToX, shipToY);
+    doc.text(addressObj.name || 'Customer', shipToX, shipToY);
     shipToY += 7;
-    doc.text(order.address.addressLine1, shipToX, shipToY);
+    doc.text(addressObj.addressLine1 || '', shipToX, shipToY);
     shipToY += 7;
-    if (order.address.addressLine2) {
-      doc.text(order.address.addressLine2, shipToX, shipToY);
+    if (addressObj.addressLine2) {
+      doc.text(addressObj.addressLine2, shipToX, shipToY);
       shipToY += 7;
     }
-    doc.text(`${order.address.city}, ${order.address.state} ${order.address.zipcode}`, shipToX, shipToY);
+    doc.text(`${addressObj.city || ''}, ${addressObj.state || ''} ${addressObj.zipcode || ''}`, shipToX, shipToY);
     shipToY += 7;
-    doc.text(order.address.country, shipToX, shipToY);
+    doc.text(addressObj.country || '', shipToX, shipToY);
   } else {
     // Bill To section with user data
     doc.text(userData.name || 'Customer', margin, billToY);

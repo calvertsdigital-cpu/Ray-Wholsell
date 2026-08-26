@@ -644,7 +644,7 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
               >
                 <div className="flex justify-between items-center flex-wrap gap-2">
                   <h3 className="text-[1.5dvw] mainFont font-semibold truncate max-w-[50%]">
-                    Order #{order.paymentIntentId || order._id.slice(-10)}
+                    Order #{order.orderNumber || order.purchaseId || order.paymentIntentId || order._id.slice(-10)}
                   </h3>
                   <p className="text-sm sm:text-[1.2dvw] paraFont font-normal">
                     {formatDateTime(order.createdAt)}
