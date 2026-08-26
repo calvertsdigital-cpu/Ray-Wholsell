@@ -733,18 +733,24 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
                         Refunded
                       </span>
                     )}
-                    {order.status === 'confirmed' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Navigate to payment or proceed to checkout
+                    {/* Pay Now Button - Always visible */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (order.status === 'confirmed') {
                           navigate('/checkout', { state: { orderId: order._id } });
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 py-1 px-3 rounded-md mainFont font-semibold cursor-pointer text-white flex justify-center items-center gap-2 text-xs sm:text-[0.9dvw] transition-colors"
-                      >
-                        <Wallet size={14} /> Pay Now
-                      </button>
-                    )}
+                        }
+                      }}
+                      disabled={order.status !== 'confirmed'}
+                      className={`py-1 px-3 rounded-md mainFont font-semibold cursor-pointer flex justify-center items-center gap-2 text-xs sm:text-[0.9dvw] transition-colors ${
+                        order.status === 'confirmed'
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg'
+                          : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      }`}
+                      title={order.status === 'confirmed' ? 'Proceed to payment' : 'Waiting for admin confirmation'}
+                    >
+                      <Wallet size={14} /> Pay Now
+                    </button>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 my-3">
