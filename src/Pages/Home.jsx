@@ -1,6 +1,5 @@
 import React, { useEffect, lazy, Suspense } from "react";
 import { Layout } from "../components/common/Layout/Layout";
-import { Herosection } from "../components/Homepage/Herosection/Herosection";
 import { SortProduct } from "../components/Homepage/ShortProducts/SortProduct";
 import { Productsection } from "../components/Homepage/ProductsSection/Productsection";
 import { Footer } from "../components/common/Footer/Footer";
@@ -15,8 +14,6 @@ export const Home = () => {
   }, []);
   return (
     <Layout>
-      <Herosection />
-      
       <SortProduct />
      
       <Suspense fallback={<div style={{ minHeight: '200px' }} />}>
