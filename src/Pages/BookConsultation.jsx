@@ -928,12 +928,13 @@ const ConsultationBooking = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 min-h-screen mt-[4rem]" style={{zoom:.9}}>
-      <div className="bg-green-600 text-white p-3 rounded-t-lg flex items-center justify-center space-x-2">
-        <User className="w-5 h-5" />
-        <span className="font-medium">Consultation</span>
-      </div>
-      <div className="bg-white p-6 rounded-b-lg shadow-lg">
+    <div className="w-full px-6 py-12 flex justify-center" style={{minHeight: 'calc(100vh - 4rem)'}}>
+      <div className="w-full" style={{maxWidth: "60%"}}>
+        <div className="bg-green-600 text-white p-3 rounded-t-lg flex items-center justify-center space-x-2">
+          <User className="w-5 h-5" />
+          <span className="font-medium">Consultation</span>
+        </div>
+        <div className="bg-white p-6 rounded-b-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Questions?</h2>
         <div className="mb-6">
           <p className="text-sm mb-2">
@@ -1001,6 +1002,7 @@ const ConsultationBooking = () => {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
