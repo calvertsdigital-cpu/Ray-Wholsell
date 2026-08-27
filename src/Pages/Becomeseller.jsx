@@ -125,7 +125,7 @@ const BecomeSeller = () => {
 
       {/* Rest of your component remains unchanged */}
       <div className="w-full px-6 py-16 flex justify-center">
-      <div className="max-w-3xl">
+      <div className="w-full" style={{maxWidth: "60%"}}>
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
