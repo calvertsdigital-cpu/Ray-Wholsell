@@ -341,7 +341,7 @@
 //                   onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
 //                 />
 //                 <span className="text-sm">I will pay now with PayPal</span>
-//                 <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA4MCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHJ4PSI0IiBmaWxsPSIjMDA5Y2RlIi8+CiAgPHRleHQgeD0iNSIgeT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiPgogICAgUGF5UGFsCiAgPC90ZXh0Pgo8L3N2Zz4K" alt="PayPal" className="h-4" />
+//                 <span className="inline-block bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold">PayPal</span>
 //               </label>
 //             </div>
 //           </div>
@@ -895,7 +895,7 @@ const ConsultationBooking = () => {
                   onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
                 />
                 <span className="text-sm">I will pay now with PayPal</span>
-                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA4MCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHJ4PSI4IiBmaWxsPSIjMDA5Y2RlIi8+CiAgPHRleHQgeD0iNSIgeT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiPgogICAgUGF5UGFsCiAgPC90ZXh0Pgo8L3N2Zz4K" alt="PayPal" className="h-4" />
+                <span className="inline-block bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold">PayPal</span>
               </label>
             </div>
           </div>
