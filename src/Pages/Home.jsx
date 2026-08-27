@@ -25,7 +25,4 @@ export const Home = () => {
        
     </Layout>
   );
-};     
-    </Layout>
-  );
 };
