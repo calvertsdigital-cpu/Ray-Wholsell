@@ -139,13 +139,13 @@ const BecomeSeller = () => {
         </motion.div>
 
         <motion.div 
-          className="mb-16"
+          className="mb-16 flex justify-center"
           initial={{ opacity: 0, x: -50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 max-w-2xl">
             <p className="text-gray-700 leading-relaxed text-lg">
               Ray's healthy living products are available at wholesale pricing to qualified resellers including retailers, health care practitioners, and e-commerce retailers. For additional information or to apply to become a wholesale customer, please complete our{' '}
               <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 hover:no-underline transition-all duration-200">WHOLESALE REGISTRATION FORM
@@ -156,7 +156,7 @@ const BecomeSeller = () => {
         </motion.div>
 
         <motion.div 
-          className="mb-16"
+          className="mb-16 flex flex-col items-center"
           initial={{ opacity: 0, x: 50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: false, amount: 0.3 }}
@@ -166,7 +166,7 @@ const BecomeSeller = () => {
             <span className="w-2 h-8 bg-green-500 rounded-full mr-4"></span>
             Wholesale accounts...
           </h2>
-          <div className="bg-white rounded-2xl shadow-lg p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-white rounded-2xl shadow-lg p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300 max-w-2xl">
             <p className="text-gray-700 leading-relaxed text-lg">
               If you are an established business licensed to sell nutritional, medical and/or athletic products, you may be qualified to receive wholesale prices on our products. To get started, complete our{' '}
               <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 hover:no-underline transition-all duration-200">WHOLESALE REGISTRATION FORM
@@ -180,7 +180,7 @@ const BecomeSeller = () => {
         </motion.div>
 
         <motion.div 
-          className="mb-16"
+          className="mb-16 flex flex-col items-center"
           initial={{ opacity: 0, x: -50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: false, amount: 0.3 }}
@@ -190,7 +190,7 @@ const BecomeSeller = () => {
             <span className="w-2 h-8 bg-blue-500 rounded-full mr-4"></span>
             Distributor accounts...
           </h2>
-          <div className="bg-white rounded-2xl shadow-lg p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-white rounded-2xl shadow-lg p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300 max-w-2xl">
             <p className="text-gray-700 leading-relaxed text-lg mb-6">
               If you are an established distributor licensed to sell nutritional, medical and/or athletic products, you may wish to offer the ray's healthy living line to your wholesale customers.
             </p>
