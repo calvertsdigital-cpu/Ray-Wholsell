@@ -959,7 +959,9 @@ const CounselingPage = () => {
   );
 };
 
-const CounselingPage = () => {
+export default CounselingPage;
+
+export default CounselingPage;
   const [expandedFaq, setExpandedFaq] = useState('is-counseling-right');
   const [formData, setFormData] = useState({
     name: '',
