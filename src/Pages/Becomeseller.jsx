@@ -124,7 +124,8 @@ const BecomeSeller = () => {
       </div>
 
       {/* Rest of your component remains unchanged */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
+      <div className="w-full px-6 py-16 flex justify-center">
+      <div className="max-w-3xl">
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
@@ -218,9 +219,7 @@ const BecomeSeller = () => {
             </button>
           </div>
         </div> */}
-
-
-
+      </div>
       </div>
     </div>
   );
