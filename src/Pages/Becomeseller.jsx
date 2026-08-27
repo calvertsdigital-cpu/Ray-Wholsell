@@ -145,8 +145,8 @@ const BecomeSeller = () => {
           viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
-            <p className="text-gray-700 leading-relaxed text-lg">
+          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+            <p className="text-gray-700 leading-relaxed text-lg text-center">
               Ray's healthy living products are available at wholesale pricing to qualified resellers including retailers, health care practitioners, and e-commerce retailers. For additional information or to apply to become a wholesale customer, please complete our{' '}
               <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 hover:no-underline transition-all duration-200">WHOLESALE REGISTRATION FORM
               </a>{' '}
@@ -167,7 +167,7 @@ const BecomeSeller = () => {
             Wholesale accounts...
           </h2>
           <div className="bg-white rounded-2xl shadow-lg p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <p className="text-gray-700 leading-relaxed text-lg">
+            <p className="text-gray-700 leading-relaxed text-lg text-center">
               If you are an established business licensed to sell nutritional, medical and/or athletic products, you may be qualified to receive wholesale prices on our products. To get started, complete our{' '}
               <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 hover:no-underline transition-all duration-200">WHOLESALE REGISTRATION FORM
               </a>. Please upload copies of your business license or other documentation for verification at the bottom on the same form, fax them to{' '}
@@ -191,10 +191,10 @@ const BecomeSeller = () => {
             Distributor accounts...
           </h2>
           <div className="bg-white rounded-2xl shadow-lg p-10 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <p className="text-gray-700 leading-relaxed text-lg mb-6">
+            <p className="text-gray-700 leading-relaxed text-lg mb-6 text-center">
               If you are an established distributor licensed to sell nutritional, medical and/or athletic products, you may wish to offer the ray's healthy living line to your wholesale customers.
             </p>
-            <p className="text-gray-700 leading-relaxed text-lg">
+            <p className="text-gray-700 leading-relaxed text-lg text-center">
               Based upon volume, distributors may be qualified to receive discounts off wholesale prices! Please complete our{' '}
               <a href="/auth/register?type=distributor" className="text-green-600 underline font-semibold hover:text-green-700 hover:no-underline transition-all duration-200">DISTRIBUTOR REGISTRATION FORM
               </a>{' '}
