@@ -162,7 +162,7 @@ const BecomeSeller = () => {
           viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center justify-center">
             <span className="w-2 h-8 bg-green-500 rounded-full mr-4"></span>
             Wholesale accounts...
           </h2>
@@ -186,7 +186,7 @@ const BecomeSeller = () => {
           viewport={{ once: false, amount: 0.3 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center justify-center">
             <span className="w-2 h-8 bg-blue-500 rounded-full mr-4"></span>
             Distributor accounts...
           </h2>
