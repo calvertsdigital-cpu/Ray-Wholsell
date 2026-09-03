@@ -28,7 +28,7 @@ export const About = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-orange-50 mb-20 pt-20 pb-16">
+    <div className="bg-gradient-to-br from-gray-50 via-white to-orange-50 mb-32 sm:mb-40 lg:mb-48 pt-20 pb-16 sm:pb-20 lg:pb-24">
       <div className="flex justify-center">
         <div className="w-[90%] max-w-7xl flex flex-col lg:flex-row justify-between items-center gap-12">
           

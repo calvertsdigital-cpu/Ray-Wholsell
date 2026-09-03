@@ -82,9 +82,9 @@ const ChamberReview = () => {
   };
 
   return (
-    <div className="px-4 py-12 sm:py-16 lg:py-20 mt-8 sm:mt-12 lg:mt-16">
-      <div className="bg-slate-950 backdrop-blur-sm rounded-3xl border border-slate-700 p-8 sm:p-10 lg:p-12 shadow-2xl max-w-2xl mx-auto">
-        <div className="text-center space-y-6">
+    <div className="px-4 py-12 sm:py-16 lg:py-20 mt-16 sm:mt-24 lg:mt-32 mb-12 sm:mb-16 lg:mb-20">
+      <div className="bg-slate-950 backdrop-blur-sm rounded-3xl border border-slate-700 p-8 sm:p-10 lg:p-12 shadow-2xl max-w-2xl mx-auto w-full flex flex-col">
+        <div className="text-center space-y-6 w-full">
           
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-blue-600/10 px-4 py-2 rounded-full border border-blue-400/40 mx-auto">
