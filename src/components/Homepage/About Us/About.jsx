@@ -28,52 +28,84 @@ export const About = () => {
   }, []);
 
   return (
-    <div className="bg-white mb-20 pt-16 pb-10">
+    <div className="bg-gradient-to-br from-gray-50 via-white to-orange-50 mb-20 pt-20 pb-16">
       <div className="flex justify-center">
-      <div className="w-[85%] flex flex-col lg:flex-row justify-between items-center mt-12rem mb-12rem">
+        <div className="w-[90%] max-w-7xl flex flex-col lg:flex-row justify-between items-center gap-12">
+          
+          {/* Left Side - Image with Enhanced Styling */}
           <div
             ref={leftRef}
             className="fade-element w-full lg:w-1/2 flex justify-center mb-8 lg:mb-0"
           >
-            <div className="relative w-[650px] max-w-full">
+            <div className="relative w-full max-w-[500px] group">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg blur-xl opacity-25 group-hover:opacity-40 transition-all duration-500 transform group-hover:scale-105"></div>
               <img
                 src={imagelogo}
-                alt="Natural health supplements and products"
+                alt="Ray's Healthy Living - Natural health supplements and herbal products"
                 loading="lazy"
-                className="w-140 aspect-[782/599] object-cover rounded"
+                className="relative w-full aspect-square object-cover rounded-lg shadow-2xl transition-transform duration-500 group-hover:scale-105"
               />
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-orange-500 rounded-full opacity-10 blur-2xl"></div>
             </div>
           </div>
 
+          {/* Right Side - Content with Enhanced Styling */}
           <div
             ref={rightRef}
             className="fade-element w-full lg:w-1/2 flex justify-center"
           >
-            <div className="text-left max-w-[600px]">
-              <div className="mb-8">
-                <h2 className="text-4xl font-bold text-gray-900 leading-tight">
-                  About Our Firm
+            <div className="text-left max-w-[550px]">
+              
+              {/* Title Section */}
+              <div className="mb-10">
+                <span className="text-orange-500 font-semibold text-sm uppercase tracking-widest">About Our Firm</span>
+                <h2 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mt-3">
+                  Ray's <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">Healthy Living</span>
                 </h2>
-                <div className="h-[3px] w-[50px] bg-gradient-to-r from-orange-500 to-orange-600 mt-2" />
+                <div className="h-1 w-20 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600 mt-4 rounded-full"></div>
               </div>
 
-              <div className="text-gray-600 text-base leading-relaxed space-y-5">
-                <p>
-                  
-We do business through a network of traditional brick-and-mortar stores and our own brand website online. Ray’s Healthy Living offers products with enhanced natural vitamins and minerals through herbal supplements that have been produced through the most thorough and effective quality standards in the industry. We take pride in doing business while taking great care of our customers’ satisfaction and safety. Ray’s Healthy Living believes customers are part of the family, and we take care of our family. You can see why this is a key element in our business by reading our founder and CEO’s personal story
+              {/* Description */}
+              <div className="text-gray-700 text-lg leading-relaxed space-y-6 mb-8">
+                <p className="font-light">
+                  We serve the community through a trusted network of physical retail locations and our comprehensive online platform. Ray's Healthy Living specializes in premium natural vitamins, minerals, and herbal supplements formulated to the highest quality standards.
+                </p>
+                <p className="font-light">
+                  <span className="font-semibold text-gray-900">Our Commitment:</span> We prioritize customer satisfaction and safety above all else. At Ray's Healthy Living, we believe our customers are family—and family deserves the very best care and attention.
+                </p>
+                <p className="text-sm text-gray-600 italic border-l-4 border-orange-500 pl-4">
+                  Discover the vision behind our mission by reading our founder and CEO's personal story.
                 </p>
               </div>
 
-              <div className="mt-10">
+              {/* Features */}
+              <div className="grid grid-cols-2 gap-4 mb-10">
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600 mb-2">100%</div>
+                  <p className="text-xs text-gray-600 font-medium">Natural Quality</p>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600 mb-2">20+</div>
+                  <p className="text-xs text-gray-600 font-medium">Years Experience</p>
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              <div className="flex gap-4">
                 <a
                   href="https://rayshealthyliving.com/about-us/"
-                  className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm md:text-base uppercase tracking-wide px-6 py-3 rounded shadow transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105"
+                  className="inline-block bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm md:text-base uppercase tracking-wide px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 flex items-center gap-2"
                 >
                   Learn More
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </a>
               </div>
+
             </div>
           </div>
+
         </div>
       </div>
     </div>
