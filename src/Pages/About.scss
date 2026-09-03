@@ -5,6 +5,7 @@
 }
 
 // Hero Section with Parallax Effect
+
 .hero-section {
   position: relative;
   min-height: 100vh;
@@ -16,19 +17,21 @@
   overflow: hidden;
 
   // Parallax Background
+
   .hero-background {
     position: absolute;
     top: -20%;
     left: 0;
     right: 0;
     bottom: -20%;
-    
+
     background-repeat: no-repeat;
     will-change: transform;
     z-index: 0;
   }
 
   // Dark Overlay
+
   .hero-overlay {
     position: absolute;
     top: 0;
@@ -45,6 +48,7 @@
   }
 
   // Container
+
   .container {
     position: relative;
     z-index: 2;
@@ -55,6 +59,7 @@
   }
 
   // Hero Content
+
   .hero-content {
     display: flex;
     align-items: center;
@@ -77,7 +82,7 @@
       letter-spacing: 3px;
       text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
       position: relative;
-      
+
       &::after {
         content: '';
         position: absolute;
@@ -149,7 +154,7 @@
           &:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 30px rgba(34, 139, 34, 0.4);
-            
+
             &::before {
               left: 0;
             }
@@ -178,6 +183,7 @@
   }
 
   // Stats Row
+
   .stats-row {
     display: flex;
     justify-content: space-between;
@@ -225,11 +231,13 @@
 }
 
 // Animations
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -241,6 +249,7 @@
     transform: scale(1);
     box-shadow: 0 0 15px rgba(144, 238, 144, 0.6);
   }
+
   50% {
     transform: scale(1.2);
     box-shadow: 0 0 25px rgba(144, 238, 144, 0.8);
@@ -248,6 +257,7 @@
 }
 
 // About Our Firm Section (Replacing Team Section)
+
 .about-firm-section {
   padding: 80px 0;
   background: #f8f9fa;
@@ -274,8 +284,9 @@
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 10px;
-    
+
     // Decorative elements
+
     &::before {
       content: '';
       position: absolute;
@@ -361,6 +372,7 @@
 }
 
 // Quality, Safety, and Satisfaction Section
+
 .quality-section {
   padding: 80px 0;
   background-color: #76a13d;
@@ -403,7 +415,7 @@
     border-radius: 2px;
   }
 
-    .quaunderlines {
+  .quaunderlines {
     width: 100px;
     height: 4px;
     background: linear-gradient(90deg, #1f791f 0%, #1e5c1e 100%);
@@ -473,6 +485,7 @@
 }
 
 // Price Comparison Section
+
 .price-comparison-section {
   padding: 80px 0;
   background: white;
@@ -492,7 +505,7 @@
 
   .price-comparison-image {
     position: relative;
-    
+
     .comparison-img {
       width: 100%;
       height: auto;
@@ -557,6 +570,7 @@
 }
 
 // Website Showcase Section
+
 .website-showcase-section {
   padding: 80px 0;
   background: #76a13d;
@@ -629,8 +643,9 @@
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
       position: relative;
       overflow: hidden;
-      
+
       // Add a subtle border
+
       &::before {
         content: '';
         position: absolute;
@@ -644,6 +659,7 @@
       }
 
       // Add a gradient overlay for better text contrast
+
       &::after {
         content: '';
         position: absolute;
@@ -659,6 +675,7 @@
 }
 
 // Testimonials Section
+
 .testimonials-section {
   padding: 80px 0;
   background: #f8f9fa;
@@ -768,7 +785,7 @@
     &:hover:not(:disabled) {
       background: #f8f9fa;
       border-color: #999;
-      
+
       svg {
         color: #333;
       }
@@ -818,6 +835,7 @@
 }
 
 // Responsive Design
+
 @media (max-width: 1024px) {
   .price-comparison-section {
     .price-comparison-content {
@@ -859,13 +877,14 @@
 
 @media (max-width: 768px) {
   // Hero Section Mobile
+
   .hero-section {
     .hero-background {
       background-attachment: scroll;
     }
 
     .hero-content {
-      padding:60px 0 40px;
+      padding: 60px 0 40px;
       min-height: auto;
     }
 
@@ -873,7 +892,7 @@
       .hero-title {
         font-size: 2.5rem;
         letter-spacing: 1px;
-        
+
         &::after {
           width: 60px;
         }
@@ -923,6 +942,7 @@
   }
 
   // Other Sections Mobile
+
   .about-firm-section,
   .quality-section,
   .price-comparison-section,
@@ -1021,7 +1041,7 @@
 
         .quality-card-title {
           font-size: 0.9rem;
-          color:#131513 !important;
+          color: #131513 !important;
         }
 
         .quality-card-description {
