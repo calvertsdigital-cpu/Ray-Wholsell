@@ -157,21 +157,6 @@ export const FilterProduct = () => {
     return null;
   }, []);
 
-  const validatePriceRange = useCallback((minPrice, maxPrice) => {
-    const min = parseFloat(minPrice);
-    const max = parseFloat(maxPrice);
-
-    if (minPrice && maxPrice && min > max) {
-      return "Minimum price cannot be greater than maximum price";
-    }
-
-    if ((minPrice && min < 0) || (maxPrice && max < 0)) {
-      return "Price cannot be negative";
-    }
-
-    return null;
-  }, []);
-
   const buildQueryParams = useCallback((filters, page, limit) => {
     const queryParams = new URLSearchParams({
       role: "wholesaler",
