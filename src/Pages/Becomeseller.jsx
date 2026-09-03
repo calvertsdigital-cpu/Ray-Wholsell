@@ -18,61 +18,64 @@ const BecomeSeller = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="w-full min-h-screen bg-gradient-to-b from-gray-50 to-white overflow-x-hidden">
       {/* Header Section with Product Categories */}
-      <div className="bg-white py-16 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="w-full max-w-full">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 lg:gap-12 px-4 sm:px-8 lg:px-16">
-            {categories.map((category, index) => (
-              <motion.div 
-                key={index} 
-                className="flex flex-col items-center justify-center text-center group cursor-pointer"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, amount: 0.3 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="w-20 h-20 mb-6 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                  <img 
-                    src={category.icon} 
-                    alt={category.name} 
-                    className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-                  />
-                </div>
-                <span className="text-gray-800 font-semibold text-sm sm:text-base group-hover:text-green-600 transition-colors duration-300">{category.name}</span>
-              </motion.div>
-            ))}
+      <div className="w-full bg-white py-12 sm:py-16 lg:py-20 shadow-sm">
+        <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-7xl">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
+              {categories.map((category, index) => (
+                <motion.div 
+                  key={index} 
+                  className="flex flex-col items-center justify-center text-center group cursor-pointer"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false, amount: 0.3 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <div className="w-16 sm:w-20 h-16 sm:h-20 mb-4 sm:mb-6 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                    <img 
+                      src={category.icon} 
+                      alt={category.name} 
+                      className="w-10 sm:w-12 h-10 sm:h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                    />
+                  </div>
+                  <span className="text-gray-800 font-semibold text-xs sm:text-sm lg:text-base group-hover:text-green-600 transition-colors duration-300">{category.name}</span>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Section - Full Width with Centered Container */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-        <div className="w-full max-w-4xl mx-auto">
+      {/* Main Content Section - Properly Centered */}
+      <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="w-full max-w-3xl">
+          
           {/* Title Section */}
           <motion.div 
-            className="text-center mb-16 lg:mb-20"
+            className="text-center mb-12 sm:mb-16 lg:mb-20"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.3 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-6" style={{lineHeight:"1.2"}}>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight mb-6 px-2">
               Become an Authorized Ray's Healthy Living Reseller
             </h1>
-            <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-green-500 via-green-400 to-green-600 mx-auto rounded-full"></div>
+            <div className="w-24 h-1 bg-gradient-to-r from-green-500 via-green-400 to-green-600 mx-auto rounded-full"></div>
           </motion.div>
 
           {/* Intro Card */}
           <motion.div 
-            className="mb-12 lg:mb-16"
+            className="mb-10 sm:mb-12 lg:mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.3 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-10 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-              <p className="text-gray-700 leading-relaxed text-base sm:text-lg">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg p-6 sm:p-8 lg:p-10 border border-gray-200 transition-shadow duration-300">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg">
                 Ray's healthy living products are available at wholesale pricing to qualified resellers including retailers, health care practitioners, and e-commerce retailers. For additional information or to apply to become a wholesale customer, please complete our{' '}
                 <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
                   WHOLESALE REGISTRATION FORM
@@ -84,18 +87,20 @@ const BecomeSeller = () => {
 
           {/* Wholesale Accounts Section */}
           <motion.div 
-            className="mb-12 lg:mb-16"
+            className="mb-10 sm:mb-12 lg:mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.3 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 flex items-center justify-start">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-green-500 to-green-600 rounded-full mr-4"></span>
-              Wholesale accounts...
-            </h2>
-            <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-10 lg:p-12 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-              <p className="text-gray-700 leading-relaxed text-base sm:text-lg">
+            <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="w-1 sm:w-1.5 h-8 bg-gradient-to-b from-green-500 to-green-600 rounded-full flex-shrink-0 mt-1"></div>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                Wholesale accounts...
+              </h2>
+            </div>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg p-6 sm:p-8 lg:p-10 border border-gray-200 transition-shadow duration-300">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg">
                 If you are an established business licensed to sell nutritional, medical and/or athletic products, you may be qualified to receive wholesale prices on our products. To get started, complete our{' '}
                 <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
                   WHOLESALE REGISTRATION FORM
@@ -110,21 +115,23 @@ const BecomeSeller = () => {
 
           {/* Distributor Accounts Section */}
           <motion.div 
-            className="mb-12 lg:mb-16"
+            className="mb-10 sm:mb-12 lg:mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.3 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8 flex items-center justify-start">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full mr-4"></span>
-              Distributor accounts...
-            </h2>
-            <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-10 lg:p-12 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-              <p className="text-gray-700 leading-relaxed text-base sm:text-lg mb-6">
+            <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="w-1 sm:w-1.5 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full flex-shrink-0 mt-1"></div>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                Distributor accounts...
+              </h2>
+            </div>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg p-6 sm:p-8 lg:p-10 border border-gray-200 transition-shadow duration-300">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg mb-4 sm:mb-6">
                 If you are an established distributor licensed to sell nutritional, medical and/or athletic products, you may wish to offer the ray's healthy living line to your wholesale customers.
               </p>
-              <p className="text-gray-700 leading-relaxed text-base sm:text-lg">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg">
                 Based upon volume, distributors may be qualified to receive discounts off wholesale prices! Please complete our{' '}
                 <a href="/auth/register?type=distributor" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
                   DISTRIBUTOR REGISTRATION FORM
@@ -137,6 +144,7 @@ const BecomeSeller = () => {
               </p>
             </div>
           </motion.div>
+
         </div>
       </div>
     </div>
