@@ -68,10 +68,9 @@ export const ProductsRange200607 = () => {
         setError("");
         setLoading(true);
         
-        // Fetch products with skip and limit to get products 200-607
-        // Skip first 200, then get 407 products (607-200)
+        // Fetch products with Product ID range 200-609
         const response = await fetchWithCancel(
-          `${BASE_URL}/api/wholesaler/get-products-range?skip=200&limit=407`,
+          `${BASE_URL}/api/wholesaler/get-products-range?startId=200&endId=609`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -82,11 +81,11 @@ export const ProductsRange200607 = () => {
 
         if (!response) return;
 
-        const data = Array.isArray(response.data) ? response.data : [];
+        const data = Array.isArray(response.data.products) ? response.data.products : [];
         setProducts(data);
 
         if (data.length === 0) {
-          setError("No products found in this range.");
+          setError("No products found in Product ID range 200-609.");
         }
       } catch (err) {
         console.error("Error fetching products:", err.response?.data, "Status:", err.response?.status);
@@ -149,9 +148,12 @@ export const ProductsRange200607 = () => {
           borderRadius: "12px",
           boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
           overflow: "hidden",
-          height: "300px",
+          height: "auto",
+          minHeight: "320px",
           position: "relative",
           transformOrigin: "center",
+          display: "flex",
+          flexDirection: "column",
         }}
         role="button"
         tabIndex={0}
@@ -169,6 +171,28 @@ export const ProductsRange200607 = () => {
           e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
         }}
       >
+        {/* Product ID Badge */}
+        <div 
+          style={{
+            position: "absolute",
+            top: "8px",
+            left: "8px",
+            background: "#77a13d",
+            color: "white",
+            padding: "6px 10px",
+            borderRadius: "6px",
+            fontSize: "11px",
+            fontWeight: "700",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            zIndex: 10,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          }}
+        >
+          ID: {product.item_number}
+        </div>
+
+        {/* Product Image */}
         <div 
           style={{
             width: "100%",
@@ -201,6 +225,7 @@ export const ProductsRange200607 = () => {
             }}
           />
           
+          {/* Stock Status Badge */}
           <div 
             style={{
               position: "absolute",
@@ -224,13 +249,14 @@ export const ProductsRange200607 = () => {
           </div>
         </div>
         
+        {/* Product Info */}
         <div 
           style={{
             padding: "12px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            height: "140px",
+            flex: 1,
             position: "relative",
             zIndex: 2
           }}
@@ -265,7 +291,8 @@ export const ProductsRange200607 = () => {
           <div style={{ 
             display: "flex", 
             justifyContent: "space-between", 
-            alignItems: "center" 
+            alignItems: "center",
+            marginTop: "8px"
           }}>
             <div>
               <h3 style={{ 
@@ -322,6 +349,8 @@ export const ProductsRange200607 = () => {
             marginBottom: "32px",
             paddingBottom: "16px",
             borderBottom: "2px solid #e5e7eb",
+            flexWrap: "wrap",
+            gap: "16px"
           }}
         >
           <div>
@@ -332,14 +361,14 @@ export const ProductsRange200607 = () => {
               margin: 0,
               letterSpacing: "-0.5px"
             }}>
-              Products 200-607
+              Products (ID: 200-609)
             </h2>
             <p style={{
               color: "#6b7280",
               fontSize: "14px",
               margin: "8px 0 0 0"
             }}>
-              Explore our complete wholesale catalog
+              Ordered by Product ID | Complete Wholesale Catalog
             </p>
           </div>
           <button
@@ -426,7 +455,7 @@ export const ProductsRange200607 = () => {
             role="status"
           >
             <p style={{ color: "#374151", fontSize: "16px", margin: 0, fontWeight: "600" }}>
-              No products available in this range yet
+              No products available in Product ID range 200-609
             </p>
           </div>
         )}
@@ -444,6 +473,25 @@ export const ProductsRange200607 = () => {
             {productList}
           </div>
         )}
+
+        {!loading && Array.isArray(products) && products.length > 0 && (
+          <div style={{
+            marginTop: "32px",
+            padding: "16px",
+            background: "rgba(119, 161, 61, 0.05)",
+            borderRadius: "8px",
+            textAlign: "center",
+            border: "1px solid rgba(119, 161, 61, 0.2)"
+          }}>
+            <p style={{
+              color: "#374151",
+              fontSize: "14px",
+              margin: 0
+            }}>
+              ✅ Showing <strong>{products.length}</strong> products | Product IDs from <strong>200 to 609</strong>
+            </p>
+          </div>
+        )}
       </div>
 
       <style>
@@ -455,7 +503,7 @@ export const ProductsRange200607 = () => {
           
           @media (max-width: 768px) {
             .productCard {
-              height: 280px !important;
+              height: auto !important;
             }
           }
         `}
