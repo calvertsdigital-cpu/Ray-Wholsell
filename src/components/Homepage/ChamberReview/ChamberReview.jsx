@@ -82,63 +82,72 @@ const ChamberReview = () => {
   };
 
   return (
-    <div className="px-4 py-8">
-      <div className="bg-slate-900 backdrop-blur-sm rounded-3xl border border-slate-200 p-8 shadow-2xl max-w-7xl mx-auto">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-3 bg-blue-600/10 px-6 py-3 rounded-full border border-blue-400/30 mb-6">
-            <Star className="w-5 h-5 text-blue-400 fill-blue-400" />
-            <span className="text-blue-100 font-semibold">
+    <div className="px-4 py-12 sm:py-16 lg:py-20 mt-8 sm:mt-12 lg:mt-16">
+      <div className="bg-slate-950 backdrop-blur-sm rounded-3xl border border-slate-700 p-8 sm:p-10 lg:p-12 shadow-2xl max-w-2xl mx-auto">
+        <div className="text-center space-y-6">
+          
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-blue-600/10 px-4 py-2 rounded-full border border-blue-400/40 mx-auto">
+            <Star className="w-4 h-4 text-blue-400 fill-blue-400" />
+            <span className="text-blue-200 font-semibold text-sm">
               Chamber of Commerce
             </span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-5 leading-tight">
+          {/* Title */}
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
             Chamber of Commerce Highlights
           </h2>
-          <p className="text-lg text-slate-300 mb-8 leading-relaxed max-w-3xl mx-auto">
-            Local Chamber recognition and top customer feedback — first
-            five 5-star reviews.
+
+          {/* Subtitle */}
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+            Local Chamber recognition and top customer feedback — first five 5-star reviews.
           </p>
 
-          <div className="flex justify-center items-center gap-4 mb-6 flex-wrap">
-            <div className="flex items-center gap-2 bg-blue-500/20 px-4 py-2 rounded-full border border-blue-400/30">
-              <span className="text-white font-semibold text-sm">
+          {/* Stats Bar */}
+          <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap bg-blue-500/5 px-4 py-3 rounded-xl border border-blue-400/20 mx-auto w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full">
+              <span className="text-white font-semibold text-xs sm:text-sm">
                 Chamber Reviews
               </span>
             </div>
-            <div className="flex">
+            
+            <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className="w-6 h-6 fill-yellow-400 text-yellow-400 drop-shadow-lg"
+                  className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400"
                 />
               ))}
             </div>
-            <span className="text-2xl font-bold text-white">
+            
+            <span className="text-xl sm:text-2xl font-bold text-white">
               5.0
             </span>
-            <div className="h-6 w-px bg-slate-700 mx-2"></div>
-            <span className="text-slate-300 text-base">
+            
+            <span className="text-slate-300 text-xs sm:text-sm whitespace-nowrap">
               5 Local 5-star Reviews
             </span>
           </div>
 
+          {/* Button */}
           <button
             onClick={handleViewChamberReviews}
-            className="inline-flex items-center gap-3 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all duration-300 text-lg shadow-xl shadow-blue-900/20 transform hover:scale-105"
+            className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-300 text-sm sm:text-base shadow-lg shadow-blue-900/20 transform hover:scale-105"
           >
-            <Star className="w-5 h-5" />
+            <Star className="w-4 h-4" />
             View Chamber Reviews
           </button>
+
         </div>
       </div>
 
       {showChamberReviews && (
-        <div className="mt-8 animate-fade-in max-w-7xl mx-auto">
-          <div className="bg-slate-900 rounded-3xl border border-slate-800 p-8 shadow-2xl">
-            <h3 className="text-2xl font-bold text-center text-white mb-10 flex items-center justify-center gap-3">
-              <Check className="text-green-400" />
-              Chamber of Commerce - Top 5 Reviews
+        <div className="mt-8 sm:mt-10 lg:mt-12 animate-fade-in max-w-4xl mx-auto">
+          <div className="bg-slate-950 rounded-3xl border border-slate-700 p-6 sm:p-8 lg:p-10 shadow-2xl">
+            <h3 className="text-xl sm:text-2xl font-bold text-center text-white mb-8 flex items-center justify-center gap-2">
+              <Check className="text-green-400 w-5 h-5" />
+              Chamber of Commerce - Top Reviews
             </h3>
 
             <div className="relative max-w-4xl mx-auto">
@@ -154,44 +163,44 @@ const ChamberReview = () => {
                   {chamberReviews.map((review, index) => (
                     <div
                       key={index}
-                      className="w-full flex-shrink-0 px-4"
+                      className="w-full flex-shrink-0 px-2 sm:px-4"
                     >
-                      <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700 shadow-xl flex flex-col min-h-[300px]">
-                        <div className="flex items-center gap-1 mb-4">
+                      <div className="bg-slate-900/50 rounded-2xl p-6 sm:p-7 border border-slate-700/50 shadow-lg flex flex-col min-h-[280px] hover:border-slate-600/70 transition-colors duration-300">
+                        <div className="flex items-center gap-1 mb-3">
                           {[...Array(review.rating)].map((_, i) => (
                             <Star
                               key={i}
-                              className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                              className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400"
                             />
                           ))}
-                          <span className="ml-2 text-sm text-slate-400">
+                          <span className="ml-2 text-xs text-slate-400">
                             {review.date}
                           </span>
                         </div>
 
-                        <Quote className="w-8 h-8 text-blue-500/50 mb-4" />
-                        <div className="flex-1 text-slate-200 text-lg mb-6 leading-relaxed italic">
+                        <Quote className="w-6 h-6 text-blue-500/40 mb-3" />
+                        <div className="flex-1 text-slate-300 text-sm sm:text-base mb-4 leading-relaxed italic">
                           "{review.text}"
                         </div>
 
-                        <div className="flex items-center justify-between pt-6 border-t border-slate-700">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-700/50 gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
                               {review.avatar}
                             </div>
                             <div>
-                              <div className="font-bold text-white">
+                              <div className="font-semibold text-white text-sm">
                                 {review.name}
                               </div>
-                              <div className="text-blue-400 text-sm">
+                              <div className="text-blue-400 text-xs">
                                 {review.location}
                               </div>
                             </div>
                           </div>
 
-                          <div className="hidden sm:flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
+                          <div className="hidden sm:flex items-center gap-1.5 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/30">
                             <Check className="w-3 h-3 text-green-400" />
-                            <span className="text-green-400 font-medium text-xs uppercase tracking-wider">
+                            <span className="text-green-400 font-medium text-xs uppercase">
                               Verified
                             </span>
                           </div>
@@ -202,16 +211,17 @@ const ChamberReview = () => {
                 </div>
               </div>
 
-              <div className="flex justify-center gap-3 mt-8">
+              <div className="flex justify-center gap-2 mt-6 sm:mt-8">
                 {chamberReviews.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentChamberReviewIndex(index)}
                     className={`h-2 rounded-full transition-all duration-300 ${
                       index === currentChamberReviewIndex
-                        ? "bg-blue-500 w-8"
+                        ? "bg-blue-500 w-6"
                         : "bg-slate-700 w-2 hover:bg-slate-600"
                     }`}
+                    aria-label={`Go to review ${index + 1}`}
                   />
                 ))}
               </div>
@@ -219,7 +229,7 @@ const ChamberReview = () => {
               <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => navigate('/bengal-reviews')}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition-all duration-200 text-base shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
                 >
                   View all reviews
                 </button>
