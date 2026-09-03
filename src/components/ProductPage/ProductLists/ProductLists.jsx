@@ -656,7 +656,7 @@ export const ProductLists = () => {
                     {/* Product Title */}
                     <td className="col-title">
                       <div className="product-title-info">
-                        <h3 className="product-name">{product.name}</h3>
+                        <h3 className="product-name">{product.originalProductName || product.name}</h3>
                         <div className="product-category">
                           {product.category?.name || product.categoryName || product.department || "General"}
                         </div>
@@ -833,7 +833,7 @@ export const ProductLists = () => {
               
               <div className="product-details-section">
                 <div className="product-header">
-                  <h3 className="modal-product-name">{selectedProduct.name}</h3>
+                  <h3 className="modal-product-name">{selectedProduct.originalProductName || selectedProduct.name}</h3>
                   <div className="stock-status-modal">
                     {selectedProduct.stock === 0 ? (
                       <span className="stock-badge out-of-stock">Out of Stock</span>

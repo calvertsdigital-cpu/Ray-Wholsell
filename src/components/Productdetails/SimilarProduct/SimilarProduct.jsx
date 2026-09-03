@@ -268,7 +268,7 @@ export const SimilarProduct = ({ similarProducts = [], getImageUrl }) => {
                   id={product._id}
                   image={getImageUrl(product.images?.[0] || "")}
                   // company={product.createdBy?.name || "Unknown"}
-                  title={product.name}
+                  title={product.originalProductName || product.name}
                   price={product.buyPrice}
                   stock={product.stock > 0 ? "In Stock" : "Out of Stock"}
                 />

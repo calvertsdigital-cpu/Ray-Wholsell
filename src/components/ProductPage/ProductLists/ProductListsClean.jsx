@@ -335,7 +335,7 @@ export const ProductLists = () => {
                   </div>
 
                   {/* Product Title */}
-                  <h3 className="product-title">{product.name}</h3>
+                  <h3 className="product-title">{product.originalProductName || product.name}</h3>
 
                   {/* Category & Bin */}
                   <div className="product-details">

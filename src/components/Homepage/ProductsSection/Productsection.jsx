@@ -1096,7 +1096,7 @@ export const Productsection = () => {
               whiteSpace: "nowrap",
               lineHeight: "1.2"
             }}>
-              {product.name}
+              {product.originalProductName || product.name}
             </h4>
           </div>
           
