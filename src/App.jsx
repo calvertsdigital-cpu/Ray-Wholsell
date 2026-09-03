@@ -162,6 +162,7 @@ function App() {
           <Route path="/auth/register" exact element={<Register />} />
           <Route path="/auth/forgot-password" exact element={<ForgotPassword />} />
           <Route path="/purchase-summary" exact element={<PurchaseSummary />} />
+          <Route path="/checkout" exact element={<PurchaseSummary />} />
           <Route path="/order-success" exact element={<OrderSuccess />} />
           <Route path="/tracking" element={<TrackingDetail />} />
 
