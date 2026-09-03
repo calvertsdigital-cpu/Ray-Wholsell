@@ -62,6 +62,8 @@ export const FilterProduct = () => {
   const [loading, setLoading] = useState(true);
   const [isFiltering, setIsFiltering] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -73,6 +75,7 @@ export const FilterProduct = () => {
     minPrice: "",
     maxPrice: "",
     sortBy: "All",
+    category: "",
   });
 
   const [scope, animate] = useAnimate();
@@ -91,6 +94,68 @@ export const FilterProduct = () => {
     }
     return token;
   }, [navigate]);
+
+  // Define the categories you want displayed
+  const VITALITY_WORKS_CATEGORIES = [
+    "Single Herbal Liquid Extracts",
+    "Herbal Formula Liquid Extracts",
+    "CBD",
+    "Vitamins & Minerals",
+    "Kids Formulas",
+    "Stevia",
+    "Carrier Oils",
+    "Essential Oils",
+    "Herbal Oils",
+    "Herbal Powders",
+    "Empty Bottles",
+    "Literature",
+  ];
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      setCategoriesLoading(true);
+      const token = localStorage.getItem("userToken");
+      
+      const response = await axios.get(`${BASE_URL}/api/user/categories`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (response.data && Array.isArray(response.data)) {
+        // Filter to only show Vitality Works categories
+        const filteredCategories = response.data.filter(cat => 
+          VITALITY_WORKS_CATEGORIES.includes(cat.name)
+        );
+        
+        // Sort by the order in VITALITY_WORKS_CATEGORIES
+        const sortedCategories = filteredCategories.sort((a, b) => {
+          const indexA = VITALITY_WORKS_CATEGORIES.indexOf(a.name);
+          const indexB = VITALITY_WORKS_CATEGORIES.indexOf(b.name);
+          return indexA - indexB;
+        });
+
+        setCategories(sortedCategories);
+      }
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, [BASE_URL]);
+
+  const validatePriceRange = useCallback((minPrice, maxPrice) => {
+    const min = parseFloat(minPrice);
+    const max = parseFloat(maxPrice);
+
+    if (minPrice && maxPrice && min > max) {
+      return "Minimum price cannot be greater than maximum price";
+    }
+
+    if ((minPrice && min < 0) || (maxPrice && max < 0)) {
+      return "Price cannot be negative";
+    }
+
+    return null;
+  }, []);
 
   const validatePriceRange = useCallback((minPrice, maxPrice) => {
     const min = parseFloat(minPrice);
@@ -222,6 +287,7 @@ export const FilterProduct = () => {
   useEffect(() => {
     const initializeData = async () => {
       setLoading(true);
+      await fetchCategories();
       await fetchProducts(filters, pagination.currentPage, pagination.itemsPerPage);
       setIsInitialized(true);
     };
@@ -329,7 +395,7 @@ export const FilterProduct = () => {
     ));
   }, [products, getImageUrl, navigate]);
 
-  const hasActiveFilters = filters.minPrice || filters.maxPrice || filters.sortBy !== "All";
+  const hasActiveFilters = filters.minPrice || filters.maxPrice || filters.sortBy !== "All" || filters.category;
 
   return (
     <>
@@ -411,6 +477,47 @@ export const FilterProduct = () => {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
+            <div>
+              <label 
+                htmlFor="category-filter"
+                style={{ 
+                  display: "block", 
+                  fontSize: "14px", 
+                  fontWeight: "500", 
+                  color: "white",
+                  marginBottom: "8px",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                }}
+              >
+                Product Category
+              </label>
+              <select
+                id="category-filter"
+                name="category"
+                value={filters.category}
+                onChange={handleFilterChange}
+                disabled={isFiltering || categoriesLoading}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  background: "rgba(255,255,255,0.1)",
+                  fontSize: "14px",
+                  color: "white",
+                  backdropFilter: "blur(4px)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <option value="" style={{ color: "#1f2937" }}>All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat._id} style={{ color: "#1f2937" }}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label 
                 htmlFor="min-price-filter"
