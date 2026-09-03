@@ -25,7 +25,7 @@ const BlogCard = ({ webinar, index = 0 }) => {
   } = webinar;
 
   const handleAction = () => {
-    if (type === 'upcoming' && registerLink) {
+    if (type === 'RHL UPComing' && registerLink) {
       window.open(registerLink, '_blank');
     } else if (type === 'past' && watchLink) {
       window.open(watchLink, '_blank');
@@ -37,7 +37,7 @@ const BlogCard = ({ webinar, index = 0 }) => {
 
   const getActionText = () => {
     switch (type) {
-      case 'upcoming':
+      case 'RHL UPComing':
         return 'Register';
       case 'past':
         return 'Watch Now';

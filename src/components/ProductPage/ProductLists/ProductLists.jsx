@@ -597,7 +597,7 @@ export const ProductLists = () => {
               <tr>
                 <th className="col-image">Image</th>
                 <th className="col-product">Product ID</th>
-                <th className="col-upc">UPC</th>
+                <th className="col-RHL UPC">RHL UPC</th>
                 <th className="col-title">Product Title</th>
                 <th className="col-location">Bin Location</th>
                 <th className="col-price">Price</th>
@@ -646,9 +646,9 @@ export const ProductLists = () => {
                       </span>
                     </td>
 
-                    {/* UPC */}
-                    <td className="col-upc">
-                      <span className="upc-code">
+                    {/* RHL UPC */}
+                    <td className="col-RHL UPC">
+                      <span className="RHL UPC-code">
                         {product.lookup_code || product.sku || "N/A"}
                       </span>
                     </td>
@@ -850,7 +850,7 @@ export const ProductLists = () => {
                   </div>
                   
                   <div className="info-item">
-                    <label>UPC Code:</label>
+                    <label>RHL UPC Code:</label>
                     <span>{selectedProduct.lookup_code || selectedProduct.sku || "N/A"}</span>
                   </div>
                   

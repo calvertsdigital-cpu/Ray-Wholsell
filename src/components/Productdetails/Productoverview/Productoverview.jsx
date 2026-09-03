@@ -409,7 +409,7 @@ export const Productoverview = () => {
                 )}
               </h1>
 
-              {/* Product ID + UPC row */}
+              {/* Product ID + RHL UPC row */}
               {(product.item_number || product.product_id || product.lookup_code || product.sku) && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
                   {(product.item_number || product.product_id) && (
@@ -427,7 +427,7 @@ export const Productoverview = () => {
                       borderRadius: '6px', padding: '4px 10px',
                       fontSize: '12px', color: '#6b7280', fontFamily: 'monospace'
                     }}>
-                      UPC: {product.lookup_code || product.sku}
+                      RHL UPC: {product.lookup_code || product.sku}
                     </span>
                   )}
                 </div>

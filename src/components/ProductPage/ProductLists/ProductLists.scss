@@ -337,7 +337,7 @@
           
           &.col-image { width: 80px; text-align: center; }
           &.col-product { width: 100px; }
-          &.col-upc { width: 120px; }
+          &.col-RHL UPC { width: 120px; }
           &.col-title { width: auto; min-width: 200px; }
           &.col-location { width: 100px; }
           &.col-price { width: 80px; text-align: right; }
@@ -433,8 +433,8 @@
               }
             }
             
-            &.col-upc {
-              .upc-code {
+            &.col-RHL UPC {
+              .RHL UPC-code {
                 font-family: monospace;
                 font-size: 12px;
                 color: var(--text-medium);

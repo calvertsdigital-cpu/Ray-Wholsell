@@ -329,8 +329,8 @@ export const ProductLists = () => {
                     <span className="product-id">
                       ID: {product.item_number || product.product_id || "N/A"}
                     </span>
-                    <span className="product-upc">
-                      UPC: {product.lookup_code || product.sku || "N/A"}
+                    <span className="product-RHL UPC">
+                      RHL UPC: {product.lookup_code || product.sku || "N/A"}
                     </span>
                   </div>
 

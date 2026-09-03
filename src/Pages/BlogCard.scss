@@ -46,7 +46,7 @@
         font-weight: 500;
         font-family: var(--mainFont), sans-serif;
   
-        &.upcoming {
+        &.RHL UPComing {
           background-color: #fff3e0;
           color: var(--color-secondary);
         }
@@ -222,8 +222,8 @@
       }
     }
   
-    // Special styling for upcoming cards
-    &.upcoming {
+    // Special styling for RHL UPComing cards
+    &.RHL UPComing {
       border-left: 4px solid var(--color-secondary);
   
       .action-button {

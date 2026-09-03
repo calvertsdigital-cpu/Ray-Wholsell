@@ -209,7 +209,7 @@ const OrderDetails = () => {
                               <span style={{ background:'#f3f4f6', border:'1px solid #e5e7eb',
                                 borderRadius:5, padding:'2px 8px', fontSize:11,
                                 fontFamily:'monospace', color:'#6b7280' }}>
-                                UPC: {product.lookup_code || product.sku}
+                                RHL UPC: {product.lookup_code || product.sku}
                               </span>
                             )}
                             {(product?.bin_location || item.bin_location) && (
