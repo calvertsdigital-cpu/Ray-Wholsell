@@ -18,7 +18,7 @@ const BecomeSeller = () => {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-gray-50 to-white overflow-x-hidden">
+    <div className="w-full min-h-screen bg-gradient-to-b from-gray-50 to-white overflow-x-hidden mt-20 sm:mt-28 lg:mt-40">
       {/* Header Section with Product Categories */}
       <div className="w-full bg-white py-12 sm:py-16 lg:py-20 shadow-sm">
         <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8">

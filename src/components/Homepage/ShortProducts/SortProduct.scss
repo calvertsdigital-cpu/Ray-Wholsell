@@ -152,6 +152,8 @@
   justify-content: center;
   align-items: center;
   margin: 2% 0%;
+  margin-bottom: 8rem;
+  padding-bottom: 4rem;
 
   .SP__mainContentWrapper {
     width: 90%;
@@ -252,6 +254,8 @@
 @media (max-width: 1024px) {
   .SortProduct__mainWrapper {
     padding: 30px 8px;
+    margin-bottom: 6rem;
+    padding-bottom: 3rem;
 
     .SP__mainContentWrapper {
       gap: 4vw;
@@ -291,6 +295,8 @@
 @media (max-width: 600px) {
   .SortProduct__mainWrapper {
     padding: 20px 5px;
+    margin-bottom: 4rem;
+    padding-bottom: 2rem;
 
     .SP__mainContentWrapper {
       gap: 6vw;
