@@ -400,7 +400,7 @@ export const Productoverview = () => {
 
             <div className="product-overview__info-section">
               <h4 className="category">{product.category?.name || "Uncategorized"}</h4>
-              <h1 className="title">{product.name}</h1>
+              <h1 className="title">{product.originalProductName || product.name}</h1>
 
               {/* Product ID + UPC row */}
               {(product.item_number || product.product_id || product.lookup_code || product.sku) && (
