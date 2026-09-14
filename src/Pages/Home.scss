@@ -1893,6 +1893,7 @@ footer {
   background: linear-gradient(135deg, #fbfaf5 0%, #f5f3ee 100%);
   margin: 48px 0;
   border-radius: 16px;
+  display: block;
 }
 
 .catalog-container {
@@ -1908,6 +1909,7 @@ footer {
 }
 
 .catalog-content {
+  display: block;
   .eyebrow {
     font-size: 12px;
     font-weight: 700;
@@ -2002,6 +2004,7 @@ footer {
   .catalog-section {
     padding: 40px 0;
     margin: 32px 0;
+    display: block;
   }
   
   .catalog-container {
@@ -2014,5 +2017,28 @@ footer {
   
   .feature-item {
     padding: 16px;
+  }
+}
+
+@media (min-width: 769px) {
+  .catalog-section {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  .catalog-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .catalog-content {
+    display: block;
+    visibility: visible;
+  }
+  
+  .catalog-features {
+    display: flex;
+    flex-direction: column;
   }
 }
