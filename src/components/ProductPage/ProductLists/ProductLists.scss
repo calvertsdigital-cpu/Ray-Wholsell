@@ -1455,3 +1455,29 @@
     }
   }
 }
+
+
+// RHL UPC Column Styling
+.col-upc {
+  text-align: center;
+  
+  .rhl-upc {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dark);
+    letter-spacing: 1px;
+    padding: 6px 8px;
+    background-color: #f3f4f6;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+  }
+}
+
+// Info Item Full Width for Modal
+.info-item {
+  &:has(.ingredients-text),
+  &:has(.variants-list) {
+    grid-column: 1 / -1;
+  }
+}

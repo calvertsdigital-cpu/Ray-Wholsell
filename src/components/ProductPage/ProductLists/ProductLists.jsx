@@ -869,6 +869,20 @@ export const ProductLists = () => {
                     </div>
                   )}
                   
+                  {selectedProduct.variants?.[0]?.rhlUpc && (
+                    <div className="info-item">
+                      <label>RHL UPC:</label>
+                      <span>{selectedProduct.variants[0].rhlUpc}</span>
+                    </div>
+                  )}
+
+                  {selectedProduct.bin_location && (
+                    <div className="info-item">
+                      <label>Bin Location:</label>
+                      <span>{selectedProduct.bin_location}</span>
+                    </div>
+                  )}
+                  
                   <div className="info-item">
                     <label>Category:</label>
                     <span>{selectedProduct.category || "General"}</span>
