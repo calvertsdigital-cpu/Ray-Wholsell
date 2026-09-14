@@ -98,22 +98,22 @@ export const ProductLists = () => {
         setLoading(true);
         setError("");
         
-        console.log('🔄 Fetching products from new catalog API...');
+        console.log('🔄 Fetching ALL products from catalog API...');
         
-        // Fetch from new catalog endpoint with pagination
+        // Fetch ALL products from new catalog endpoint (no pagination limit)
         const response = await axios.get(`${BASE_URL}/api/user/catalog/products`, {
           params: {
-            page: currentPage,
-            limit: productsPerPage,
+            page: 1,
+            limit: 500,  // Request all products (backend has 408 total)
             search: searchQuery
           }
         });
         
         if (response.data?.products && response.data.products.length > 0) {
-          console.log('✅ Loaded products from catalog API:', response.data.products.length);
+          console.log('✅ Loaded all products from catalog API:', response.data.products.length);
           setProducts(response.data.products);
-          setTotalProducts(response.data.totalProducts);
-          setPaginatedProducts(response.data.products);
+          setTotalProducts(response.data.products.length);
+          setPaginatedProducts(response.data.products);  // Show all products, no pagination
           setLoading(false);
           return;
         }
@@ -135,7 +135,7 @@ export const ProductLists = () => {
     };
     
     fetchProducts();
-  }, [BASE_URL, currentPage, productsPerPage, searchQuery]);
+  }, [BASE_URL, searchQuery]);
 
   // Fetch wishlist if user is logged in
   useEffect(() => {
