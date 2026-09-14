@@ -467,10 +467,10 @@ export const Productoverview = () => {
                 </button>
               </div>
 
-              {product.bin_location && (
+              {product.variants?.[0]?.binLocation && (
                 <div className="bin-location-badge">
                   <MapPin size={16} />
-                  <span>Bin Location: <strong>{product.bin_location}</strong></span>
+                  <span>Bin Location: <strong>{product.variants[0].binLocation}</strong></span>
                 </div>
               )}
 

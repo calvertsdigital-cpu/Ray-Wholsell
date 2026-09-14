@@ -330,9 +330,9 @@ const PurchaseSummary = () => {
                 </p>
               )}
               {/* Bin Location badge */}
-              {(item.product.bin_location || item.bin_location) && (
+              {(item.product?.variants?.[0]?.binLocation || item.variants?.[0]?.binLocation) && (
                 <p style={{ fontSize:'11px', color:'#77a13d', fontWeight:600, margin:'2px 0', display:'flex', alignItems:'center', gap:3 }}>
-                  📍 Bin: {item.product.bin_location || item.bin_location}
+                  📍 Bin: {item.product?.variants?.[0]?.binLocation || item.variants?.[0]?.binLocation}
                 </p>
               )}
               <p>Qty: {item.quantity} × ${item.price.toFixed(2)}</p>

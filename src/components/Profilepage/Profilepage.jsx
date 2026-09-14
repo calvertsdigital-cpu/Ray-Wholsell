@@ -210,9 +210,9 @@ export const Profilepage = () => {
                       <strong>Product ID:</strong> {item.product.item_number || item.product.product_id}
                     </p>
                   )}
-                  {(item.product?.bin_location || item.bin_location) && (
+                  {(item.product?.variants?.[0]?.binLocation || item.variants?.[0]?.binLocation) && (
                     <p style={{ fontSize:11, color:'#3d6b0f', fontWeight:600 }}>
-                      📍 <strong>Bin:</strong> {item.product?.bin_location || item.bin_location}
+                      📍 <strong>Bin:</strong> {item.product?.variants?.[0]?.binLocation || item.variants?.[0]?.binLocation}
                     </p>
                   )}
                   <p><strong>Quantity:</strong> {item.quantity}</p>

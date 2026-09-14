@@ -658,7 +658,7 @@ export const ProductLists = () => {
                     {/* Bin Location */}
                     <td className="col-location">
                       <span className="bin-location">
-                        {product.bin_location || "N/A"}
+                        {product.variants?.[0]?.binLocation || "N/A"}
                       </span>
                     </td>
 
@@ -869,10 +869,10 @@ export const ProductLists = () => {
                     </div>
                   )}
 
-                  {selectedProduct.bin_location && (
+                  {selectedProduct.variants?.[0]?.binLocation && (
                     <div className="info-item">
                       <label>Bin Location:</label>
-                      <span>{selectedProduct.bin_location}</span>
+                      <span>{selectedProduct.variants[0].binLocation}</span>
                     </div>
                   )}
                   

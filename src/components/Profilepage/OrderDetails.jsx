@@ -212,11 +212,11 @@ const OrderDetails = () => {
                                 RHL UPC: {product.lookup_code || product.sku}
                               </span>
                             )}
-                            {(product?.bin_location || item.bin_location) && (
+                            {(product?.variants?.[0]?.binLocation || item.variants?.[0]?.binLocation) && (
                               <span style={{ background:'#e8f3d6', border:'1px solid #bbf7d0',
                                 borderRadius:5, padding:'2px 8px', fontSize:11,
                                 color:'#3d6b0f', fontWeight:600 }}>
-                                📍 Bin: {product?.bin_location || item.bin_location}
+                                📍 Bin: {product?.variants?.[0]?.binLocation || item.variants?.[0]?.binLocation}
                               </span>
                             )}
                           </div>
