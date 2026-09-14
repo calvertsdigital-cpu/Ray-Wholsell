@@ -96,74 +96,49 @@ export const ProductLists = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        setError("");
         
-        let productsData = [];
+        console.log('🔄 Fetching products from new catalog API...');
         
-        // Try to fetch real products from public API endpoint (no auth required)
-        try {
-          console.log('🔄 Fetching products from public endpoint...');
-          const response = await axiosInstance.get('/api/wholesaler/get-tirtho-wholesaler', {
-            params: {
-              role: 'wholesaler',
-              page: 1,
-              limit: 1000 // Request all products (backend will return up to 1000)
-            }
-          });
-          
-          if (response.data?.products && response.data.products.length > 0) {
-            productsData = response.data.products;
-            console.log('✅ Loaded real products from public API:', productsData.length);
-            setProducts(productsData);
-            setLoading(false);
-            return;
+        // Fetch from new catalog endpoint with pagination
+        const response = await axios.get(`${BASE_URL}/api/user/catalog/products`, {
+          params: {
+            page: currentPage,
+            limit: productsPerPage,
+            search: searchQuery
           }
-        } catch (apiError) {
-          console.log('⚠️  Public endpoint failed:', apiError.message);
+        });
+        
+        if (response.data?.products && response.data.products.length > 0) {
+          console.log('✅ Loaded products from catalog API:', response.data.products.length);
+          setProducts(response.data.products);
+          setTotalProducts(response.data.totalProducts);
+          setPaginatedProducts(response.data.products);
+          setLoading(false);
+          return;
         }
         
-        // Fallback to authenticated endpoint for logged-in users
-        if (productsData.length === 0) {
-          try {
-            const token = localStorage.getItem("userToken");
-            
-            if (token) {
-              console.log('🔄 Fetching products with authentication...');
-              const response = await axiosInstance.get('/api/user/get-products', {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              
-              if (response.data?.products && response.data.products.length > 0) {
-                productsData = response.data.products;
-                console.log('✅ Loaded real products from authenticated endpoint:', productsData.length);
-                setProducts(productsData);
-                setLoading(false);
-                return;
-              }
-            }
-          } catch (authError) {
-            console.log('⚠️  Authenticated endpoint also failed:', authError.message);
-          }
-        }
-        
-        // If still no data, show error
-        if (productsData.length === 0) {
-          console.error('❌ No products available from any endpoint');
-          setError('Failed to load products. Please try again later.');
-          setProducts([]);
-        }
+        // If no products
+        console.warn('⚠️  No products returned from catalog API');
+        setProducts([]);
+        setPaginatedProducts([]);
+        setTotalProducts(0);
+        setLoading(false);
         
       } catch (error) {
-        console.error('Error in fetchProducts:', error);
-        setError('Failed to load products');
+        console.error('❌ Error fetching products:', error.message);
+        setError(error.message || "Failed to fetch products");
         setProducts([]);
-      } finally {
+        setPaginatedProducts([]);
         setLoading(false);
       }
     };
-
-    fetchProducts();
     
-    // Fetch wishlist if user is logged in
+    fetchProducts();
+  }, [BASE_URL, currentPage, productsPerPage, searchQuery]);
+
+  // Fetch wishlist if user is logged in
+  useEffect(() => {
     const fetchWishlist = async () => {
       try {
         const token = localStorage.getItem("userToken");
@@ -656,10 +631,24 @@ export const ProductLists = () => {
                     {/* Product Title */}
                     <td className="col-title">
                       <div className="product-title-info">
-                        <h3 className="product-name">{product.originalProductName || product.name}</h3>
-                        <div className="product-category">
-                          {product.category?.name || product.categoryName || product.department || "General"}
+                        <h3 className="product-name">{product.name}</h3>
+                        <div className="product-metadata">
+                          {product.category && (
+                            <span className="badge category-badge">{product.category}</span>
+                          )}
+                          {product.type && (
+                            <span className="badge type-badge">{product.type}</span>
+                          )}
+                          {product.variants && product.variants.length > 0 && (
+                            <span className="badge variant-badge">{product.variants.length} sizes</span>
+                          )}
                         </div>
+                        {product.description && (
+                          <p className="product-description">{product.description}</p>
+                        )}
+                        {product.rhlId && (
+                          <small className="rhl-id">RHL#{product.rhlId}</small>
+                        )}
                         {isOutOfStock && <span className="stock-status out-of-stock">Out of Stock</span>}
                         {!isOutOfStock && <span className="stock-status in-stock">Stock: {product.stock}</span>}
                       </div>
@@ -674,7 +663,18 @@ export const ProductLists = () => {
 
                     {/* Price */}
                     <td className="col-price">
-                      <span className="price">${product.buyPrice.toFixed(2)}</span>
+                      {product.variants && product.variants.length > 0 ? (
+                        <div className="price-display">
+                          <span className="price">${product.variants[0].price?.toFixed(2) || "N/A"}</span>
+                          {product.variants.length > 1 && (
+                            <small className="price-range">
+                              (${Math.min(...product.variants.map(v => v.price || 0)).toFixed(2)} - ${Math.max(...product.variants.map(v => v.price || 0)).toFixed(2)})
+                            </small>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="price">${product.buyPrice?.toFixed(2) || "N/A"}</span>
+                      )}
                     </td>
 
                     {/* Quantity Controls */}
@@ -833,7 +833,10 @@ export const ProductLists = () => {
               
               <div className="product-details-section">
                 <div className="product-header">
-                  <h3 className="modal-product-name">{selectedProduct.originalProductName || selectedProduct.name}</h3>
+                  <h3 className="modal-product-name">{selectedProduct.name}</h3>
+                  {selectedProduct.rhlId && (
+                    <span className="modal-rhl-id">RHL#{selectedProduct.rhlId}</span>
+                  )}
                   <div className="stock-status-modal">
                     {selectedProduct.stock === 0 ? (
                       <span className="stock-badge out-of-stock">Out of Stock</span>
@@ -841,38 +844,62 @@ export const ProductLists = () => {
                       <span className="stock-badge in-stock">In Stock ({selectedProduct.stock} available)</span>
                     )}
                   </div>
+                  {selectedProduct.category && (
+                    <div className="modal-metadata">
+                      <span className="modal-badge category">{selectedProduct.category}</span>
+                      {selectedProduct.type && <span className="modal-badge type">{selectedProduct.type}</span>}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="product-info-grid">
-                  <div className="info-item">
-                    <label>Product ID:</label>
-                    <span>{selectedProduct.item_number || selectedProduct.product_id || "N/A"}</span>
-                  </div>
-                  
-                  <div className="info-item">
-                    <label>RHL UPC Code:</label>
-                    <span>{selectedProduct.lookup_code || selectedProduct.sku || "N/A"}</span>
-                  </div>
+                  {selectedProduct.rhlId && (
+                    <div className="info-item">
+                      <label>RHL ID:</label>
+                      <span>{selectedProduct.rhlId}</span>
+                    </div>
+                  )}
                   
                   <div className="info-item">
                     <label>Category:</label>
-                    <span>{selectedProduct.category?.name || selectedProduct.categoryName || selectedProduct.department || "General"}</span>
+                    <span>{selectedProduct.category || "General"}</span>
                   </div>
+
+                  {selectedProduct.manufacturerName && (
+                    <div className="info-item">
+                      <label>Manufacturer:</label>
+                      <span>{selectedProduct.manufacturerName}</span>
+                    </div>
+                  )}
                   
-                  <div className="info-item">
-                    <label>Bin Location:</label>
-                    <span>{selectedProduct.bin_location || "N/A"}</span>
-                  </div>
+                  {selectedProduct.description && (
+                    <div className="info-item full-width">
+                      <label>Description:</label>
+                      <span>{selectedProduct.description}</span>
+                    </div>
+                  )}
                   
-                  <div className="info-item">
-                    <label>Department:</label>
-                    <span>{selectedProduct.department || "N/A"}</span>
-                  </div>
-                  
-                  <div className="info-item">
-                    <label>Available Stock:</label>
-                    <span>{selectedProduct.stock} units</span>
-                  </div>
+                  {selectedProduct.ingredients && (
+                    <div className="info-item full-width">
+                      <label>Ingredients:</label>
+                      <span className="ingredients-text">{selectedProduct.ingredients}</span>
+                    </div>
+                  )}
+
+                  {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                    <div className="info-item full-width">
+                      <label>Available Sizes/Variants:</label>
+                      <div className="variants-list">
+                        {selectedProduct.variants.map((variant, idx) => (
+                          <div key={idx} className="variant-item">
+                            <span className="variant-size">{variant.size}</span>
+                            <span className="variant-price">${variant.price?.toFixed(2) || "N/A"}</span>
+                            <span className="variant-item-num">(Item#{variant.itemNumber})</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="pricing-section">

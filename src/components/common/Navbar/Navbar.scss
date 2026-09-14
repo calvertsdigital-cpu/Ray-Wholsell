@@ -15,7 +15,7 @@
 
   &__utility {
     background: #4a5f3a;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0;
 
     .navbar-swanson__container {
       justify-content: flex-end;
@@ -24,59 +24,82 @@
     .utility-links {
       display: flex;
       align-items: center;
-      gap: 2rem;
+      gap: 16px;
 
       a {
-        color: #fff;
+        color: white;
         text-decoration: none;
-        font-family: "Futura PT", "Futura PT Fallback", Arial, Helvetica, sans-serif;
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 18px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 20px;
         transition: all 0.3s;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        white-space: nowrap;
+        cursor: pointer;
         
         &:hover {
-          color: #d4d9c2;
+          background: rgba(255, 255, 255, 0.15);
+          color: #ee6b0b;
           transform: translateY(-1px);
         }
       }
 
       button {
-        font-family: "Futura PT", "Futura PT Fallback", Arial, Helvetica, sans-serif;
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 18px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 20px;
         border: none;
         cursor: pointer;
         transition: all 0.3s;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        white-space: nowrap;
 
-        &.wholesale-btn {
-          background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-          color: #fff;
-          padding: 0.5rem 1.25rem;
-          border-radius: 6px;
-          font-weight: 500;
-          box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+        svg {
+          font-size: 20px;
+          font-weight: 900;
+        }
+
+        &.retail-button, &.wholesale-btn {
+          background: #ee6b0b;
+          color: white;
+          font-weight: 800;
+
+          svg {
+            color: white;
+            font-weight: 900;
+          }
           
           &:hover {
-            background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+            background: #d85a08;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+            box-shadow: 0 4px 12px rgba(238, 107, 11, 0.4);
           }
         }
 
-        &:not(.wholesale-btn) {
+        &:not(.retail-button):not(.wholesale-btn) {
           background: none;
-          color: #fff;
+          color: white;
+          font-weight: 700;
+
+          svg {
+            font-size: 20px;
+            font-weight: 900;
+            color: white;
+          }
           
           &:hover {
-            color: #d4d9c2;
+            background: rgba(255, 255, 255, 0.15);
+            color: #ee6b0b;
             transform: translateY(-1px);
           }
         }

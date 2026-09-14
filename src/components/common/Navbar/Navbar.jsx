@@ -1938,31 +1938,31 @@ export const Navbar = () => {
                     setIsMobileMenuOpen(false); 
                   }}
                 >
-                  <Building2 size={18} /> Retail
+                  <span className="nav-icon">▥</span> Retail
                 </button>
 
                 <div className="mobile-menu-divider"></div>
 
                 <a href="/" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Home size={18} /> Home
+                  <span className="nav-icon">⌂</span> Home
                 </a>
                 <a href="/about" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Info size={18} /> About
+                  <span className="nav-icon">ⓘ</span> About
                 </a>
                 <a href="/products" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <ShoppingBag size={18} /> Products
+                  <span className="nav-icon">▣</span> Products
                 </a>
                 <a href="/blogs" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <FileText size={18} /> Blogs
+                  <span className="nav-icon">▤</span> Blogs
                 </a>
                 <a href="/contact" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Mail size={18} /> Contact
+                  <span className="nav-icon">✉</span> Contact
                 </a>
                 <button 
                   className="mobile-menu-utility" 
                   onClick={() => { navigate("/feedback"); setIsMobileMenuOpen(false); }}
                 >
-                  <MessageSquare size={18} /> Feedback
+                  <span className="nav-icon">▢</span> Feedback
                 </button>
               </div>
             </div>

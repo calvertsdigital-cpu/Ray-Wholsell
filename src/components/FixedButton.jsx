@@ -8,8 +8,8 @@ const FixedButtons = () => {
         <Link to={"/counseling"}>
 
         <button 
-          className="bg-gray-800 text-white font-semibold text-xs tracking-wider px-4 py-16 transform rotate-90 origin-center whitespace-nowrap hover:bg-gray-700 transition-colors duration-200"
-          style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', padding: '10px', zoom: 0.9 }}
+          className="bg-gray-800 text-white font-semibold text-xs tracking-wider px-4 py-16 origin-center whitespace-nowrap hover:bg-gray-700 transition-colors duration-200"
+          style={{ writingMode: 'vertical-lr', textOrientation: 'mixed', padding: '10px', zoom: 0.9 }}
         >
           BOOK A HEALTH CONSULTANT
         </button>

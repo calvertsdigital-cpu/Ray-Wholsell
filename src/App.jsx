@@ -1,7 +1,7 @@
 
 
 import "./App.css";
-import { Home } from "./Pages/Home";
+import { HomePage } from "./Pages/Home";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Products } from "./Pages/Products";
 import { ProductDetails } from "./Pages/ProductDetails";
@@ -153,7 +153,7 @@ function App() {
     <CookieConsentProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" exact element={<Home />} />
+          <Route path="/" exact element={<HomePage />} />
           <Route path="/products" exact element={<Products />} />
           <Route path="/products-details/:pid" exact element={<ProductDetails />} />
           <Route path="/account/my-profile" exact element={<Profile />} />
