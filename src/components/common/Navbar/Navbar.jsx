@@ -1668,14 +1668,7 @@ export const Navbar = () => {
                 <span>${totalCartPrice}</span>
               </div>
               
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                <span style={{ color: "#666" }}>Shipping fee</span>
-                {shippingLoading ? (
-                  <span style={{ color: "#666" }}>Calculating...</span>
-                ) : (
-                  <span>${shippingCost.toFixed(2)}</span>
-                )}
-              </div>
+              {/* REMOVED: Shipping fee - user doesn't need it */}
               
               {couponDiscount > 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
@@ -1693,8 +1686,8 @@ export const Navbar = () => {
                   fontWeight: "600",
                 }}
               >
-                <span>Total (Incl. Shipping)</span>
-                <span style={{ color: "#28a745", fontSize: "1.2rem" }}>${totalWithShipping}</span>
+                <span>Total</span>
+                <span style={{ color: "#28a745", fontSize: "1.2rem" }}>${totalCartPrice}</span>
               </div>
               
               <button

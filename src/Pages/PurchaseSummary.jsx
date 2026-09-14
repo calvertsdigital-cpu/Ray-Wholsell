@@ -281,12 +281,7 @@ const PurchaseSummary = () => {
           <span>Items Total:</span>
           <span>${(purchase.itemsTotal || purchase.total - (purchase.shippingCost || 0)).toFixed(2)}</span>
         </div>
-        {purchase.shippingCost > 0 && (
-          <div className="detail-row">
-            <span>Shipping Cost:</span>
-            <span>${purchase.shippingCost.toFixed(2)}</span>
-          </div>
-        )}
+        {/* REMOVED: Shipping cost display - user doesn't need it */}
         <div className="detail-row" style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.5rem', fontWeight: 'bold' }}>
           <span>Total Amount:</span>
           <span>${totalPrice}</span>
