@@ -1204,7 +1204,7 @@ export const Navbar = () => {
     const totalCartPrice = memoizedCartItems
       .filter(item => item?.product?._id)
       .reduce((sum, item) => {
-        const price = item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || item.product?.sellPrice || 0;
+        const price = item.variantDetails?.price || item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || 0;
         return sum + (price * (item.quantity || 1));
       }, 0)
       .toFixed(2);
@@ -1415,10 +1415,10 @@ export const Navbar = () => {
                       fontWeight: "700",
                       color: "#333",
                     }}>
-                      ${(item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || 0).toFixed(2)}
+                      ${(item.variantDetails?.price || item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || 0).toFixed(2)}
                       {item.quantity > 1 && (
                         <span style={{ fontSize: "0.9rem", fontWeight: "400", color: "#666" }}>
-                          {" "}(Total: ${((item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || 0) * item.quantity).toFixed(2)})
+                          {" "}(Total: ${((item.variantDetails?.price || item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || 0) * item.quantity).toFixed(2)})
                         </span>
                       )}
                     </h4>
