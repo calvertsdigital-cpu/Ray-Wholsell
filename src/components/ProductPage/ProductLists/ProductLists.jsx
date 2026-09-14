@@ -589,7 +589,8 @@ export const ProductLists = () => {
                 const isMaxQuantity = quantity >= product.stock;
                 const isAddingToCart = addingToCart[product._id] || false;
                 const isInWishlist = wishlistItems.includes(product._id);
-                const subtotal = (product.buyPrice * quantity).toFixed(2);
+                const productPrice = product.variants?.[0]?.price || product.buyPrice || 0;
+                const subtotal = (productPrice * quantity).toFixed(2);
 
                 return (
                   <tr key={product._id} className={`product-row ${isOutOfStock ? 'out-of-stock' : ''}`}>
@@ -658,6 +659,13 @@ export const ProductLists = () => {
                     <td className="col-location">
                       <span className="bin-location">
                         {product.bin_location || "N/A"}
+                      </span>
+                    </td>
+
+                    {/* RHL UPC */}
+                    <td className="col-upc">
+                      <span className="rhl-upc">
+                        {product.variants?.[0]?.rhlUpc || product.lookup_code || "N/A"}
                       </span>
                     </td>
 
@@ -813,9 +821,10 @@ export const ProductLists = () => {
             <div className="modal-content">
               <div className="product-image-section">
                 <img
-                  src={`/${((products.findIndex(p => p._id === selectedProduct._id) % 7) + 1)}.png`}
-                  alt={selectedProduct.name}
+                  src={`/${((Math.max(0, products.findIndex(p => p._id === selectedProduct._id)) % 7) + 1)}.png`}
+                  alt={selectedProduct.name || 'Product'}
                   className="modal-product-image"
+                  onError={(e) => { e.target.src = '/1.png'; }}
                 />
                 <div className="image-actions">
                   <button
