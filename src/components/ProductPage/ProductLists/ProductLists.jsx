@@ -574,7 +574,7 @@ export const ProductLists = () => {
                 <th className="col-product">RHL ID</th>
                 <th className="col-rhl-upc">RHL UPC</th>
                 <th className="col-title">Product Title</th>
-                <th className="col-manufacturer">Manufacturer</th>
+                <th className="col-location">Bin Location</th>
                 <th className="col-price">Price</th>
                 <th className="col-quantity">Quantity</th>
                 <th className="col-subtotal">Subtotal</th>
@@ -656,16 +656,9 @@ export const ProductLists = () => {
                     </td>
 
                     {/* Bin Location */}
-                    <td className="col-manufacturer">
-                      <span className="manufacturer-name">
-                        {product.manufacturerName || "N/A"}
-                      </span>
-                    </td>
-
-                    {/* RHL UPC */}
-                    <td className="col-upc">
-                      <span className="rhl-upc">
-                        {product.variants?.[0]?.rhlUpc || product.lookup_code || "N/A"}
+                    <td className="col-location">
+                      <span className="bin-location">
+                        {product.bin_location || "N/A"}
                       </span>
                     </td>
 
