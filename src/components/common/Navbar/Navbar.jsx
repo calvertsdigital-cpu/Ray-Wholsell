@@ -1022,7 +1022,7 @@ export const Navbar = () => {
             .map(item => ({
               productId: item.product?._id,
               quantity: item.quantity,
-              price: item.product?.buyPrice || item.product?.sellPrice || item.price,
+              price: item.price || item.product?.variants?.[0]?.price || item.product?.buyPrice || item.product?.sellPrice || 0,
               websiteRole: 'wholesaler'
             }))
         };
