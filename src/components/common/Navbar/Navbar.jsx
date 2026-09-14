@@ -1772,7 +1772,7 @@ export const Navbar = () => {
               <button 
                 className="catalog-link"
                 onClick={() => window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank')}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'white', fontSize: '14px' }}
               >
                 <BookOpen size={16} /> Catalog
               </button>
