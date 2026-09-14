@@ -1481,3 +1481,53 @@
     grid-column: 1 / -1;
   }
 }
+
+
+// Manufacturer Column
+.col-manufacturer {
+  text-align: left;
+  
+  .manufacturer-name {
+    font-size: 13px;
+    color: var(--text-medium);
+    font-weight: 500;
+    line-height: 1.4;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// RHL UPC Code styling
+.col-rhl-upc {
+  text-align: center;
+  
+  .rhl-upc-code {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dark);
+    letter-spacing: 0.5px;
+    padding: 4px 6px;
+    background-color: #f0f9ff;
+    border: 1px solid #93c5fd;
+    border-radius: 3px;
+    display: inline-block;
+  }
+}
+
+// Product ID (RHL ID) styling
+.col-product {
+  text-align: center;
+  
+  .product-id {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--primary-color);
+    background-color: rgba(119, 161, 61, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+}

@@ -571,10 +571,10 @@ export const ProductLists = () => {
             <thead>
               <tr>
                 <th className="col-image">Image</th>
-                <th className="col-product">Product ID</th>
-                <th className="col-RHL UPC">RHL UPC</th>
+                <th className="col-product">RHL ID</th>
+                <th className="col-rhl-upc">RHL UPC</th>
                 <th className="col-title">Product Title</th>
-                <th className="col-location">Bin Location</th>
+                <th className="col-manufacturer">Manufacturer</th>
                 <th className="col-price">Price</th>
                 <th className="col-quantity">Quantity</th>
                 <th className="col-subtotal">Subtotal</th>
@@ -618,14 +618,14 @@ export const ProductLists = () => {
                     {/* Product ID */}
                     <td className="col-product">
                       <span className="product-id">
-                        {product.item_number || product.product_id || "N/A"}
+                        {product.rhlId || product.item_number || product.product_id || "N/A"}
                       </span>
                     </td>
 
                     {/* RHL UPC */}
-                    <td className="col-RHL UPC">
-                      <span className="RHL UPC-code">
-                        {product.lookup_code || product.sku || "N/A"}
+                    <td className="col-rhl-upc">
+                      <span className="rhl-upc-code">
+                        {product.variants?.[0]?.rhlUpc || product.lookup_code || product.sku || "N/A"}
                       </span>
                     </td>
 
@@ -656,9 +656,9 @@ export const ProductLists = () => {
                     </td>
 
                     {/* Bin Location */}
-                    <td className="col-location">
-                      <span className="bin-location">
-                        {product.bin_location || "N/A"}
+                    <td className="col-manufacturer">
+                      <span className="manufacturer-name">
+                        {product.manufacturerName || "N/A"}
                       </span>
                     </td>
 
