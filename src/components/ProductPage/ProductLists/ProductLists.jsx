@@ -302,6 +302,9 @@ export const ProductLists = () => {
         console.log('💾 Adding to local cart');
         const currentCart = JSON.parse(localStorage.getItem("localCart") || "[]");
         
+        // Get the correct price from variants or fallback fields
+        const itemPrice = product.variants?.[0]?.price || product.sellPrice || product.buyPrice || 0;
+        
         // Check if product already in cart
         const existingItem = currentCart.find(item => item._id === product._id);
         
@@ -311,7 +314,7 @@ export const ProductLists = () => {
           currentCart.push({
             _id: product._id,
             name: product.name,
-            price: product.sellPrice || product.buyPrice,
+            price: itemPrice,
             quantity: quantity,
             stock: product.stock,
             category: product.category?.name || product.categoryName,
