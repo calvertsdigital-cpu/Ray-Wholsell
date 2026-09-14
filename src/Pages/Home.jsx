@@ -264,6 +264,40 @@ export const HomePage = () => {
         </div>
       </section>
 
+      {/* CATALOG SECTION */}
+      <section className="catalog-section wrap">
+        <div className="catalog-container">
+          <div className="catalog-content">
+            <p className="eyebrow orange-text">DIGITAL CATALOG</p>
+            <h2>Browse Our Product Catalog</h2>
+            <p className="catalog-description">Explore our complete product lineup with detailed specifications, pricing, and availability. Perfect for retailers and health practitioners planning wholesale orders.</p>
+            <button 
+              className="orange-button catalog-button"
+              onClick={() => window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank')}
+            >
+              View Digital Catalog <span>→</span>
+            </button>
+          </div>
+          <div className="catalog-features">
+            <div className="feature-item">
+              <span className="feature-icon">📋</span>
+              <h4>Complete Listings</h4>
+              <p>All 408 products with detailed specifications</p>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">💰</span>
+              <h4>Wholesale Pricing</h4>
+              <p>View wholesale prices and bulk discounts</p>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">📊</span>
+              <h4>Product Details</h4>
+              <p>Ingredients, sizes, variants, and availability</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* RESELLER SECTION */}
       <section className="reseller-section" id="wholesale">
         <div className="reseller wrap">

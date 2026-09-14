@@ -1952,6 +1952,15 @@ export const Navbar = () => {
                 <a href="/products" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
                   <span className="nav-icon">▣</span> Products
                 </a>
+                <button 
+                  className="mobile-menu-utility"
+                  onClick={() => { 
+                    window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank');
+                    setIsMobileMenuOpen(false); 
+                  }}
+                >
+                  <span className="nav-icon">📋</span> Catalog
+                </button>
                 <a href="/blogs" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
                   <span className="nav-icon">▤</span> Blogs
                 </a>

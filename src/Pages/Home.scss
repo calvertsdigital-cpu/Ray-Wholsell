@@ -1885,3 +1885,134 @@ footer {
     background: rgba($olive, 0.1);
   }
 }
+
+
+/* CATALOG SECTION */
+.catalog-section {
+  padding: 64px 0;
+  background: linear-gradient(135deg, #fbfaf5 0%, #f5f3ee 100%);
+  margin: 48px 0;
+  border-radius: 16px;
+}
+
+.catalog-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.catalog-content {
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: $orange;
+    margin: 0 0 16px 0;
+  }
+  
+  h2 {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    color: $ink;
+    margin: 0 0 16px 0;
+    line-height: 1.2;
+  }
+  
+  .catalog-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #666;
+    margin: 0 0 24px 0;
+  }
+  
+  .catalog-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: $orange;
+    color: white;
+    
+    &:hover {
+      background: darken($orange, 8%);
+      transform: translateX(4px);
+    }
+    
+    span {
+      font-size: 18px;
+    }
+  }
+}
+
+.catalog-features {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.feature-item {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border-left: 4px solid $orange;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(4px);
+  }
+  
+  .feature-icon {
+    font-size: 28px;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+  }
+  
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: $ink;
+    margin: 0 0 8px 0;
+  }
+  
+  p {
+    font-size: 14px;
+    color: #999;
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 768px) {
+  .catalog-section {
+    padding: 40px 0;
+    margin: 32px 0;
+  }
+  
+  .catalog-container {
+    gap: 24px;
+  }
+  
+  .catalog-features {
+    gap: 16px;
+  }
+  
+  .feature-item {
+    padding: 16px;
+  }
+}
