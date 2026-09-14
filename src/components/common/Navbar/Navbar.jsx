@@ -1768,6 +1768,13 @@ export const Navbar = () => {
               <a href="/"><Home size={16} /> Home</a>
               <a href="/about"><Info size={16} /> About</a>
               <a href="/products"><ShoppingBag size={16} /> Products</a>
+              <button 
+                className="catalog-link"
+                onClick={() => window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank')}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px' }}
+              >
+                📋 Catalog
+              </button>
               <a href="/blogs"><FileText size={16} /> Blogs</a>
               <a href="/contact"><Mail size={16} /> Contact</a>
               <button 
