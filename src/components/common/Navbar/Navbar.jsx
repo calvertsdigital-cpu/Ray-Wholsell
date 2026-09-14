@@ -24,6 +24,7 @@ import {
   Mail,
   Building2,
   MessageSquare,
+  BookOpen,
 } from "lucide-react";
 import { Avatar } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
@@ -1773,7 +1774,7 @@ export const Navbar = () => {
                 onClick={() => window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank')}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px' }}
               >
-                📋 Catalog
+                <BookOpen size={16} /> Catalog
               </button>
               <a href="/blogs"><FileText size={16} /> Blogs</a>
               <a href="/contact"><Mail size={16} /> Contact</a>
