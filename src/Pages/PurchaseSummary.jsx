@@ -319,13 +319,9 @@ const PurchaseSummary = () => {
         return;
       }
 
-      // Create Stripe checkout session for this confirmed order
-      const response = await axiosInstance.post('/api/orders/create-checkout-session', {
-        orderId,
-        items: purchase.items,
-        total: purchase.total,
-        shippingCost: purchase.shippingCost,
-        isAdminConfirmed: true
+      // Call the new endpoint to process payment for admin-confirmed order
+      const response = await axiosInstance.post('/api/orders/payment/admin-confirmed', {
+        orderId
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -333,8 +329,11 @@ const PurchaseSummary = () => {
       if (response.data.url) {
         // Redirect to Stripe checkout
         window.location.href = response.data.url;
+      } else if (response.data.sessionId) {
+        // Fallback: redirect with session ID
+        window.location.href = response.data.url || `${import.meta.env.VITE_BASE_URL}/checkout?session_id=${response.data.sessionId}`;
       } else {
-        showToast('Failed to initiate payment. Please try again.', 'error');
+        showToast('Payment page loading...', 'info');
       }
     } catch (error) {
       console.error('Error initiating payment:', error);
