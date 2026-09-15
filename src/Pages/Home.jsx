@@ -195,11 +195,11 @@ export const HomePage = () => {
         <div className="hero-copy">
           <p className="hero-eyebrow">RAY'S HEALTHY LIVING</p>
           <h1 className="hero-title">
-            <span className="hero-main">{heroSlides[heroIndex].title}</span>
+            <span className="hero-main">{heroSlides[heroIndex]?.title || "Pure Wellness"}</span>
             <br />
-            <span className="hero-accent">{heroSlides[heroIndex].subtitle}</span>
+            <span className="hero-accent">{heroSlides[heroIndex]?.subtitle || "Naturally Yours"}</span>
           </h1>
-          <p className="hero-description">{heroSlides[heroIndex].text}</p>
+          <p className="hero-description">{heroSlides[heroIndex]?.text || "Ray's Healthy Living offers organic supplements for your family's health."}</p>
           <a className="orange-button hero-button" href="#departments">Shop products <span>→</span></a>
         </div>
         <div className="hero-slider-dots">
