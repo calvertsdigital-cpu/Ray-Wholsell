@@ -524,7 +524,7 @@ export const ProductLists = () => {
             </svg>
             <input
               type="text"
-              placeholder="Search products by name, SKU, or category..."
+              placeholder="Search by RHL ID, RHL UPC, or Product Title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
@@ -904,21 +904,6 @@ export const ProductLists = () => {
                       <span className="ingredients-text">{selectedProduct.ingredients}</span>
                     </div>
                   )}
-
-                  {selectedProduct.variants && selectedProduct.variants.length > 0 && (
-                    <div className="info-item full-width">
-                      <label>Available Sizes/Variants:</label>
-                      <div className="variants-list">
-                        {selectedProduct.variants.map((variant, idx) => (
-                          <div key={idx} className="variant-item">
-                            <span className="variant-size">{variant.size}</span>
-                            <span className="variant-price">${variant.price?.toFixed(2) || "N/A"}</span>
-                            <span className="variant-item-num">(Item#{variant.itemNumber})</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="pricing-section">
@@ -954,13 +939,6 @@ export const ProductLists = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                       </svg>
                     </button>
-                  </div>
-                  
-                  <div className="subtotal-display">
-                    <label>Subtotal:</label>
-                    <span className="modal-subtotal">
-                      ${((selectedProduct?.buyPrice || 0) * getQuantity(selectedProduct._id)).toFixed(2)}
-                    </span>
                   </div>
                 </div>
                 
