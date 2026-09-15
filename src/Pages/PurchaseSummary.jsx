@@ -145,7 +145,7 @@ const PurchaseSummary = () => {
               discount: order.discount || 0,
               address: order.deliveryAddress,
               orderNumber: order.orderNumber,
-              status: 'pending_payment',
+              status: 'order_confirmation_sent',
               isAdminConfirmed: true,
               itemsTotal: order.subtotal
             };

@@ -737,17 +737,17 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (order.status === 'confirmed') {
+                        if (order.status === 'order_confirmation_sent') {
                           navigate('/checkout', { state: { orderId: order._id } });
                         }
                       }}
-                      disabled={order.status !== 'confirmed'}
+                      disabled={order.status !== 'order_confirmation_sent'}
                       className={`py-1 px-3 rounded-md mainFont font-semibold cursor-pointer flex justify-center items-center gap-2 text-xs sm:text-[0.9dvw] transition-colors ${
-                        order.status === 'confirmed'
+                        order.status === 'order_confirmation_sent'
                           ? 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg'
                           : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                       }`}
-                      title={order.status === 'confirmed' ? 'Proceed to payment' : 'Waiting for admin confirmation'}
+                      title={order.status === 'order_confirmation_sent' ? 'Proceed to payment' : 'Waiting for admin confirmation'}
                     >
                       <Wallet size={14} /> Pay Now
                     </button>
