@@ -940,6 +940,13 @@ export const ProductLists = () => {
                       </svg>
                     </button>
                   </div>
+                  
+                  <div className="subtotal-display">
+                    <label>Subtotal:</label>
+                    <span className="modal-subtotal">
+                      ${((selectedProduct?.buyPrice || 0) * getQuantity(selectedProduct._id)).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="modal-actions">
