@@ -924,7 +924,7 @@ export const ProductLists = () => {
                 <div className="pricing-section">
                   <div className="price-display">
                     <label>Unit Price:</label>
-                    <span className="modal-price">${selectedProduct.buyPrice.toFixed(2)}</span>
+                    <span className="modal-price">${(selectedProduct?.buyPrice || 0).toFixed(2)}</span>
                   </div>
                   <div className="moq-info">
                     <label>Minimum Order Quantity:</label>
@@ -959,7 +959,7 @@ export const ProductLists = () => {
                   <div className="subtotal-display">
                     <label>Subtotal:</label>
                     <span className="modal-subtotal">
-                      ${(selectedProduct.buyPrice * getQuantity(selectedProduct._id)).toFixed(2)}
+                      ${((selectedProduct?.buyPrice || 0) * getQuantity(selectedProduct._id)).toFixed(2)}
                     </span>
                   </div>
                 </div>
