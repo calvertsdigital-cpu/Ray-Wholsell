@@ -196,7 +196,6 @@ export const HomePage = () => {
           <p className="hero-eyebrow">RAY'S HEALTHY LIVING</p>
           <h1 className="hero-title">
             <span className="hero-main">{heroSlides[heroIndex].title}</span>
-            <span className="hero-accent">,</span>
             <br />
             <span className="hero-accent">{heroSlides[heroIndex].subtitle}</span>
           </h1>
