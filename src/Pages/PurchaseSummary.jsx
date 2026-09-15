@@ -109,8 +109,60 @@ const PurchaseSummary = () => {
     const fetchPurchaseSummary = async () => {
       try {
         setLoading(true);
+        
+        // Check if orderId passed from admin-confirmed orders
+        const orderId = location.state?.orderId;
         let sessionId = new URLSearchParams(location.search).get('session_id') || localStorage.getItem('checkoutSessionId');
 
+        // If orderId exists, handle admin-confirmed order payment
+        if (orderId) {
+          console.log('[DEBUG] Handling admin-confirmed order payment for orderId:', orderId);
+          
+          const token = localStorage.getItem('userToken');
+          if (!token) {
+            setError('Please log in to proceed with payment');
+            showToast('Please log in to proceed with payment', 'error');
+            navigate('/auth/login');
+            return;
+          }
+
+          try {
+            // Fetch the order details using the existing endpoint
+            const orderResponse = await axiosInstance.get(`/api/orders/details/${orderId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const order = orderResponse.data.order;
+            console.log('[DEBUG] Fetched order:', order);
+
+            // Create purchase state from confirmed order
+            const purchaseState = {
+              purchaseId: orderId,
+              items: order.confirmedItems || order.items,
+              total: order.total,
+              subtotal: order.subtotal,
+              shippingCost: order.shippingCost,
+              discount: order.discount || 0,
+              address: order.deliveryAddress,
+              orderNumber: order.orderNumber,
+              status: 'pending_payment',
+              isAdminConfirmed: true,
+              itemsTotal: order.subtotal
+            };
+
+            setPurchase(purchaseState);
+            setLoading(false);
+            return;
+          } catch (error) {
+            console.error('[DEBUG] Error fetching admin-confirmed order:', error);
+            setError('Order not found or no longer available');
+            showToast('Order not found', 'error');
+            navigate('/');
+            return;
+          }
+        }
+
+        // Original Stripe session_id flow
         if (!sessionId) {
           console.log('[DEBUG] No sessionId found in URL or localStorage', { sessionId });
           setError('Invalid session ID');
@@ -257,6 +309,122 @@ const PurchaseSummary = () => {
   }
 
   const totalPrice = purchase.total.toFixed(2);
+
+  const handleStripePayment = async (orderId) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        showToast('Please log in to proceed with payment', 'error');
+        navigate('/auth/login');
+        return;
+      }
+
+      // Create Stripe checkout session for this confirmed order
+      const response = await axiosInstance.post('/api/orders/create-checkout-session', {
+        orderId,
+        items: purchase.items,
+        total: purchase.total,
+        shippingCost: purchase.shippingCost,
+        isAdminConfirmed: true
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = response.data.url;
+      } else {
+        showToast('Failed to initiate payment. Please try again.', 'error');
+      }
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      showToast(error.response?.data?.message || 'Failed to initiate payment', 'error');
+    }
+  };
+
+  // For admin-confirmed orders, show checkout view instead of success view
+  if (purchase.isAdminConfirmed) {
+    return (
+      <div className="purchase-summary-container">
+        <Toast message={toast.message} type={toast.type} show={toast.show} onClose={hideToast} />
+
+        <div className="success-header">
+          <h1>Order Confirmed - Ready for Payment</h1>
+          <p>Your order has been confirmed by the admin. Please proceed with payment.</p>
+        </div>
+
+        <div className="transaction-details">
+          <div className="detail-row">
+            <span>Order Number:</span>
+            <span>#{purchase.orderNumber}</span>
+          </div>
+          <div className="detail-row">
+            <span>Items Total:</span>
+            <span>${(purchase.itemsTotal || purchase.total - (purchase.shippingCost || 0)).toFixed(2)}</span>
+          </div>
+          <div className="detail-row">
+            <span>Shipping Cost:</span>
+            <span>${(purchase.shippingCost || 0).toFixed(2)}</span>
+          </div>
+          {purchase.discount > 0 && (
+            <div className="detail-row">
+              <span>Discount:</span>
+              <span>-${purchase.discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="detail-row" style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.5rem', fontWeight: 'bold' }}>
+            <span>Total Amount Due:</span>
+            <span style={{ color: '#77a13d', fontSize: '1.2em' }}>${totalPrice}</span>
+          </div>
+        </div>
+
+        {purchase.address && (
+          <div className="shipping-info">
+            <h3>Delivery Address</h3>
+            <div className="address-card">
+              <p><strong>{purchase.address.name}</strong></p>
+              <p>{purchase.address.addressLine1}</p>
+              {purchase.address.addressLine2 && <p>{purchase.address.addressLine2}</p>}
+              <p>{purchase.address.city}, {purchase.address.state} {purchase.address.zipcode}</p>
+              <p>{purchase.address.country}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="items-section">
+          <h3>Items to be Paid</h3>
+          {purchase.items.map((item, idx) => (
+            <div key={idx} className="item-card">
+              <div className="item-details">
+                <h4>{item.name || item.product?.name}</h4>
+                <p>Qty: {item.quantity} × ${item.price?.toFixed(2) || '0.00'}</p>
+                <p style={{ fontWeight: 'bold' }}>Subtotal: ${(item.quantity * (item.price || 0)).toFixed(2)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="payment-section" style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <button
+            className="payment-button"
+            onClick={() => handleStripePayment(purchase.purchaseId)}
+            style={{
+              backgroundColor: '#77a13d',
+              color: 'white',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            Proceed to Payment
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="purchase-summary-container">
