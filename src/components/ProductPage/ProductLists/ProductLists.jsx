@@ -817,7 +817,7 @@ export const ProductLists = () => {
             <div className="modal-content">
               <div className="product-image-section">
                 <img
-                  src={`/${((Math.max(0, products.findIndex(p => p._id === selectedProduct._id)) % 7) + 1)}.png`}
+                  src={`/${(Math.floor(Math.random() * 7) + 1)}.png`}
                   alt={selectedProduct.name || 'Product'}
                   className="modal-product-image"
                   onError={(e) => { e.target.src = '/1.png'; }}
