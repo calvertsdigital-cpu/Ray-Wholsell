@@ -35,6 +35,7 @@ import Testimonial from "./Pages/Testimonial";
 import Feedback from "./Pages/Feedback";
 import FixedButtons from "./components/FixedButton";
 import CounselingPage from "./Pages/CousellingPage";
+import { ConsultingBooking } from "./Pages/ConsultingBooking";
 import SuccessPage from "./Pages/SuccessPage";
 import CancelPage from "./Pages/CancelPage";
 import { ChatWidget } from "./components/ChatWidget/ChatWidget";
@@ -185,7 +186,7 @@ function App() {
 
           <Route path="/feedback" exact element={<Feedback />} />
 
-          <Route path="/counseling" exact element={<CounselingPage />} />
+          <Route path="/counseling" exact element={<ConsultingBooking />} />
 
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/cancel" element={<CancelPage />} />
