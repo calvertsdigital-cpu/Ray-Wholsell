@@ -270,16 +270,16 @@ export const HomePage = () => {
           <p className="eyebrow orange-text">WHOLESALE PARTNERSHIPS</p>
           <h2>Become an Authorized Ray's<br />Healthy Living Reseller</h2>
           <div className="reseller-intro">
-            Ray's healthy living products are available at wholesale pricing to qualified resellers including retailers, health care practitioners, and e-commerce retailers. For additional information or to apply to become a wholesale customer, please complete our <a href="#wholesale-form">WHOLESALE REGISTRATION FORM</a> for approval.
+            Ray's healthy living products are available at wholesale pricing to qualified resellers including retailers, health care practitioners, and e-commerce retailers. For additional information or to apply to become a wholesale customer, please <a href="/auth/login">Login to access WHOLESALE REGISTRATION FORM</a> for approval.
           </div>
           <div className="reseller-grid">
             <article>
               <h3>Wholesale accounts</h3>
-              <p>If you are an established business licensed to sell nutritional, medical and/or athletic products, you may be qualified to receive wholesale prices on our products. To get started, complete our <a href="#wholesale-form">WHOLESALE REGISTRATION FORM</a>. Please upload copies of your business license or other documentation for verification at the bottom on the same form, fax them to <strong>443-432-3295</strong> or email them to <a href="mailto:info@rayshealthyliving.com">info@rayshealthyliving.com</a></p>
+              <p>If you are an established business licensed to sell nutritional, medical and/or athletic products, you may be qualified to receive wholesale prices on our products. To get started, <a href="/auth/login">Login to access WHOLESALE REGISTRATION FORM</a>. Please upload copies of your business license or other documentation for verification at the bottom on the same form, fax them to <strong>443-432-3295</strong> or email them to <a href="mailto:info@rayshealthyliving.com">info@rayshealthyliving.com</a></p>
             </article>
             <article>
               <h3>Distributor accounts</h3>
-              <p>If you are an established distributor licensed to sell nutritional, medical and/or athletic products, you may wish to offer the Ray's Healthy Living line to your wholesale customers. Based upon volume, distributors may be qualified to receive discounts off wholesale prices! Please complete our <a href="#distributor-form">DISTRIBUTOR REGISTRATION FORM</a> and provide us with a copy of your business license and letter on your business letterhead describing your business, lines carried and areas served for verification. Please upload your documents, fax them to <strong>443-432-3295</strong> or email to <a href="mailto:info@rayshealthyliving.com">info@rayshealthyliving.com</a></p>
+              <p>If you are an established distributor licensed to sell nutritional, medical and/or athletic products, you may wish to offer the Ray's Healthy Living line to your wholesale customers. Based upon volume, distributors may be qualified to receive discounts off wholesale prices! Please <a href="/auth/login">Login to access DISTRIBUTOR REGISTRATION FORM</a> and provide us with a copy of your business license and letter on your business letterhead describing your business, lines carried and areas served for verification. Please upload your documents, fax them to <strong>443-432-3295</strong> or email to <a href="mailto:info@rayshealthyliving.com">info@rayshealthyliving.com</a></p>
             </article>
           </div>
         </div>

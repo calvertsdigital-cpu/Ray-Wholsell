@@ -79,7 +79,7 @@ const BecomeSeller = () => {
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg p-6 sm:p-8 lg:p-10 border border-gray-200 transition-shadow duration-300">
                 <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg">
                   Ray's healthy living products are available at wholesale pricing to qualified resellers including retailers, health care practitioners, and e-commerce retailers. For additional information or to apply to become a wholesale customer, please complete our{' '}
-                  <a href="/auth/register" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
+                  <a href="/auth/login" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
                     WHOLESALE REGISTRATION FORM
                   </a>{' '}
                   for approval.
@@ -133,7 +133,7 @@ const BecomeSeller = () => {
                 </p>
                 <p className="text-gray-700 leading-relaxed text-sm sm:text-base lg:text-lg">
                   Based upon volume, distributors may be qualified to receive discounts off wholesale prices! Please complete our{' '}
-                  <a href="/auth/register?type=distributor" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
+                  <a href="/auth/login" className="text-green-600 underline font-semibold hover:text-green-700 transition-all duration-200">
                     DISTRIBUTOR REGISTRATION FORM
                   </a>{' '}
                   and provide us with a copy of your business license and letter on your business letterhead describing your business, lines carried and areas served for verification. Please upload your documents, fax them to{' '}
