@@ -235,8 +235,10 @@ export const Navbar = () => {
           }
         }
 
-        // No token - show empty cart
-        setCartItemCount(0);
+        // No token - read from localStorage for cart count
+        const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+        setCartItemCount(localCart.length);
+        console.log("[DEBUG] Local cart count (no token):", localCart.length);
         
       } catch (error) {
         console.error("Error in updateCartCount:", error);
@@ -474,12 +476,8 @@ export const Navbar = () => {
     useEffect(() => {
       console.log("[DEBUG] Cart modal opened, starting backend-first cart load");
       
-      // Clear old localStorage cart data on component mount
-      if (!initialCartFetched.current) {
-        localStorage.removeItem("localCart");
-        console.log("[DEBUG] Cleared old localStorage cart data");
-      }
-      
+      // ✅ FIX: Don't clear cart on mount - only clear after successful checkout
+      // Keeping cart data when component remounts (e.g., when user closes and reopens cart)
       let isMounted = true;
       
       // Listen for cart updates from other components
