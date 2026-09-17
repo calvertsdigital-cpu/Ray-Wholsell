@@ -69,11 +69,12 @@ export const ProductLists = () => {
   const [addingToCart, setAddingToCart] = useState({});
   const [wishlistItems, setWishlistItems] = useState([]);
   const [addingToWishlist, setAddingToWishlist] = useState({});
-  const [moq] = useState(100);
+  const [moq] = useState(12);
   const [searchQuery, setSearchQuery] = useState("");          // raw input value (instant)
   const [debouncedSearch, setDebouncedSearch] = useState(""); // debounced value used for API
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [categoryName, setCategoryName] = useState("");
   const [modalSubscription, setModalSubscription] = useState({
@@ -276,21 +277,29 @@ export const ProductLists = () => {
   );
 
   const updateQuantity = useCallback((productId, newQuantity) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: newQuantity,
-    }));
+    console.log(`Updating quantity for ${productId}: ${newQuantity}`);
+    setQuantities((prev) => {
+      const updated = {
+        ...prev,
+        [productId]: newQuantity,
+      };
+      console.log('New quantities state:', updated);
+      return updated;
+    });
   }, []);
 
   const incrementQuantity = useCallback(
     (productId, maxStock) => {
       const currentQty = getQuantity(productId);
       const nextQty = currentQty + 1; // Increment by 1
+      console.log(`Incrementing ${productId}: ${currentQty} -> ${nextQty}, max: ${maxStock}`);
       if (nextQty <= maxStock) {
         updateQuantity(productId, nextQty);
+      } else {
+        showToast(`Maximum stock available is ${maxStock}`, "warning");
       }
     },
-    [getQuantity, updateQuantity]
+    [getQuantity, updateQuantity, showToast]
   );
 
   const decrementQuantity = useCallback(
@@ -304,8 +313,10 @@ export const ProductLists = () => {
   );
 
   const addToCart = useCallback(
-    async (product) => {
+    async (product, variantOverride = null) => {
       const quantity = getQuantity(product._id);
+      // Use the caller-supplied variant (from modal size picker), else first variant
+      const activeVariant = variantOverride || product.variants?.[0] || null;
       
       if (product.stock === 0) {
         showToast("Product is out of stock", "error");
@@ -329,15 +340,19 @@ export const ProductLists = () => {
         const token = localStorage.getItem("userToken");
         
         if (token) {
-          // Authenticated user - add to backend cart
           console.log('🔄 Authenticated mode: Adding to backend cart');
-          console.log('📦 Product:', product.name, 'Quantity:', quantity);
+          console.log('📦 Product:', product.name, 'Size:', activeVariant?.size, 'Item#:', activeVariant?.itemNumber, 'Quantity:', quantity);
           
           try {
-            const response = await axiosInstance.post("/api/user/add-to-cart", {
+            await axiosInstance.post("/api/user/add-to-cart", {
               productId: product._id,
               quantity: quantity,
-              websiteRole: 'wholesaler'
+              websiteRole: 'wholesaler',
+              // Carry selected variant details so admin sees the right size
+              ...(activeVariant && {
+                variantItemNumber: activeVariant.itemNumber,
+                variantSize: activeVariant.size,
+              }),
             }, {
               headers: { 
                 Authorization: `Bearer ${token}`,
@@ -345,54 +360,47 @@ export const ProductLists = () => {
               }
             });
 
-            console.log('✅ Added to backend cart successfully');
-            showToast(`${quantity} items added to cart!`, "success");
-            
-            // Update cart count
+            showToast(`${quantity}× ${activeVariant?.size || ''} added to cart!`, "success");
             window.dispatchEvent(new Event("cartUpdated"));
             return;
             
           } catch (apiError) {
             console.log('⚠️  Backend cart failed, using local cart:', apiError.message);
-            // Fallback to local cart
             throw new Error('Fallback to local');
           }
           
         } else {
-          // No token - use local storage cart
           throw new Error('Fallback to local');
         }
         
       } catch (error) {
-        // Fallback: Add to local cart
         console.log('💾 Adding to local cart');
         const currentCart = JSON.parse(localStorage.getItem("localCart") || "[]");
+        const itemPrice = activeVariant?.price || product.sellPrice || product.buyPrice || 0;
         
-        // Get the correct price from variants or fallback fields
-        const itemPrice = product.variants?.[0]?.price || product.sellPrice || product.buyPrice || 0;
-        
-        // Check if product already in cart
-        const existingItem = currentCart.find(item => item._id === product._id);
+        // Key by product+variant so different sizes are separate cart lines
+        const cartKey = activeVariant?.itemNumber || product._id;
+        const existingItem = currentCart.find(item => item._id === cartKey);
         
         if (existingItem) {
           existingItem.quantity += quantity;
         } else {
           currentCart.push({
-            _id: product._id,
-            name: product.name,
+            _id: cartKey,
+            productId: product._id,
+            name: `${product.rhlProductTitle || product.name}${activeVariant?.size ? ` (${activeVariant.size})` : ''}`,
             price: itemPrice,
             quantity: quantity,
             stock: product.stock,
-            category: product.category?.name || product.categoryName,
-            sku: product.sku
+            category: product.category?.name || product.category,
+            itemNumber: activeVariant?.itemNumber,
+            size: activeVariant?.size,
+            sku: product.sku,
           });
         }
         
         localStorage.setItem("localCart", JSON.stringify(currentCart));
-        console.log('✅ Added to local cart successfully');
-        showToast(`${quantity} items added to cart!`, "success");
-        
-        // Update cart count
+        showToast(`${quantity}× ${activeVariant?.size || ''} added to cart!`, "success");
         window.dispatchEvent(new Event("cartUpdated"));
       } finally {
         setAddingToCart(prev => ({ ...prev, [product._id]: false }));
@@ -447,6 +455,7 @@ export const ProductLists = () => {
 
   const openProductDetails = useCallback((product) => {
     setSelectedProduct(product);
+    setSelectedVariantIdx(0);
     setShowModal(true);
     setModalSubscription({ isSubscription: false, frequency: null, discountPercentage: 0, discount: 0 });
   }, []);
@@ -722,9 +731,31 @@ export const ProductLists = () => {
 
                       {/* Quantity */}
                       <div className="mpc-qty-row">
-                        <button onClick={() => decrementQuantity(product._id)} disabled={quantity <= moq} className="quantity-btn decrease">−</button>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            decrementQuantity(product._id);
+                          }} 
+                          disabled={quantity <= moq} 
+                          className="quantity-btn decrease"
+                        >
+                          −
+                        </button>
                         <span className="quantity-display">{quantity}</span>
-                        <button onClick={() => incrementQuantity(product._id, product.stock)} disabled={quantity >= product.stock || isOutOfStock} className="quantity-btn increase">+</button>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            incrementQuantity(product._id, product.stock);
+                          }} 
+                          disabled={quantity >= product.stock || isOutOfStock} 
+                          className="quantity-btn increase"
+                        >
+                          +
+                        </button>
                         <span className="mpc-subtotal">= ${subtotal}</span>
                       </div>
 
@@ -862,7 +893,12 @@ export const ProductLists = () => {
                     <td className="col-quantity">
                       <div className="quantity-controls">
                         <button
-                          onClick={() => decrementQuantity(product._id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            decrementQuantity(product._id);
+                          }}
                           disabled={quantity <= moq || isAddingToCart}
                           className="quantity-btn decrease"
                         >
@@ -870,7 +906,12 @@ export const ProductLists = () => {
                         </button>
                         <span className="quantity-display">{quantity}</span>
                         <button
-                          onClick={() => incrementQuantity(product._id, product.stock)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            incrementQuantity(product._id, product.stock);
+                          }}
                           disabled={isMaxQuantity || isOutOfStock || isAddingToCart}
                           className="quantity-btn increase"
                         >
@@ -979,7 +1020,13 @@ export const ProductLists = () => {
       </div>
 
       {/* Product Details Modal */}
-      {showModal && selectedProduct && (
+      {showModal && selectedProduct && (() => {
+        const variants = selectedProduct.variants || [];
+        const selectedVariant = variants[selectedVariantIdx] || variants[0] || null;
+        const activePrice = selectedVariant?.price ?? selectedProduct.buyPrice ?? 0;
+        const multiVariant = variants.length > 1;
+
+        return (
         <div className="modal-overlay" onClick={closeProductDetails}>
           <div className="product-details-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -990,7 +1037,7 @@ export const ProductLists = () => {
                 </svg>
               </button>
             </div>
-            
+
             <div className="modal-content">
               <div className="product-image-section">
                 <img
@@ -1012,7 +1059,7 @@ export const ProductLists = () => {
                   </button>
                 </div>
               </div>
-              
+
               <div className="product-details-section">
                 <div className="product-header">
                   <h3 className="modal-product-name">{selectedProduct.rhlProductTitle || selectedProduct.name}</h3>
@@ -1023,10 +1070,10 @@ export const ProductLists = () => {
                     <span className="modal-rhl-id">RHL#{selectedProduct.rhlId}</span>
                   )}
                   <div className="stock-status-modal">
-                    {selectedProduct.stock === 0 ? (
-                      <span className="stock-badge out-of-stock">Out of Stock</span>
+                    {selectedProduct.status === 'inactive' || selectedProduct.status === 'discontinued' ? (
+                      <span className="stock-badge out-of-stock">Unavailable</span>
                     ) : (
-                      <span className="stock-badge in-stock">In Stock ({selectedProduct.stock} available)</span>
+                      <span className="stock-badge in-stock">In Stock ( available)</span>
                     )}
                   </div>
                   {selectedProduct.category && (
@@ -1036,7 +1083,7 @@ export const ProductLists = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="product-info-grid">
                   {selectedProduct.rhlId && (
                     <div className="info-item">
@@ -1044,44 +1091,51 @@ export const ProductLists = () => {
                       <span>{selectedProduct.rhlId}</span>
                     </div>
                   )}
-                  
-                  {selectedProduct.variants?.[0]?.rhlUpc && (
+
+                  {selectedVariant?.rhlUpc && (
                     <div className="info-item">
                       <label>RHL UPC:</label>
-                      <span>{selectedProduct.variants[0].rhlUpc}</span>
+                      <span>{selectedVariant.rhlUpc}</span>
                     </div>
                   )}
 
-                  {/* Bin Location — always show, null = not yet confirmed */}
+                  {selectedVariant?.manufacturerUpc && (
+                    <div className="info-item">
+                      <label>Mfr UPC:</label>
+                      <span>{selectedVariant.manufacturerUpc}</span>
+                    </div>
+                  )}
+
+                  {selectedVariant?.itemNumber && (
+                    <div className="info-item">
+                      <label>Item #:</label>
+                      <span>{selectedVariant.itemNumber}</span>
+                    </div>
+                  )}
+
+                  {/* Bin Location */}
                   <div className="info-item">
                     <label>Bin Location:</label>
                     <span>
-                      {selectedProduct.variants?.[0]?.binLocation
-                        ? selectedProduct.variants[0].binLocation
+                      {selectedVariant?.binLocation
+                        ? selectedVariant.binLocation
                         : <span className="bin-pending">Not yet assigned</span>
                       }
                     </span>
                   </div>
-                  
+
                   <div className="info-item">
                     <label>Category:</label>
                     <span>{selectedProduct.category || "General"}</span>
                   </div>
 
-                  {selectedProduct.manufacturerName && (
-                    <div className="info-item">
-                      <label>Manufacturer:</label>
-                      <span>{selectedProduct.manufacturerName}</span>
-                    </div>
-                  )}
-                  
                   {selectedProduct.description && (
                     <div className="info-item full-width">
                       <label>Description:</label>
                       <span>{selectedProduct.description}</span>
                     </div>
                   )}
-                  
+
                   {selectedProduct.ingredients && (
                     <div className="info-item full-width">
                       <label>Ingredients:</label>
@@ -1089,18 +1143,41 @@ export const ProductLists = () => {
                     </div>
                   )}
                 </div>
-                
+
+                {/* ── Size / Variant Selector ── */}
+                {multiVariant ? (
+                  <div className="variant-selector">
+                    <label className="variant-label">Size:</label>
+                    <div className="variant-pills">
+                      {variants.map((v, i) => (
+                        <button
+                          key={v.itemNumber || i}
+                          className={`variant-pill ${i === selectedVariantIdx ? 'active' : ''}`}
+                          onClick={() => setSelectedVariantIdx(i)}
+                        >
+                          {v.size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : variants.length === 1 ? (
+                  <div className="variant-single">
+                    <span className="variant-label">Size:</span>
+                    <span className="variant-single-value">{variants[0].size}</span>
+                  </div>
+                ) : null}
+
                 <div className="pricing-section">
                   <div className="price-display">
                     <label>Unit Price:</label>
-                    <span className="modal-price">${(selectedProduct?.variants?.[0]?.price || selectedProduct?.buyPrice || 0).toFixed(2)}</span>
+                    <span className="modal-price">${activePrice.toFixed(2)}</span>
                   </div>
                   <div className="moq-info">
                     <label>Minimum Order Quantity:</label>
                     <span>{moq} units</span>
                   </div>
                 </div>
-                
+
                 <div className="quantity-section">
                   <label>Select Quantity:</label>
                   <div className="modal-quantity-controls">
@@ -1115,8 +1192,7 @@ export const ProductLists = () => {
                     </button>
                     <span className="modal-quantity-display">{getQuantity(selectedProduct._id)}</span>
                     <button
-                      onClick={() => incrementQuantity(selectedProduct._id, selectedProduct.stock)}
-                      disabled={getQuantity(selectedProduct._id) >= selectedProduct.stock || selectedProduct.stock === 0}
+                      onClick={() => incrementQuantity(selectedProduct._id, 99999)}
                       className="modal-quantity-btn increase"
                     >
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1124,36 +1200,40 @@ export const ProductLists = () => {
                       </svg>
                     </button>
                   </div>
-                  
+
                   <div className="subtotal-display">
                     <label>Subtotal:</label>
                     <span className="modal-subtotal">
-                      ${((selectedProduct?.variants?.[0]?.price || selectedProduct?.buyPrice || 0) * getQuantity(selectedProduct._id)).toFixed(2)}
+                      ${(activePrice * getQuantity(selectedProduct._id)).toFixed(2)}
                     </span>
                   </div>
                 </div>
 
-                {/* Subscribe to Save option */}
+                {/* Subscribe to Save */}
                 <SubscriptionOption
                   product={selectedProduct}
                   quantity={getQuantity(selectedProduct._id)}
-                  basePrice={selectedProduct?.variants?.[0]?.price || selectedProduct?.buyPrice || 0}
+                  basePrice={activePrice}
                   onSubscriptionChange={(data) => setModalSubscription(data)}
                 />
 
                 <div className="modal-actions">
                   <button
                     onClick={() => {
-                      addToCart(selectedProduct);
+                      addToCart(selectedProduct, selectedVariant);
                       closeProductDetails();
                     }}
-                    disabled={selectedProduct.stock === 0 || addingToCart[selectedProduct._id]}
-                    className={`modal-add-to-cart ${selectedProduct.stock === 0 ? 'disabled' : ''}`}
+                    disabled={addingToCart[selectedProduct._id]}
+                    className="modal-add-to-cart"
                   >
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h1m0 0h4a1 1 0 001-1m-6 0V13m0 10V13m0 0h6" />
                     </svg>
-                    {selectedProduct.stock === 0 ? "Out of Stock" : addingToCart[selectedProduct._id] ? "Adding..." : modalSubscription.isSubscription ? "SUBSCRIBE & SAVE" : "ADD TO CART"}
+                    {addingToCart[selectedProduct._id]
+                      ? "Adding..."
+                      : modalSubscription.isSubscription
+                      ? "SUBSCRIBE & SAVE"
+                      : "ADD TO CART"}
                   </button>
 
                   <button className="modal-close-btn" onClick={closeProductDetails}>
@@ -1164,7 +1244,8 @@ export const ProductLists = () => {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

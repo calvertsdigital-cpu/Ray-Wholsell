@@ -1250,6 +1250,8 @@ const AddressTab = () => {
       await axiosInstance.delete(`/api/auth/delete-address/${id}`);
       toast.success('Address deleted successfully');
       fetchAddresses();
+      // Dispatch event to update addresses in cart
+      window.dispatchEvent(new Event('addressUpdated'));
     } catch (error) {
       console.error('Error deleting address:', error);
       toast.error('Failed to delete address');
@@ -1714,7 +1716,7 @@ const WishlistTab = ({ onOpenCart = null }) => {
         return;
       }
 
-      const moq = 100;
+      const moq = 12;
       await axiosInstance.post('/api/user/add-to-cart', {
         productId: product._id,
         quantity: moq,
@@ -2007,11 +2009,15 @@ const EditAndAddModel = ({ isModelShow, setIsModelShow }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success('Address added successfully');
+        // Dispatch event to update addresses in cart
+        window.dispatchEvent(new Event('addressUpdated'));
       } else if (isModelShow.activeType === 'Edit') {
         await axiosInstance.put(`/api/auth/update-address/${isModelShow.data._id}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success('Address updated successfully');
+        // Dispatch event to update addresses in cart
+        window.dispatchEvent(new Event('addressUpdated'));
       }
 
       setIsModelShow({ state: false, data: null, activeType: '' });

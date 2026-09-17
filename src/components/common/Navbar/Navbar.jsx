@@ -652,22 +652,8 @@ export const Navbar = () => {
           const res = await axiosInstance.get("/api/auth/get-addresses");
           
           if (!res.data.addresses || res.data.addresses.length === 0) {
-            setAddresses([{
-              _id: 'temp-address-' + Date.now(),
-              fullName: 'Test User',
-              address: '123 Main Street',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001',
-              country: 'US',
-              isDefault: true,
-              name: 'Test User',
-              addressLine1: '123 Main Street',
-              zipcode: '10001'
-            }]);
-            setSelectedAddressId('temp-address-' + Date.now());
-            setIsAddressOpen(false);
-            showToast("Using default test address for checkout", "info");
+            setAddresses([]);
+            setIsAddressOpen(true);
           } else {
             setAddresses(res.data.addresses || []);
             const defaultAddress = res.data.addresses?.find((addr) => addr.isDefault);
@@ -683,24 +669,13 @@ export const Navbar = () => {
           }
         } catch (error) {
           if (error.response?.status === 429) {
-            setAddresses([{
-              _id: 'temp-address-' + Date.now(),
-              fullName: 'Test User', 
-              address: '123 Main Street',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001',
-              country: 'US',
-              isDefault: true,
-              name: 'Test User',
-              addressLine1: '123 Main Street',
-              zipcode: '10001'
-            }]);
-            setSelectedAddressId('temp-address-' + Date.now());
-            setIsAddressOpen(false);
+            showToast("Too many requests. Please try again later.", "warning");
           } else {
+            console.error("Address fetch error:", error);
             showToast("Unable to load addresses", "error");
           }
+          setAddresses([]);
+          setIsAddressOpen(true);
         } finally {
           setAddressLoading(false);
         }
@@ -725,7 +700,18 @@ export const Navbar = () => {
 
       fetchAddresses();
       fetchCoupons();
-    }, []); // run once on cart modal open — not on every cartItems.length change
+      
+      // Listen for address updates from profile page
+      const handleAddressUpdated = () => {
+        fetchAddresses();
+      };
+      
+      window.addEventListener('addressUpdated', handleAddressUpdated);
+      
+      return () => {
+        window.removeEventListener('addressUpdated', handleAddressUpdated);
+      };
+    }, [cartItems.length]); // Refetch when cart items change
 
     // NOTE: The cartUpdated + localStorage listener is handled in the primary fetchCart
     // useEffect above. No duplicate listener needed here.
@@ -1091,7 +1077,7 @@ export const Navbar = () => {
         return;
       }
 
-      const moq = 100; // Minimum Order Quantity
+      const moq = 12; // Minimum Order Quantity
       const newQuantity = action === "increment" ? item.quantity + 1 : item.quantity - 1;
       
       if (newQuantity < moq) {
@@ -1394,7 +1380,7 @@ export const Navbar = () => {
                         fontStyle: "italic",
                         marginLeft: "0.5rem"
                       }}>
-                        (MOQ: 100)
+                        (MOQ: 12)
                       </span>
                       <button
                         type="button"
