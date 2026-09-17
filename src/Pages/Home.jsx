@@ -266,15 +266,12 @@ export const HomePage = () => {
         {/* default: 5 cards, expanded: max 15 */}
         <div className={`dept-cards-row ${showAllDepts ? 'dept-expanded' : ''}`}>
           {(showAllDepts ? departments.slice(0, 15) : departments.slice(0, 5)).map((dept, idx) => {
-            const categoryId = categories[idx]?._id;
             return (
               <button
                 key={idx}
                 className="dept-card"
-                onClick={() => {
-                  if (categoryId) navigate(`/products?category=${categoryId}`);
-                  else navigate('/products');
-                }}
+                onClick={() => navigate('/products')}
+                title={`Browse ${dept} products`}
               >
                 <span className="dept-card-icon">🌿</span>
                 <span className="dept-card-name">{dept}</span>
@@ -299,6 +296,7 @@ export const HomePage = () => {
                 key={idx}
                 className="category-icon-card"
                 onClick={() => navigate('/products')}
+                title={`Browse ${category.name}`}
               >
                 <div className="category-icon-image">
                   <img src={category.image} alt={category.name} />

@@ -84,15 +84,12 @@ export const ProductLists = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [paginatedProducts, setPaginatedProducts] = useState([]);
 
   // Filter + sort state
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("default");
-  const [filteredProducts, setFilteredProducts] = useState([]);
 
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -143,6 +140,19 @@ export const ProductLists = () => {
           }
           
           setProducts(response.data.products);
+
+          // Pre-populate quantities so every product starts at MOQ with a real entry
+          // This prevents the `|| moq` fallback from masking state updates
+          setQuantities((prev) => {
+            const initial = { ...prev };
+            response.data.products.forEach((p) => {
+              if (initial[p._id] === undefined) {
+                initial[p._id] = 12; // MOQ
+              }
+            });
+            return initial;
+          });
+
           // Don't set paginatedProducts here — the filter+sort useEffect will handle it
           setLoading(false);
           return;
@@ -150,15 +160,12 @@ export const ProductLists = () => {
         
         console.warn('⚠️  No products found');
         setProducts([]);
-        setPaginatedProducts([]);
-        setTotalProducts(0);
         setLoading(false);
         
       } catch (error) {
         console.error('❌ Error fetching products:', error.message);
         setError(error.message || "Failed to fetch products");
         setProducts([]);
-        setPaginatedProducts([]);
         setLoading(false);
       }
     };
@@ -220,8 +227,8 @@ export const ProductLists = () => {
     };
   }, []);
 
-  // ── Apply filters + sort whenever products / filter state changes ───────
-  useEffect(() => {
+  // ── Apply filters + sort whenever products / filter state changes (useMemo = no extra render) ──
+  const filteredProducts = useMemo(() => {
     let result = [...products];
 
     // 1. Category filter
@@ -251,52 +258,44 @@ export const ProductLists = () => {
     if (sortBy === "stock-asc")  result.sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
     if (sortBy === "stock-desc") result.sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0));
 
-    setFilteredProducts(result);
-    setCurrentPage(1); // reset to page 1 when filters change
+    return result;
   }, [products, selectedCategories, minPrice, maxPrice, sortBy]);
 
-  // ── Paginate filteredProducts ─────────────────────────────────────────────
-  // Handle pagination when products or current page changes
-  useEffect(() => {
-    if (filteredProducts.length > 0) {
-      setTotalProducts(filteredProducts.length);
-      const startIndex = (currentPage - 1) * productsPerPage;
-      const endIndex = startIndex + productsPerPage;
-      const paginated = filteredProducts.slice(startIndex, endIndex);
-      setPaginatedProducts(paginated);
-      window.scrollTo(0, 0);
-    } else {
-      setTotalProducts(0);
-      setPaginatedProducts([]);
-    }
+  // ── Paginate filteredProducts (useMemo = no extra render, no state wipe) ──
+  const totalProducts = filteredProducts.length;
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * productsPerPage;
+    const endIndex = startIndex + productsPerPage;
+    return filteredProducts.slice(startIndex, endIndex);
   }, [filteredProducts, currentPage, productsPerPage]);
 
   const getQuantity = useCallback(
-    (productId) => quantities[productId] || moq,
-    [quantities, moq]
+    (productId) => quantities[productId] !== undefined ? quantities[productId] : 12,
+    [quantities]
   );
 
   const updateQuantity = useCallback((productId, newQuantity) => {
-    console.log(`Updating quantity for ${productId}: ${newQuantity}`);
-    setQuantities((prev) => {
-      const updated = {
-        ...prev,
-        [productId]: newQuantity,
-      };
-      console.log('New quantities state:', updated);
-      return updated;
-    });
+    setQuantities((prev) => ({
+      ...prev,
+      [productId]: newQuantity,
+    }));
   }, []);
 
   const incrementQuantity = useCallback(
     (productId, maxStock) => {
       const currentQty = getQuantity(productId);
-      const nextQty = currentQty + 1; // Increment by 1
-      console.log(`Incrementing ${productId}: ${currentQty} -> ${nextQty}, max: ${maxStock}`);
-      if (nextQty <= maxStock) {
+      const nextQty = currentQty + 1;
+      const maxLimit = Math.min(maxStock, 100); // Maximum 100 units limit
+      
+      if (nextQty <= maxLimit) {
         updateQuantity(productId, nextQty);
       } else {
-        showToast(`Maximum stock available is ${maxStock}`, "warning");
+        if (maxStock < 100) {
+          showToast(`Maximum stock available is ${maxStock}`, "warning");
+        } else {
+          showToast(`Maximum order quantity is 100 units`, "warning");
+        }
       }
     },
     [getQuantity, updateQuantity, showToast]
@@ -514,6 +513,7 @@ export const ProductLists = () => {
     setSelectedCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     );
+    setCurrentPage(1);
   }, []);
 
   // Handler: clear all filters
@@ -522,6 +522,7 @@ export const ProductLists = () => {
     setMinPrice("");
     setMaxPrice("");
     setSortBy("default");
+    setCurrentPage(1);
   }, []);
 
   return (
@@ -568,7 +569,7 @@ export const ProductLists = () => {
                   className="price-input"
                   value={minPrice}
                   min="0"
-                  onChange={e => setMinPrice(e.target.value)}
+                  onChange={e => { setMinPrice(e.target.value); setCurrentPage(1); }}
                 />
               </div>
               <div className="price-input-wrapper">
@@ -579,7 +580,7 @@ export const ProductLists = () => {
                   className="price-input"
                   value={maxPrice}
                   min="0"
-                  onChange={e => setMaxPrice(e.target.value)}
+                  onChange={e => { setMaxPrice(e.target.value); setCurrentPage(1); }}
                 />
               </div>
             </div>
@@ -592,7 +593,7 @@ export const ProductLists = () => {
           <select
             className="sort-select"
             value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
+            onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }}
           >
             <option value="default">Default</option>
             <option value="name-asc">Name A-Z</option>
@@ -689,6 +690,7 @@ export const ProductLists = () => {
               {paginatedProducts.map((product, index) => {
                 const quantity = getQuantity(product._id);
                 const isOutOfStock = product.stock === 0;
+                const maxLimit = Math.min(product.stock, 100); // Maximum 100 units limit
                 const isAddingToCart = addingToCart[product._id] || false;
                 const isInWishlist = wishlistItems.includes(product._id);
                 const productPrice = product.variants?.[0]?.price || product.buyPrice || 0;
@@ -751,7 +753,7 @@ export const ProductLists = () => {
                             e.stopPropagation();
                             incrementQuantity(product._id, product.stock);
                           }} 
-                          disabled={quantity >= product.stock || isOutOfStock} 
+                          disabled={quantity >= maxLimit || isOutOfStock} 
                           className="quantity-btn increase"
                         >
                           +
@@ -797,7 +799,8 @@ export const ProductLists = () => {
               {paginatedProducts.map((product, index) => {
                 const quantity = getQuantity(product._id);
                 const isOutOfStock = product.stock === 0;
-                const isMaxQuantity = quantity >= product.stock;
+                const maxLimit = Math.min(product.stock, 100); // Maximum 100 units limit
+                const isMaxQuantity = quantity >= maxLimit;
                 const isAddingToCart = addingToCart[product._id] || false;
                 const isInWishlist = wishlistItems.includes(product._id);
                 const productPrice = product.variants?.[0]?.price || product.buyPrice || 0;
@@ -1151,6 +1154,7 @@ export const ProductLists = () => {
                     <div className="variant-pills">
                       {variants.map((v, i) => (
                         <button
+                          type="button"
                           key={v.itemNumber || i}
                           className={`variant-pill ${i === selectedVariantIdx ? 'active' : ''}`}
                           onClick={() => setSelectedVariantIdx(i)}
@@ -1182,7 +1186,12 @@ export const ProductLists = () => {
                   <label>Select Quantity:</label>
                   <div className="modal-quantity-controls">
                     <button
-                      onClick={() => decrementQuantity(selectedProduct._id)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        decrementQuantity(selectedProduct._id);
+                      }}
                       disabled={getQuantity(selectedProduct._id) <= moq}
                       className="modal-quantity-btn decrease"
                     >
@@ -1192,7 +1201,12 @@ export const ProductLists = () => {
                     </button>
                     <span className="modal-quantity-display">{getQuantity(selectedProduct._id)}</span>
                     <button
-                      onClick={() => incrementQuantity(selectedProduct._id, 99999)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        incrementQuantity(selectedProduct._id, selectedProduct.stock || 99999);
+                      }}
                       className="modal-quantity-btn increase"
                     >
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
