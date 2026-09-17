@@ -65,7 +65,7 @@ export const ProductLists = () => {
   const [addingToCart, setAddingToCart] = useState({});
   const [wishlistItems, setWishlistItems] = useState([]);
   const [addingToWishlist, setAddingToWishlist] = useState({});
-  const [moq] = useState(12);
+  const [moq] = useState(100);
   const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();

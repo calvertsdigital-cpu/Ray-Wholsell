@@ -725,73 +725,10 @@ export const Navbar = () => {
 
       fetchAddresses();
       fetchCoupons();
-    }, [cartItems.length]);
-    useEffect(() => {
-      const handleCartUpdate = () => {
-        console.log("[DEBUG] Cart updated event received, refreshing cart display");
-        
-        setTimeout(() => {
-          const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
-          console.log("[DEBUG] Reading localStorage cart:", localCart.length, "items");
-          
-          if (localCart.length > 0) {
-            const localCartFormatted = localCart.map((item, index) => {
-              // Handle both formats:
-              // Format 1 (from backend): { _id, product: { _id, name, buyPrice, images, stock, weight, dimensions, description }, quantity }
-              // Format 2 (from ProductLists): { _id, name, price, quantity, stock, category, sku }
-              
-              const isBackendFormat = item.product && typeof item.product === 'object' && item.product._id;
-              
-              if (isBackendFormat) {
-                // Already in backend format
-                return {
-                  _id: item._id || `${item.product._id}_${Date.now()}_${index}`,
-                  product: {
-                    _id: item.product._id,
-                    name: item.product.name || "Unnamed Product",
-                    buyPrice: item.product.buyPrice || item.product.sellPrice || 0,
-                    images: item.product.images || [],
-                    stock: item.product.stock || 0,
-                    weight: item.product.weight || 0.016,
-                    dimensions: item.product.dimensions || { length: 10, width: 5, height: 2 },
-                    description: item.product.description || "No description available",
-                  },
-                  quantity: item.quantity,
-                };
-              } else {
-                // ProductLists format - convert to backend format
-                return {
-                  _id: item._id || `product_${item._id}_${Date.now()}_${index}`,
-                  product: {
-                    _id: item._id,
-                    name: item.name || "Unnamed Product",
-                    buyPrice: item.price || 0,
-                    images: item.images || [],
-                    stock: item.stock || 0,
-                    weight: item.weight || 0.016,
-                    dimensions: item.dimensions || { length: 10, width: 5, height: 2 },
-                    description: item.description || "No description available",
-                  },
-                  quantity: item.quantity,
-                };
-              }
-            });
-            
-            setCartItems(localCartFormatted);
-            setLoading(false);
-          } else {
-            setCartItems([]);
-            setLoading(false);
-          }
-        }, 50);
-      };
+    }, []); // run once on cart modal open — not on every cartItems.length change
 
-      handleCartUpdate();
-      window.addEventListener("cartUpdated", handleCartUpdate);
-      return () => {
-        window.removeEventListener("cartUpdated", handleCartUpdate);
-      };
-    }, []);
+    // NOTE: The cartUpdated + localStorage listener is handled in the primary fetchCart
+    // useEffect above. No duplicate listener needed here.
 
     const fetchShippingRates = useCallback(
       _.debounce(async (addressId, cart) => {
@@ -1122,9 +1059,15 @@ export const Navbar = () => {
           }
         }
         
-        // Update local state
+        // Update local state — handle both flat {_id, name, ...} and nested {product: {_id}} formats
         const localCart = JSON.parse(localStorage.getItem("localCart") || "[]");
-        const updatedLocalCart = localCart.filter(cartItem => cartItem.product?._id !== item.product?._id);
+        const productId = item.product?._id;
+        const updatedLocalCart = localCart.filter(cartItem => {
+          // nested format: { product: { _id } }
+          if (cartItem.product?._id) return cartItem.product._id !== productId;
+          // flat format: { _id, name, price, ... }
+          return cartItem._id !== productId;
+        });
         localStorage.setItem("localCart", JSON.stringify(updatedLocalCart));
         
         const updatedCartItems = memoizedCartItems.filter(cartItem => cartItem.product?._id !== item.product?._id);
@@ -1148,7 +1091,7 @@ export const Navbar = () => {
         return;
       }
 
-      const moq = 12; // Minimum Order Quantity
+      const moq = 100; // Minimum Order Quantity
       const newQuantity = action === "increment" ? item.quantity + 1 : item.quantity - 1;
       
       if (newQuantity < moq) {
@@ -1451,7 +1394,7 @@ export const Navbar = () => {
                         fontStyle: "italic",
                         marginLeft: "0.5rem"
                       }}>
-                        (MOQ: 12)
+                        (MOQ: 100)
                       </span>
                       <button
                         type="button"

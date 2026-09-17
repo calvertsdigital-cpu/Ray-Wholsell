@@ -69,8 +69,9 @@ export const ProductLists = () => {
   const [addingToCart, setAddingToCart] = useState({});
   const [wishlistItems, setWishlistItems] = useState([]);
   const [addingToWishlist, setAddingToWishlist] = useState({});
-  const [moq] = useState(12);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [moq] = useState(100);
+  const [searchQuery, setSearchQuery] = useState("");          // raw input value (instant)
+  const [debouncedSearch, setDebouncedSearch] = useState(""); // debounced value used for API
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItemsCount, setCartItemsCount] = useState(0);
@@ -94,6 +95,12 @@ export const ProductLists = () => {
 
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+  // Debounce the search input — wait 400ms after the user stops typing before firing the API
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ show: true, message, type });
@@ -121,8 +128,8 @@ export const ProductLists = () => {
           params: {
             page: 1,
             limit: 500,
-            search: searchQuery,
-            ...(categoryId && { category: categoryId })  // Add category filter if provided
+            search: debouncedSearch,
+            ...(categoryId && { category: categoryId })
           }
         });
         
@@ -156,7 +163,7 @@ export const ProductLists = () => {
     };
     
     fetchProducts();
-  }, [BASE_URL, searchQuery, categoryId]);
+  }, [BASE_URL, debouncedSearch, categoryId]);
 
   // Fetch wishlist if user is logged in
   useEffect(() => {
@@ -207,11 +214,10 @@ export const ProductLists = () => {
     };
     
     window.addEventListener("cartUpdated", handleCartUpdate);
-    
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
-  }, [BASE_URL]);
+  }, []);
 
   // ── Apply filters + sort whenever products / filter state changes ───────
   useEffect(() => {
@@ -220,7 +226,7 @@ export const ProductLists = () => {
     // 1. Category filter
     if (selectedCategories.length > 0) {
       result = result.filter(p =>
-        selectedCategories.includes(p.category)
+        selectedCategories.includes(p.category?.trim())
       );
     }
 
@@ -488,7 +494,9 @@ export const ProductLists = () => {
 
   // Derive unique categories from loaded products for the filter sidebar
   const uniqueCategories = useMemo(() => {
-    const cats = products.map(p => p.category).filter(Boolean);
+    const cats = products
+      .map(p => p.category?.trim())
+      .filter(Boolean);
     return [...new Set(cats)].sort();
   }, [products]);
 
@@ -642,6 +650,13 @@ export const ProductLists = () => {
           <div className="empty-section">
             <div className="empty-content">
               <p className="empty-text">No products available at the moment.</p>
+            </div>
+          </div>
+        ) : filteredProducts.length === 0 && (selectedCategories.length > 0 || minPrice || maxPrice) ? (
+          <div className="empty-section">
+            <div className="empty-content">
+              <p className="empty-text">No products match your current filters.</p>
+              <button className="retry-btn" onClick={handleClearFilters}>Clear Filters</button>
             </div>
           </div>
         ) : (

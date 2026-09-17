@@ -233,7 +233,7 @@ export const HomePage = () => {
             <span className="hero-accent">{heroSlides[heroIndex]?.subtitle || "Naturally Yours"}</span>
           </h1>
           <p className="hero-description">{heroSlides[heroIndex]?.text || "Ray's Healthy Living offers organic supplements for your family's health."}</p>
-          <a className="orange-button hero-button" href="#departments">Shop products <span>→</span></a>
+          <a className="orange-button hero-button" href="/products">Shop products <span>→</span></a>
         </div>
         <div className="hero-slider-dots">
           {heroSlides.map((_, idx) => (

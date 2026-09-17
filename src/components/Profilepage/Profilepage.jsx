@@ -1714,9 +1714,10 @@ const WishlistTab = ({ onOpenCart = null }) => {
         return;
       }
 
+      const moq = 100;
       await axiosInstance.post('/api/user/add-to-cart', {
         productId: product._id,
-        quantity: 1,
+        quantity: moq,
         websiteRole: 'wholesaler'
       }, {
         headers: {
@@ -1728,12 +1729,12 @@ const WishlistTab = ({ onOpenCart = null }) => {
         _id: `${product._id}_${Date.now()}`,
         product: {
           _id: product._id,
-          name: product.name,
-          sellPrice: product.sellPrice,
+          name: product.rhlProductTitle || product.name,
+          buyPrice: product.variants?.[0]?.price ?? product.sellPrice ?? product.buyPrice ?? 0,
           images: product.images,
           stock: product.stock,
         },
-        quantity: 1,
+        quantity: moq,
       };
 
       const existingCart = JSON.parse(localStorage.getItem('localCart') || '[]');
@@ -1804,7 +1805,11 @@ const WishlistTab = ({ onOpenCart = null }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {wishlistItems.map((item) => {
             if (!item || !item._id) return null;
-            const discount = calculateDiscount(item.originalPrice, item.sellPrice);
+            // Price: use first variant price, fallback to legacy fields
+            const itemPrice = item.variants?.[0]?.price ?? item.sellPrice ?? item.buyPrice ?? 0;
+            // Stock: this catalog has no stock field — treat as available unless status says otherwise
+            const isOutOfStock = item.status === 'inactive' || item.status === 'discontinued';
+            const discount = calculateDiscount(item.originalPrice, itemPrice);
             return (
               <div
                 key={item._id}
@@ -1835,7 +1840,7 @@ const WishlistTab = ({ onOpenCart = null }) => {
                       -{discount}% OFF
                     </div>
                   )}
-                  {item.stock === 0 && (
+                  {isOutOfStock && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <span className="bg-white text-red-600 px-4 py-2 rounded-lg font-semibold">
                         Out of Stock
@@ -1865,24 +1870,24 @@ const WishlistTab = ({ onOpenCart = null }) => {
                   </p>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-2xl font-bold text-black">
-                      ${item.sellPrice?.toFixed(2) || '0.00'}
+                      ${itemPrice.toFixed(2)}
                     </span>
-                    {item.originalPrice && item.originalPrice > item.sellPrice && (
+                    {item.originalPrice && item.originalPrice > itemPrice && (
                       <span className="text-lg text-gray-400 line-through">
                         ${item.originalPrice.toFixed(2)}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                    <span className={`font-medium ${item.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.stock > 0 ? `${item.stock} in stock` : 'Out of stock'}
+                  <div className="flex items-center gap-2 text-sm mb-3">
+                    <span className={`font-medium ${!isOutOfStock ? 'text-green-600' : 'text-red-600'}`}>
+                      {!isOutOfStock ? 'Available' : 'Unavailable'}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     <button
                       className="flex-1 px-4 py-2 bg-[var(--color-primary)] text-white font-semibold rounded-lg transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       onClick={() => handleAddToCart(item)}
-                      disabled={item.stock === 0 || addingToCart === item._id}
+                      disabled={isOutOfStock || addingToCart === item._id}
                     >
                       {addingToCart === item._id ? (
                         <>
