@@ -2,9 +2,10 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { stagger, useAnimate, useInView } from "framer-motion";
 import axios from "axios";
 import axiosInstance from "../../../utils/axiosInstance";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
 import { CheckCircle, AlertCircle, X } from "lucide-react";
+import { SubscriptionOption } from "../../Subscription/SubscriptionOption";
 import "./ProductLists.scss";
 
 // Toast Component
@@ -57,6 +58,9 @@ const Toast = ({ message, type, onClose, show }) => {
 };
 
 export const ProductLists = () => {
+  const [searchParams] = useSearchParams();
+  const categoryId = searchParams.get('category');
+  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,6 +74,10 @@ export const ProductLists = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItemsCount, setCartItemsCount] = useState(0);
+  const [categoryName, setCategoryName] = useState("");
+  const [modalSubscription, setModalSubscription] = useState({
+    isSubscription: false, frequency: null, discountPercentage: 0, discount: 0,
+  });
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,28 +106,35 @@ export const ProductLists = () => {
         setLoading(true);
         setError("");
         
-        console.log('🔄 Fetching ALL products from catalog API...');
+        const isFiltered = !!categoryId;
+        console.log(isFiltered ? `🔄 Fetching products for category: ${categoryId}` : '🔄 Fetching ALL products...');
         
-        // Fetch ALL products from new catalog endpoint (no pagination limit)
+        // Fetch products with optional category filter
         const response = await axios.get(`${BASE_URL}/api/user/catalog/products`, {
           params: {
             page: 1,
-            limit: 500,  // Request all products (backend has 408 total)
-            search: searchQuery
+            limit: 500,
+            search: searchQuery,
+            ...(categoryId && { category: categoryId })  // Add category filter if provided
           }
         });
         
         if (response.data?.products && response.data.products.length > 0) {
-          console.log('✅ Loaded all products from catalog API:', response.data.products.length);
+          console.log(`✅ Loaded ${response.data.products.length} products`);
+          
+          // Set category name from first product if filtering
+          if (categoryId && response.data.products[0]?.category?.name) {
+            setCategoryName(response.data.products[0].category.name);
+          }
+          
           setProducts(response.data.products);
           setTotalProducts(response.data.products.length);
-          setPaginatedProducts(response.data.products);  // Show all products, no pagination
+          setPaginatedProducts(response.data.products);
           setLoading(false);
           return;
         }
         
-        // If no products
-        console.warn('⚠️  No products returned from catalog API');
+        console.warn('⚠️  No products found');
         setProducts([]);
         setPaginatedProducts([]);
         setTotalProducts(0);
@@ -135,7 +150,7 @@ export const ProductLists = () => {
     };
     
     fetchProducts();
-  }, [BASE_URL, searchQuery]);
+  }, [BASE_URL, searchQuery, categoryId]);
 
   // Fetch wishlist if user is logged in
   useEffect(() => {
@@ -382,6 +397,7 @@ export const ProductLists = () => {
   const openProductDetails = useCallback((product) => {
     setSelectedProduct(product);
     setShowModal(true);
+    setModalSubscription({ isSubscription: false, frequency: null, discountPercentage: 0, discount: 0 });
   }, []);
 
   const closeProductDetails = useCallback(() => {
@@ -948,7 +964,15 @@ export const ProductLists = () => {
                     </span>
                   </div>
                 </div>
-                
+
+                {/* Subscribe to Save option */}
+                <SubscriptionOption
+                  product={selectedProduct}
+                  quantity={getQuantity(selectedProduct._id)}
+                  basePrice={selectedProduct?.variants?.[0]?.price || selectedProduct?.buyPrice || 0}
+                  onSubscriptionChange={(data) => setModalSubscription(data)}
+                />
+
                 <div className="modal-actions">
                   <button
                     onClick={() => {
@@ -961,9 +985,9 @@ export const ProductLists = () => {
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h1m0 0h4a1 1 0 001-1m-6 0V13m0 10V13m0 0h6" />
                     </svg>
-                    {selectedProduct.stock === 0 ? "Out of Stock" : addingToCart[selectedProduct._id] ? "Adding..." : "ADD TO CART"}
+                    {selectedProduct.stock === 0 ? "Out of Stock" : addingToCart[selectedProduct._id] ? "Adding..." : modalSubscription.isSubscription ? "SUBSCRIBE & SAVE" : "ADD TO CART"}
                   </button>
-                  
+
                   <button className="modal-close-btn" onClick={closeProductDetails}>
                     Close
                   </button>

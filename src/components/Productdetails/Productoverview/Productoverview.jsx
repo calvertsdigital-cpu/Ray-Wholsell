@@ -6,6 +6,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { SimilarProduct } from "../SimilarProduct/SimilarProduct";
 import placeholderImg from "../../../assets/images/bg/prod-img.webp";
+import { SubscriptionOption } from "../../Subscription/SubscriptionOption";
 
 // Spinner Component
 const Spinner = ({ size = "medium", color = "#007bff" }) => {
@@ -28,12 +29,6 @@ const Spinner = ({ size = "medium", color = "#007bff" }) => {
   return (
     <div className="spinner-container" style={{ textAlign: "center", padding: "20px" }}>
       <div style={spinnerStyle}></div>
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };
@@ -94,6 +89,12 @@ export const Productoverview = () => {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [moq, setMoq] = useState(1);
+  const [subscriptionData, setSubscriptionData] = useState({
+    isSubscription: false,
+    frequency: null,
+    discountPercentage: 0,
+    discount: 0,
+  });
   
   const { pid } = useParams();
   const navigate = useNavigate();
@@ -496,6 +497,14 @@ export const Productoverview = () => {
                   MINIMUM ORDER QUANTITY: {moq}
                 </div>
 
+                {/* Subscription Option */}
+                <SubscriptionOption
+                  product={product}
+                  quantity={quantity}
+                  basePrice={product.price || 0}
+                  onSubscriptionChange={(data) => setSubscriptionData(data)}
+                />
+
                 <div className="action-buttons">
                   <button
                     className="add-to-cart"
@@ -503,16 +512,9 @@ export const Productoverview = () => {
                     disabled={product.stock === 0 || addingToCart}
                   >
                     <ShoppingCart size={20} />
-                    Add to Cart
+                    {subscriptionData.isSubscription ? 'Subscribe & Save' : 'Add to Cart'}
                   </button>
-                  {/* <button
-                    className="buy-now"
-                    onClick={handleBuyNow}
-                    disabled={product.stock === 0}
-                  >
-                    <Briefcase size={20} />
-                    Buy Now
-                  </button> */}
+                  {/* Buy Now button - currently disabled */}
                   <button
                     className={`wishlist ${isWishlisted ? "wishlisted" : ""}`}
                     onClick={handleWishlist}
@@ -530,3 +532,4 @@ export const Productoverview = () => {
     </div>
   );
 };
+

@@ -970,6 +970,17 @@ export const Navbar = () => {
         return;
       }
 
+      // CHECK LOGIN FIRST - before checking address
+      const token = localStorage.getItem("userToken");
+      if (!token) {
+        showToast("Please log in to proceed to checkout", "error");
+        navigate("/auth/login");
+        setIsCartOpen(false);
+        isCheckingOut.current = false;
+        return;
+      }
+
+      // NOW check if address is selected (only after login confirmed)
       if (!selectedAddressId) {
         showToast("Please select a shipping address", "error");
         setIsAddressOpen(true);
@@ -985,15 +996,6 @@ export const Navbar = () => {
 
       setLoading(true);
       try {
-        const token = localStorage.getItem("userToken");
-        if (!token) {
-          showToast("Please log in to proceed to checkout", "error");
-          navigate("/auth/login");
-          setIsCartOpen(false);
-          isCheckingOut.current = false;
-          return;
-        }
-
         // Real API mode: Create order with pending_review status
         console.log('🚀 Real checkout mode - calling API');
         console.log('📧 User token exists:', !!token);
@@ -1690,18 +1692,18 @@ export const Navbar = () => {
               
               <button
                 onClick={handleCheckout}
-                disabled={loading || memoizedCartItems.length === 0 || !selectedAddressId || addressLoading}
+                disabled={loading || memoizedCartItems.length === 0 || addressLoading}
                 style={{
                   width: "100%",
                   backgroundColor:
-                    loading || memoizedCartItems.length === 0 || !selectedAddressId || addressLoading
+                    loading || memoizedCartItems.length === 0 || addressLoading
                       ? "#28a74580"
                       : "#28a745",
                   color: "#ffffff",
                   padding: "0.75rem",
                   marginTop: "1rem",
                   cursor:
-                    loading || memoizedCartItems.length === 0 || !selectedAddressId || addressLoading
+                    loading || memoizedCartItems.length === 0 || addressLoading
                       ? "not-allowed"
                       : "pointer",
                   border: "none",
@@ -1762,7 +1764,7 @@ export const Navbar = () => {
               <a href="/products"><ShoppingBag size={16} /> Products</a>
               <button 
                 className="catalog-link"
-                onClick={() => window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank')}
+                onClick={() => window.open('https://ray-wholsales-catalog.vercel.app/', '_blank')}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'white', fontSize: '14px' }}
               >
                 <BookOpen size={16} /> Catalog
@@ -1954,7 +1956,7 @@ export const Navbar = () => {
                 <button 
                   className="mobile-menu-utility"
                   onClick={() => { 
-                    window.open('https://id-preview--46f82153-2105-4196-af86-e9c99960b253.lovable.app/?__lovable_sha=7aa622e2', '_blank');
+                    window.open('https://ray-wholsales-catalog.vercel.app/', '_blank');
                     setIsMobileMenuOpen(false); 
                   }}
                 >

@@ -1016,6 +1016,15 @@ footer {
     width: 100%;
   }
 
+  .dept-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    .dept-card {
+      padding: 12px 14px;
+      .dept-card-name { font-size: 13px; }
+    }
+  }
+
   .story-section,
   .department-section,
   .quality-section {
@@ -1163,48 +1172,86 @@ footer {
   }
 }
 
-// DEPARTMENT PILLS
-.department-pills {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-  max-height: 200px;
-  overflow: hidden;
-  transition: max-height 0.5s ease;
+// DEPARTMENT CARDS
+.dept-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 2px solid $orange;
+  color: $orange;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
 
-  &.show-all {
-    max-height: 600px;
+  &:hover {
+    background: $orange;
+    color: white;
   }
 
-  .dept-pill {
-    background: $olive;
-    color: white;
-    border: none;
-    border-radius: 24px;
-    padding: 12px 24px;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: inline-flex;
+  .toggle-arrow {
+    font-size: 10px;
+    transition: transform 0.3s;
+    &.up { transform: rotate(0deg); }
+  }
+}
+
+.dept-cards-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 48px;
+
+  &.dept-expanded {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .dept-card {
+    display: flex;
     align-items: center;
     gap: 10px;
-    font-weight: 600;
-    font-size: 14px;
-    justify-content: center;
-
-    .jar {
-      font-size: 18px;
-      display: inline-flex;
-      align-items: center;
-    }
+    background: white;
+    border: 2px solid #e8ede0;
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    width: 100%;
 
     &:hover {
-      background: darken($olive, 10%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba($olive, 0.3);
+      border-color: $olive;
+      background: $olive;
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba($olive, 0.25);
+
+      .dept-card-arrow { opacity: 1; color: white; }
     }
 
-    &:active {
-      transform: translateY(0);
+    .dept-card-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .dept-card-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: inherit;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .dept-card-arrow {
+      font-size: 14px;
+      opacity: 0;
+      color: $olive;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
     }
   }
 }

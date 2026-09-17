@@ -48,22 +48,44 @@ export const HomePage = () => {
   const [showAllDepts, setShowAllDepts] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
-  // Fetch categories for departments
+  // Fetch categories for departments (works with or without login)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const token = localStorage.getItem('userToken');
-        if (!token) return;
-
+        
+        // Try with backend (supports both logged in and non-logged in users)
         const response = await axios.get(`${BASE_URL}/api/user/categories`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
         const data = Array.isArray(response.data) ? response.data : [];
-        setCategories(data.slice(0, 6)); // First 6 categories
+        
+        // Define the 10 departments we want to show
+        const departmentNames = [
+          'Single Herbal Liquid Extracts', 
+          'Herbal Formula Liquid Extracts', 
+          'CBD', 
+          'Kids Formulas', 
+          'Carrier Oils', 
+          'Essential Oils', 
+          'Herbal Oils', 
+          'Herbal Powders', 
+          'Empty Bottles', 
+          'Literature'
+        ];
+        
+        // Filter to only show the 10 departments in order
+        const filteredCategories = departmentNames
+          .map(name => data.find(cat => cat.name === name))
+          .filter(cat => cat !== undefined);
+        
+        setCategories(filteredCategories);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching categories:', err);
+        // Fallback to default departments if API fails
+        setCategories([]);
         setLoading(false);
       }
     };
@@ -81,7 +103,18 @@ export const HomePage = () => {
 
   const departments = categories.length > 0 
     ? categories.map(c => c.name)
-    : ['Single Herbal Liquid Extracts', 'Herbal Formula Liquid Extracts', 'CBD', 'Kids Formulas', 'Carrier Oils', 'Essential Oils', 'Herbal Oils', 'Herbal Powders', 'Empty Bottles', 'Literature'];
+    : [
+        'Single Herbal Liquid Extracts', 
+        'Herbal Formula Liquid Extracts', 
+        'CBD', 
+        'Kids Formulas', 
+        'Carrier Oils', 
+        'Essential Oils', 
+        'Herbal Oils', 
+        'Herbal Powders', 
+        'Empty Bottles', 
+        'Literature'
+      ];
 
   const categoryIcons = ['Herbs', 'Vitamins', 'Bulk Herbs', 'Teas', 'Oils', 'Incense'];
 
@@ -221,20 +254,34 @@ export const HomePage = () => {
             <p className="eyebrow orange-text">EXPLORE OUR COLLECTION</p>
             <h2>Shop by Department</h2>
           </div>
-          <button className="orange-button" onClick={() => setShowAllDepts(!showAllDepts)}>
-            {showAllDepts ? 'Show Less' : 'View all departments'}
+          <button className="dept-toggle-btn" onClick={() => setShowAllDepts(!showAllDepts)}>
+            {showAllDepts ? (
+              <><span>Show Less</span><span className="toggle-arrow up">▲</span></>
+            ) : (
+              <><span>View all departments</span><span className="toggle-arrow">▼</span></>
+            )}
           </button>
         </div>
-        <div className={`department-pills ${showAllDepts ? 'show-all' : ''}`}>
-          {departments.map((dept, idx) => (
-            <button 
-              key={idx}
-              className="dept-pill"
-              onClick={() => handleShopClick(categories[idx]?._id)}
-            >
-              <span className="jar">▥</span>{dept}
-            </button>
-          ))}
+
+        {/* default: 5 cards, expanded: max 15 */}
+        <div className={`dept-cards-row ${showAllDepts ? 'dept-expanded' : ''}`}>
+          {(showAllDepts ? departments.slice(0, 15) : departments.slice(0, 5)).map((dept, idx) => {
+            const categoryId = categories[idx]?._id;
+            return (
+              <button
+                key={idx}
+                className="dept-card"
+                onClick={() => {
+                  if (categoryId) navigate(`/products?category=${categoryId}`);
+                  else navigate('/products');
+                }}
+              >
+                <span className="dept-card-icon">🌿</span>
+                <span className="dept-card-name">{dept}</span>
+                <span className="dept-card-arrow">→</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* CATEGORY ICONS SECTION */}

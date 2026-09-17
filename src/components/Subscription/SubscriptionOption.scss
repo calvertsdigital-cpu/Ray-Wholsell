@@ -1,0 +1,287 @@
+.subscription-option {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  background: #f9f9f9;
+  transition: all 0.3s ease;
+
+  &:has(input:checked) {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f0fdf4 0%, #f9f9f9 100%);
+  }
+
+  .subscription-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .subscription-checkbox {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      flex: 1;
+      position: relative;
+
+      input {
+        width: 24px;
+        height: 24px;
+        margin-right: 12px;
+        cursor: pointer;
+        accent-color: #28a745;
+      }
+
+      .label-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .best-value {
+        background: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-left: 8px;
+      }
+    }
+  }
+
+  .subscription-details {
+    animation: slideDown 0.3s ease-out;
+
+    .savings-banner {
+      background: linear-gradient(135deg, #28a745 0%, #1f7e31 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      text-align: right;
+
+      .savings-text {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+      }
+
+      .per-serving {
+        font-size: 14px;
+        margin: 0;
+        opacity: 0.95;
+      }
+    }
+
+    .frequency-selector {
+      margin-bottom: 16px;
+
+      .frequency-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .frequency-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+
+        .frequency-btn {
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 12px;
+          background: white;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+
+          .freq-main {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+          }
+
+          .freq-discount {
+            font-size: 12px;
+            color: #28a745;
+            font-weight: 700;
+          }
+
+          &:hover {
+            border-color: #28a745;
+            background: #f0fdf4;
+          }
+
+          &.active {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+
+            .freq-main {
+              color: white;
+            }
+
+            .freq-discount {
+              color: #d4f4dd;
+            }
+          }
+        }
+      }
+    }
+
+    .subscription-benefits {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+
+      h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        list-style: none;
+
+        li {
+          font-size: 12px;
+          color: #666;
+          margin-bottom: 6px;
+          line-height: 1.4;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+
+    .frequency-dropdown {
+      display: none;
+
+      .frequency-select-mobile {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+
+        option {
+          padding: 8px;
+        }
+      }
+    }
+  }
+
+  .one-time-purchase {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    text-align: center;
+
+    .one-time-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 4px 0;
+    }
+
+    .one-time-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #28a745;
+      margin: 0;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 600px;
+  }
+}
+
+// Mobile Responsive
+@media (max-width: 768px) {
+  .subscription-option {
+    padding: 16px;
+
+    .subscription-details {
+      .frequency-selector {
+        .frequency-options {
+          display: none;
+        }
+      }
+
+      .frequency-dropdown {
+        display: block;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .subscription-option {
+    padding: 12px;
+    margin: 12px 0;
+
+    .subscription-header {
+      .subscription-checkbox {
+        .label-text {
+          font-size: 14px;
+        }
+
+        .best-value {
+          font-size: 10px;
+          padding: 2px 6px;
+        }
+      }
+    }
+
+    .subscription-details {
+      .savings-banner {
+        padding: 12px;
+
+        .savings-text {
+          font-size: 16px;
+        }
+
+        .per-serving {
+          font-size: 12px;
+        }
+      }
+
+      .subscription-benefits {
+        padding: 10px;
+
+        h4 {
+          font-size: 13px;
+        }
+
+        ul li {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
