@@ -24,6 +24,14 @@ export const CookieConsentBanner = () => {
       <div className="cookie-consent-modal">
         {!showPreferences ? (
           <>
+            <button 
+              onClick={() => declineAll()} 
+              className="btn-close-banner" 
+              aria-label="Close cookie banner"
+              title="Close without accepting"
+            >
+              ×
+            </button>
             <div className="cookie-content">
               <h3 id="cookie-title">Cookie Preferences</h3>
               <p>We use cookies to enhance your experience, analyze site traffic, and for marketing. By clicking "Accept All Cookies", you consent to our use of cookies. <a href="/private-policy#manage-cookies" target="_blank" rel="noopener noreferrer">More information</a></p>

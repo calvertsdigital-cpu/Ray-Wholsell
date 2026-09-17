@@ -55,6 +55,34 @@
   color: #333;
 }
 
+.btn-close-banner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.btn-close-banner:hover {
+  color: #333;
+}
+
+.btn-close-banner:focus {
+  outline: 2px solid #478156;
+  outline-offset: 2px;
+}
+
 .cookie-content {
   margin-bottom: 24px;
 }
