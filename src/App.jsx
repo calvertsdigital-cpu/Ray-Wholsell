@@ -132,6 +132,7 @@ import Loader from './components/common/Loader/Loader';
 import { useState, useEffect } from 'react';
 import { CookieConsentProvider } from './context/CookieConsentContext';
 import { CookieConsentBanner } from './components/CookieConsent/CookieConsentBanner';
+import { WelcomeModal } from './components/WelcomeModal/WelcomeModal';
 
 
 function App() {
@@ -273,6 +274,7 @@ function App() {
         </Routes>
         <FixedButtons />
         <ChatWidget />
+        <WelcomeModal />
         <AnimatePresence mode="wait">
           {isLoading && <DiagonalLoader key="loader" />}
         </AnimatePresence>

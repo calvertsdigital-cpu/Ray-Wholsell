@@ -342,7 +342,9 @@ button, input, select {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 48px;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 32px;
 
     h2 {
       font-size: 42px;
@@ -1009,7 +1011,16 @@ footer {
   }
 
   .section-heading {
-    display: block;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+
+    h2 { font-size: 28px; }
+
+    .dept-toggle-btn {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   .department-pills a {
@@ -1017,11 +1028,33 @@ footer {
   }
 
   .dept-cards-row {
-    grid-template-columns: repeat(2, 1fr);
+    /* horizontal scroll on mobile — no grid, single row */
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
     gap: 10px;
+    padding-bottom: 8px;
+    /* bleed to screen edges past the wrap padding */
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    /* hide scrollbar visually but keep scrolling */
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+
     .dept-card {
-      padding: 12px 14px;
-      .dept-card-name { font-size: 13px; }
+      flex: 0 0 140px;       /* fixed width, won't shrink */
+      scroll-snap-align: start;
+      padding: 12px 10px;
+      .dept-card-name { font-size: 12px; white-space: normal; }
+      .dept-card-icon { font-size: 16px; }
+      .dept-card-arrow { display: none; }
     }
   }
 

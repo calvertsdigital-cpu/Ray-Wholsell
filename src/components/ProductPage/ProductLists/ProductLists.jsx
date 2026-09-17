@@ -85,6 +85,13 @@ export const ProductLists = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [paginatedProducts, setPaginatedProducts] = useState([]);
 
+  // Filter + sort state
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sortBy, setSortBy] = useState("default");
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -128,8 +135,7 @@ export const ProductLists = () => {
           }
           
           setProducts(response.data.products);
-          setTotalProducts(response.data.products.length);
-          setPaginatedProducts(response.data.products);
+          // Don't set paginatedProducts here — the filter+sort useEffect will handle it
           setLoading(false);
           return;
         }
@@ -207,17 +213,56 @@ export const ProductLists = () => {
     };
   }, [BASE_URL]);
 
+  // ── Apply filters + sort whenever products / filter state changes ───────
+  useEffect(() => {
+    let result = [...products];
+
+    // 1. Category filter
+    if (selectedCategories.length > 0) {
+      result = result.filter(p =>
+        selectedCategories.includes(p.category)
+      );
+    }
+
+    // 2. Price range filter (use first variant price or buyPrice)
+    const min = minPrice !== "" ? parseFloat(minPrice) : null;
+    const max = maxPrice !== "" ? parseFloat(maxPrice) : null;
+    if (min !== null || max !== null) {
+      result = result.filter(p => {
+        const price = p.variants?.[0]?.price ?? p.buyPrice ?? 0;
+        if (min !== null && price < min) return false;
+        if (max !== null && price > max) return false;
+        return true;
+      });
+    }
+
+    // 3. Sort
+    if (sortBy === "name-asc")   result.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === "name-desc")  result.sort((a, b) => b.name.localeCompare(a.name));
+    if (sortBy === "price-asc")  result.sort((a, b) => (a.variants?.[0]?.price ?? a.buyPrice ?? 0) - (b.variants?.[0]?.price ?? b.buyPrice ?? 0));
+    if (sortBy === "price-desc") result.sort((a, b) => (b.variants?.[0]?.price ?? b.buyPrice ?? 0) - (a.variants?.[0]?.price ?? a.buyPrice ?? 0));
+    if (sortBy === "stock-asc")  result.sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
+    if (sortBy === "stock-desc") result.sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0));
+
+    setFilteredProducts(result);
+    setCurrentPage(1); // reset to page 1 when filters change
+  }, [products, selectedCategories, minPrice, maxPrice, sortBy]);
+
+  // ── Paginate filteredProducts ─────────────────────────────────────────────
   // Handle pagination when products or current page changes
   useEffect(() => {
-    if (products && products.length > 0) {
-      setTotalProducts(products.length);
+    if (filteredProducts.length > 0) {
+      setTotalProducts(filteredProducts.length);
       const startIndex = (currentPage - 1) * productsPerPage;
       const endIndex = startIndex + productsPerPage;
-      const paginated = products.slice(startIndex, endIndex);
+      const paginated = filteredProducts.slice(startIndex, endIndex);
       setPaginatedProducts(paginated);
-      window.scrollTo(0, 0); // Scroll to top when page changes
+      window.scrollTo(0, 0);
+    } else {
+      setTotalProducts(0);
+      setPaginatedProducts([]);
     }
-  }, [products, currentPage, productsPerPage]);
+  }, [filteredProducts, currentPage, productsPerPage]);
 
   const getQuantity = useCallback(
     (productId) => quantities[productId] || moq,
@@ -441,6 +486,27 @@ export const ProductLists = () => {
     return range;
   };
 
+  // Derive unique categories from loaded products for the filter sidebar
+  const uniqueCategories = useMemo(() => {
+    const cats = products.map(p => p.category).filter(Boolean);
+    return [...new Set(cats)].sort();
+  }, [products]);
+
+  // Handler: toggle a category checkbox
+  const handleCategoryToggle = useCallback((cat) => {
+    setSelectedCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  }, []);
+
+  // Handler: clear all filters
+  const handleClearFilters = useCallback(() => {
+    setSelectedCategories([]);
+    setMinPrice("");
+    setMaxPrice("");
+    setSortBy("default");
+  }, []);
+
   return (
     <div className="products-page-container">
       <Toast message={toast.message} type={toast.type} show={toast.show} onClose={hideToast} />
@@ -449,53 +515,26 @@ export const ProductLists = () => {
       <div className="filters-sidebar">
         <div className="filters-header">
           <h3>Filters</h3>
-          <button className="clear-filters-btn">Show All</button>
+          <button className="clear-filters-btn" onClick={handleClearFilters}>
+            Show All
+          </button>
         </div>
-        
-        {/* Category Filters */}
+
+        {/* Category Filters — built from real product data */}
         <div className="filter-section">
           <h4>Product Categories</h4>
           <div className="filter-options">
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              B Vitamins
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              C Vitamins
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Omega Supplements
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Minerals
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Probiotics
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Herbal Supplements
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Multivitamins
-            </label>
-            <label className="filter-option">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              Collagen
-            </label>
+            {uniqueCategories.map(cat => (
+              <label key={cat} className="filter-option">
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(cat)}
+                  onChange={() => handleCategoryToggle(cat)}
+                />
+                <span className="checkmark"></span>
+                {cat}
+              </label>
+            ))}
           </div>
         </div>
 
@@ -506,11 +545,25 @@ export const ProductLists = () => {
             <div className="price-input-group">
               <div className="price-input-wrapper">
                 <label>Min ($)</label>
-                <input type="number" placeholder="0" className="price-input" />
+                <input
+                  type="number"
+                  placeholder="0"
+                  className="price-input"
+                  value={minPrice}
+                  min="0"
+                  onChange={e => setMinPrice(e.target.value)}
+                />
               </div>
               <div className="price-input-wrapper">
                 <label>Max ($)</label>
-                <input type="number" placeholder="1000" className="price-input" />
+                <input
+                  type="number"
+                  placeholder="1000"
+                  className="price-input"
+                  value={maxPrice}
+                  min="0"
+                  onChange={e => setMaxPrice(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -519,7 +572,11 @@ export const ProductLists = () => {
         {/* Sort Options */}
         <div className="filter-section">
           <h4>Sort By</h4>
-          <select className="sort-select">
+          <select
+            className="sort-select"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+          >
             <option value="default">Default</option>
             <option value="name-asc">Name A-Z</option>
             <option value="name-desc">Name Z-A</option>
@@ -529,6 +586,25 @@ export const ProductLists = () => {
             <option value="stock-desc">Stock High to Low</option>
           </select>
         </div>
+
+        {/* Active filter summary */}
+        {(selectedCategories.length > 0 || minPrice || maxPrice || sortBy !== "default") && (
+          <div className="filter-section active-filters">
+            <h4>Active Filters</h4>
+            {selectedCategories.map(cat => (
+              <span key={cat} className="active-filter-tag">
+                {cat}
+                <button onClick={() => handleCategoryToggle(cat)}>×</button>
+              </span>
+            ))}
+            {(minPrice || maxPrice) && (
+              <span className="active-filter-tag">
+                ${minPrice || "0"} – ${maxPrice || "∞"}
+                <button onClick={() => { setMinPrice(""); setMaxPrice(""); }}>×</button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="main-content">
@@ -584,8 +660,78 @@ export const ProductLists = () => {
               </div>
             </div>
 
-            {/* Products Table */}
-            <div className="products-table-container">
+            {/* ── MOBILE CARD VIEW (hidden on desktop) ── */}
+            <div className="mobile-product-cards">
+              {paginatedProducts.map((product, index) => {
+                const quantity = getQuantity(product._id);
+                const isOutOfStock = product.stock === 0;
+                const isAddingToCart = addingToCart[product._id] || false;
+                const isInWishlist = wishlistItems.includes(product._id);
+                const productPrice = product.variants?.[0]?.price || product.buyPrice || 0;
+                const subtotal = (productPrice * quantity).toFixed(2);
+                return (
+                  <div key={product._id} className={`mobile-product-card ${isOutOfStock ? 'out-of-stock' : ''}`}>
+                    {/* Image + wishlist */}
+                    <div className="mpc-image-wrap">
+                      <img src={`/${((index % 7) + 1)}.png`} alt={product.name} className="mpc-img" />
+                      <button
+                        onClick={() => addToWishlist(product)}
+                        className={`mpc-wishlist ${isInWishlist ? 'active' : ''}`}
+                        title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                      >
+                        <svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Info */}
+                    <div className="mpc-info">
+                      <h3 className="mpc-name">{product.rhlProductTitle || product.name}</h3>
+                      <div className="mpc-badges">
+                        {product.category && <span className="badge category-badge">{product.category}</span>}
+                        {product.type && <span className="badge type-badge">{product.type}</span>}
+                      </div>
+                      {product.rhlId && <small className="mpc-rhlid">RHL#{product.rhlId}</small>}
+                      <p className="mpc-desc">{product.description}</p>
+                      <div className="mpc-row">
+                        <span className="mpc-label">Price:</span>
+                        <span className="mpc-price">${productPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="mpc-row">
+                        <span className="mpc-label">Stock:</span>
+                        <span className={isOutOfStock ? 'mpc-out' : 'mpc-in'}>
+                          {isOutOfStock ? 'Out of Stock' : `${product.stock} units`}
+                        </span>
+                      </div>
+
+                      {/* Quantity */}
+                      <div className="mpc-qty-row">
+                        <button onClick={() => decrementQuantity(product._id)} disabled={quantity <= moq} className="quantity-btn decrease">−</button>
+                        <span className="quantity-display">{quantity}</span>
+                        <button onClick={() => incrementQuantity(product._id, product.stock)} disabled={quantity >= product.stock || isOutOfStock} className="quantity-btn increase">+</button>
+                        <span className="mpc-subtotal">= ${subtotal}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="mpc-actions">
+                        <button
+                          onClick={() => addToCart(product)}
+                          disabled={isOutOfStock || isAddingToCart}
+                          className={`buy-now-btn ${isOutOfStock ? 'disabled' : ''}`}
+                        >
+                          {isOutOfStock ? 'Out of Stock' : isAddingToCart ? 'Adding...' : 'ADD TO CART'}
+                        </button>
+                        <button className="details-btn" onClick={() => openProductDetails(product)}>Details</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── DESKTOP TABLE VIEW (hidden on mobile) ── */}
+            <div className="products-table-container desktop-only-table">
           <table className="products-table">
             <thead>
               <tr>
@@ -651,7 +797,7 @@ export const ProductLists = () => {
                     {/* Product Title */}
                     <td className="col-title">
                       <div className="product-title-info">
-                        <h3 className="product-name">{product.name}</h3>
+                        <h3 className="product-name">{product.rhlProductTitle || product.name}</h3>
                         <div className="product-metadata">
                           {product.category && (
                             <span className="badge category-badge">{product.category}</span>
@@ -677,7 +823,7 @@ export const ProductLists = () => {
                     {/* Bin Location */}
                     <td className="col-location">
                       <span className="bin-location">
-                        {product.variants?.[0]?.binLocation || "N/A"}
+                        {product.variants?.[0]?.binLocation || <span className="bin-pending">Not yet assigned</span>}
                       </span>
                     </td>
 
@@ -854,7 +1000,10 @@ export const ProductLists = () => {
               
               <div className="product-details-section">
                 <div className="product-header">
-                  <h3 className="modal-product-name">{selectedProduct.name}</h3>
+                  <h3 className="modal-product-name">{selectedProduct.rhlProductTitle || selectedProduct.name}</h3>
+                  {selectedProduct.rhlProductTitle && (
+                    <p className="modal-manufacturer-name">{selectedProduct.name}</p>
+                  )}
                   {selectedProduct.rhlId && (
                     <span className="modal-rhl-id">RHL#{selectedProduct.rhlId}</span>
                   )}
@@ -888,12 +1037,16 @@ export const ProductLists = () => {
                     </div>
                   )}
 
-                  {selectedProduct.variants?.[0]?.binLocation && (
-                    <div className="info-item">
-                      <label>Bin Location:</label>
-                      <span>{selectedProduct.variants[0].binLocation}</span>
-                    </div>
-                  )}
+                  {/* Bin Location — always show, null = not yet confirmed */}
+                  <div className="info-item">
+                    <label>Bin Location:</label>
+                    <span>
+                      {selectedProduct.variants?.[0]?.binLocation
+                        ? selectedProduct.variants[0].binLocation
+                        : <span className="bin-pending">Not yet assigned</span>
+                      }
+                    </span>
+                  </div>
                   
                   <div className="info-item">
                     <label>Category:</label>
