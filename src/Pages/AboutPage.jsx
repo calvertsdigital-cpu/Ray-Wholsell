@@ -138,238 +138,243 @@ const Aboutpage = () => {
 
   return (
     <>
-    <Navbar/>
+      <Navbar/>
 
-        <div className="about-page">
-      {/* <Navbar isNavOpen={isNavOpen} setIsNavOpen={setIsNavOpen} /> */}
-
-      {/* Hero Section with Parallax */}
-      <section className="hero-section">
-        <div
-          className="hero-background"
-          style={{
-            transform: `translateY(${scrollY * 0.5}px)`,
-          }}
-        ></div>
-        <div className="hero-overlay"></div>
-        <div className="container">
-          <div className="hero-content">
-            <div className="hero-text">
-              <h1 className="hero-title">LIVE WELL. FEEL WELL. BE WELL.</h1>
-              <h2 className="hero-subtitle">
-Your Everyday Wellness, Powered by Better Choices.              </h2>
-              <p className="hero-description">
-               At Ray’s Healthy Living, we believe wellness is not a destination — it is a lifestyle.
-We bring together thoughtfully selected health, nutrition, and wellness products to help you make informed choices for yourself and your family.
-Quality products. Trusted standards. A healthier way of living.
-
-              </p>
-              <div className="hero-buttons">
-                <button className="hero-btn secondary">Learn More</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About Our Firm Section */}
-      <section className="about-firm-section">
-        <div className="container">
-          <div className="about-firm-content">
-            <div className="about-firm-image">
-              {/* The image is set via CSS background */}
-            </div>
-            <div className="about-firm-text">
-              <h2 className="firm-title">About Our Firm</h2>
-              <div className="firm-underline"></div>
-              <p className="firm-description">
-              We do business through a network of traditional brick-and-mortar stores and our own brand website online. Ray’s Healthy Living offers products with enhanced natural vitamins and minerals through herbal supplements that have been produced through the most thorough and effective quality standards in the industry. We take pride in doing business while taking great care of our customers’ satisfaction and safety. Ray’s Healthy Living believes customers are part of the family, and we take care of our family. You can see why this is a key element in our business by reading our founder and CEO’s personal story
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Quality, Safety, and Satisfaction Section */}
-      <section className="quality-section">
-        <div className="container">
-          <h2 className="quality-title capitalize">
-            Quality, safety, and satisfaction
-          </h2>
-          <div className="quality-underline"></div>
-          <div className="quality-grid">
-            {qualityFeatures.map((feature, index) => (
-              <div key={index} className="quality-card">
-                <div className="quality-image">
-                  <img src={feature.image} alt={feature.title} />
-                </div>
-                <div className="quality-content">
-                  <h3 className="quality-card-title">{feature.title}</h3>
-                  <p className="quality-card-description">
-                    {feature.description}
-                  </p>
+      <div className="about-page">
+        {/* Hero Section with Parallax */}
+        <section className="hero-section">
+          <div
+            className="hero-background"
+            style={{
+              transform: `translateY(${scrollY * 0.5}px)`,
+            }}
+          ></div>
+          <div className="hero-overlay"></div>
+          <div className="container">
+            <div className="hero-content">
+              <div className="hero-text">
+                <h1 className="hero-title">LIVE WELL. FEEL WELL. BE WELL.</h1>
+                <h2 className="hero-subtitle">
+                  Your Everyday Wellness, Powered by Better Choices.
+                </h2>
+                <p className="hero-description">
+                  At Ray's Healthy Living, we believe wellness is not a destination — it is a lifestyle.
+                  We bring together thoughtfully selected health, nutrition, and wellness products to help you make informed choices for yourself and your family.
+                  Quality products. Trusted standards. A healthier way of living.
+                </p>
+                <div className="hero-buttons">
+                  <button className="hero-btn secondary">Learn More</button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Price Comparison Section */}
-      <section className="price-comparison-section">
-        <div className="container">
-          <div className="price-comparison-content">
-            <div className="price-comparison-image">
-              <img
-                src="https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&h=500&fit=crop"
-                alt="Natural Medicine Products"
-                className="comparison-img"
-              />
             </div>
-            <div className="price-comparison-text">
-              <h2 className="comparison-title">
-                Natural Medicine Product Price Comparisons
-              </h2>
-              <div className="comparison-underline"></div>
-              <p className="comparison-description">
-                We are dedicated to offering high-quality natural herbal
-                supplements at affordable prices to promote better health and
-                lifestyle. Our products are competitively priced—among the
-                lowest online—and we aim to be your one-stop shop for all
-                organic supplement needs. If you find a lower price elsewhere,
-                we’ll match or beat it.
-              </p>
+          </div>
+        </section>
 
-              <div className="comparison-cta">
-                <button className="comparison-btn">
-                  View Price Comparisons
-                </button>
+        {/* About Our Firm Section */}
+        <section className="about-firm-section">
+          <div className="container">
+            <div className="about-firm-content">
+              <div className="about-firm-image">
+                {/* The image is set via CSS background */}
+              </div>
+              <div className="about-firm-text">
+                <h2 className="firm-title">About Our Firm</h2>
+                <div className="firm-underline"></div>
+                <p className="firm-description">
+                  We do business through a network of traditional brick-and-mortar stores and our own brand website online. Ray's Healthy Living offers products with enhanced natural vitamins and minerals through herbal supplements that have been produced through the most thorough and effective quality standards in the industry. We take pride in doing business while taking great care of our customers' satisfaction and safety. Ray's Healthy Living believes customers are part of the family, and we take care of our family. You can see why this is a key element in our business by reading our founder and CEO's personal story
+                </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Organic and Ethical Sourcing Section */}
-      <OrganicSourcing />
-
-      {/* Website Showcase Section */}
-      <section className="website-showcase-section">
-        <div className="container">
-          <div className="website-showcase-content">
-            <div className="website-text">
-              <h2 className="website-title">Natural Medicine Website</h2>
-              <div className="website-underline"></div>
-              <p className="website-description">
-                NaturalMedicine.com is our online platform, offering a wide
-                selection of natural organic supplements at affordable prices,
-                including top brands and our own premium products. Designed for
-                simplicity and ease, the site features a user-friendly shopping
-                experience and a detailed Help Center for guidance. All customer
-                information, including payment details, is kept completely
-                secure with trusted, confidential systems.
-              </p>
-            </div>
-            <div className="website-image">
-              <div className="showcase-image">
-                {/* Image will be set via CSS background */}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="testimonials-section">
-        <div className="container">
-          <h2 className="section-h2">What Our Partners Say</h2>
-          <div className="testimonials-carousel">
-            <div className="testimonials-grid">
-              {getVisibleTestimonials().map((testimonial, index) => (
-                <div key={index} className="testimonial-card">
-                  <div className="testimonial-header">
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="testimonial-img"
-                    />
-                    <div className="testimonial-info">
-                      <h4 className="testimonial-h4">{testimonial.name}</h4>
-                      <p className="testimonial-company">
-                        {testimonial.company}
-                      </p>
-                    </div>
+        {/* Quality, Safety, and Satisfaction Section */}
+        <section className="quality-section">
+          <div className="container">
+            <h2 className="quality-title capitalize">
+              Quality, safety, and satisfaction
+            </h2>
+            <div className="quality-underline"></div>
+            <div className="quality-grid">
+              {qualityFeatures.map((feature, index) => (
+                <div key={index} className="quality-card">
+                  <div className="quality-image">
+                    <img src={feature.image} alt={feature.title} />
                   </div>
-                  <p className="testimonial-text">"{testimonial.text}"</p>
+                  <div className="quality-content">
+                    <h3 className="quality-card-title">{feature.title}</h3>
+                    <p className="quality-card-description">
+                      {feature.description}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            {/* Navigation Buttons */}
-            <button
-              className="carousel-nav prev"
-              onClick={() => moveCarousel(-1)}
-              disabled={currentTestimonialIndex === 0}
-              aria-label="Previous testimonial"
-            >
-              <svg
-                width="24"
-                height="24"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 19l-7-7 7-7"
-                ></path>
-              </svg>
-            </button>
-            <button
-              className="carousel-nav next"
-              onClick={() => moveCarousel(1)}
-              disabled={currentTestimonialIndex === maxIndex}
-              aria-label="Next testimonial"
-            >
-              <svg
-                width="24"
-                height="24"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5l7 7-7 7"
-                ></path>
-              </svg>
-            </button>
-
-            {/* Indicators */}
-            <div className="carousel-indicators">
-              {Array.from({ length: maxIndex + 1 }, (_, index) => (
-                <button
-                  key={index}
-                  className={`indicator ${
-                    index === currentTestimonialIndex ? "active" : ""
-                  }`}
-                  onClick={() => goToSlide(index)}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
+        {/* Video Section - Clean Implementation */}
+        <section className="video-showcase-section">
+          <div className="container">
+            <div className="video-showcase-content">
+              <div className="video-showcase-container">
+                <video 
+                  className="showcase-video"
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  controls
+                >
+                  <source 
+                    src="https://res.cloudinary.com/v3zgtcwc/video/upload/v1790027127/WhatsApp_Video_2026-09-18_at_7.30.26_AM.mp4" 
+                    type="video/mp4" 
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="video-showcase-text">
+                <h2 className="video-title">
+                  RAY'S HEALTHY LIVING
+                </h2>
+                <div className="video-underline"></div>
+                <p className="video-description">
+                  <strong>Better Choices. Better Health. Better Living.</strong>
+                </p>
+                <p className="video-description">
+                  Ray's Healthy Living brings together quality wellness products designed to support a healthier, more active lifestyle.
+                  From carefully selected nutritional products and supplements to everyday wellness essentials, our goal is simple — to make trusted health and wellness solutions accessible, convenient, and easy to understand.
+                </p>
+                <p className="video-description">
+                  We believe healthy living starts with better choices. That is why we focus on product quality, responsible sourcing, safety, and customer satisfaction at every stage.
+                </p>
+                <p className="video-description">
+                  <strong>Explore our range. Discover what works for you. Live healthier every day.</strong>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <Footer />
-    </div>
+        {/* Organic and Ethical Sourcing Section */}
+        <OrganicSourcing />
+
+        {/* Website Showcase Section */}
+        <section className="website-showcase-section">
+          <div className="container">
+            <div className="website-showcase-content">
+              <div className="website-text">
+                <h2 className="website-title">Natural Medicine Website</h2>
+                <div className="website-underline"></div>
+                <p className="website-description">
+                  NaturalMedicine.com is our online platform, offering a wide
+                  selection of natural organic supplements at affordable prices,
+                  including top brands and our own premium products. Designed for
+                  simplicity and ease, the site features a user-friendly shopping
+                  experience and a detailed Help Center for guidance. All customer
+                  information, including payment details, is kept completely
+                  secure with trusted, confidential systems.
+                </p>
+              </div>
+              <div className="website-image">
+                <div className="showcase-image">
+                  {/* Image will be set via CSS background */}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="testimonials-section">
+          <div className="container">
+            <h2 className="section-h2">What Our Partners Say</h2>
+            <div className="testimonials-carousel">
+              <div className="testimonials-grid">
+                {getVisibleTestimonials().map((testimonial, index) => (
+                  <div key={index} className="testimonial-card">
+                    <div className="testimonial-header">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="testimonial-img"
+                      />
+                      <div className="testimonial-info">
+                        <h4 className="testimonial-h4">{testimonial.name}</h4>
+                        <p className="testimonial-company">
+                          {testimonial.company}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="testimonial-text">"{testimonial.text}"</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Navigation Buttons */}
+              <button
+                className="carousel-nav prev"
+                onClick={() => moveCarousel(-1)}
+                disabled={currentTestimonialIndex === 0}
+                aria-label="Previous testimonial"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 19l-7-7 7-7"
+                  ></path>
+                </svg>
+              </button>
+              <button
+                className="carousel-nav next"
+                onClick={() => moveCarousel(1)}
+                disabled={currentTestimonialIndex === maxIndex}
+                aria-label="Next testimonial"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5l7 7-7 7"
+                  ></path>
+                </svg>
+              </button>
+
+              {/* Indicators */}
+              <div className="carousel-indicators">
+                {Array.from({ length: maxIndex + 1 }, (_, index) => (
+                  <button
+                    key={index}
+                    className={`indicator ${
+                      index === currentTestimonialIndex ? "active" : ""
+                    }`}
+                    onClick={() => goToSlide(index)}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </div>
     </>
-
   );
 };
 
