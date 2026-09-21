@@ -365,10 +365,13 @@ export const HomePage = () => {
       <section className="natural-section" id="natural" style={{backgroundColor: '#7d9f48'}}>
         <div className="natural wrap">
           <div className="natural-content">
-            <p className="eyebrow">ONLINE WELLNESS PLATFORM</p>
-            <h2>Natural Medicine Website</h2>
+            <p className="eyebrow">RAY'S HEALTHY LIVING</p>
+            <h2>Better Choices. Better Health. Better Living.</h2>
             <div className="natural-rule" />
-            <p>NaturalMedicine.com is our online platform, offering a wide selection of natural organic supplements at affordable prices, including top brands and our own premium products. Designed for simplicity and ease, the site features a user-friendly shopping experience and a detailed Help Center for guidance. All customer information, including payment details, is kept completely secure with trusted, confidential systems.</p>
+            <p>Ray’s Healthy Living brings together quality wellness products designed to support a healthier, more active lifestyle.
+From carefully selected nutritional products and supplements to everyday wellness essentials, our goal is simple — to make trusted health and wellness solutions accessible, convenient, and easy to understand.
+We believe healthy living starts with better choices. That is why we focus on product quality, responsible sourcing, safety, and customer satisfaction at every stage
+</p>
           </div>
           <div className="natural-art" style={{backgroundImage: `url(${WebsiteShowcase})`}} aria-label="Natural medicine website showcase" role="img" />
         </div>
