@@ -155,14 +155,14 @@ const Aboutpage = () => {
         <div className="container">
           <div className="hero-content">
             <div className="hero-text">
-              <h1 className="hero-title">Natural Healing</h1>
+              <h1 className="hero-title">LIVE WELL. FEEL WELL. BE WELL.</h1>
               <h2 className="hero-subtitle">
-                Discover the Power of Nature's Medicine
-              </h2>
+Your Everyday Wellness, Powered by Better Choices.              </h2>
               <p className="hero-description">
-                Harness the ancient wisdom of herbal remedies and natural
-                healing practices. Transform your wellness journey with pure,
-                organic solutions that nurture your body and soul.
+               At Ray’s Healthy Living, we believe wellness is not a destination — it is a lifestyle.
+We bring together thoughtfully selected health, nutrition, and wellness products to help you make informed choices for yourself and your family.
+Quality products. Trusted standards. A healthier way of living.
+
               </p>
               <div className="hero-buttons">
                 <button className="hero-btn secondary">Learn More</button>
