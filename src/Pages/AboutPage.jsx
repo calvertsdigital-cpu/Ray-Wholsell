@@ -264,16 +264,10 @@ const Aboutpage = () => {
           <div className="container">
             <div className="website-showcase-content">
               <div className="website-text">
-                <h2 className="website-title">Natural Medicine Website</h2>
+                <h2 className="website-title">Better Choices. Better Health. Better Living.</h2>
                 <div className="website-underline"></div>
                 <p className="website-description">
-                  NaturalMedicine.com is our online platform, offering a wide
-                  selection of natural organic supplements at affordable prices,
-                  including top brands and our own premium products. Designed for
-                  simplicity and ease, the site features a user-friendly shopping
-                  experience and a detailed Help Center for guidance. All customer
-                  information, including payment details, is kept completely
-                  secure with trusted, confidential systems.
+                 Ray’s Healthy Living brings together quality wellness products designed to support a healthier, more active lifestyle. From carefully selected nutritional products and supplements to everyday wellness essentials, our goal is simple — to make trusted health and wellness solutions accessible, convenient, and easy to understand. We believe healthy living starts with better choices. That is why we focus on product quality, responsible sourcing, safety, and customer satisfaction at every stage
                 </p>
               </div>
               <div className="website-image">

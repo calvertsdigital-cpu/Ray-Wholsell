@@ -600,7 +600,7 @@ We believe healthy living starts with better choices. That is why we focus on pr
                 <small>Years Experience</small>
               </div>
             </div>
-            <a className="orange-button small" href="#contact">Learn more →</a>
+            <button className="orange-button small" onClick={() => handleNavigation('/about')}>Learn more →</button>
           </div>
         </div>
       </section>
