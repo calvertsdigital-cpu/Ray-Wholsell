@@ -144,6 +144,7 @@ export const Navbar = () => {
             <a href="/about">About</a>
             <a href="/products">Products</a>
             <a href="/blogs">Blogs</a>
+            <a href="/reviews">Reviews</a>
             <a href="/contact">Contact</a>
             <button className="wholesale-btn" onClick={() => window.open(import.meta.env.VITE_RETAIL_URL, "_blank")}>
               Retail
@@ -269,6 +270,7 @@ export const Navbar = () => {
               <a href="/about" onClick={() => setIsMobileMenuOpen(false)}>About</a>
               <a href="/products" onClick={() => setIsMobileMenuOpen(false)}>Products</a>
               <a href="/blogs" onClick={() => setIsMobileMenuOpen(false)}>Blogs</a>
+              <a href="/reviews" onClick={() => setIsMobileMenuOpen(false)}>Reviews</a>
               <a href="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</a>
               <button className="wholesale-btn" onClick={() => { window.open(import.meta.env.VITE_RETAIL_URL, "_blank"); setIsMobileMenuOpen(false); }}>
                 Retail

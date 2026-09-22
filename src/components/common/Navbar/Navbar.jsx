@@ -1699,6 +1699,7 @@ export const Navbar = () => {
                 <BookOpen size={16} /> Catalog
               </button>
               <a href="/blogs"><FileText size={16} /> Blogs</a>
+              <a href="/reviews"><MessageSquare size={16} /> Reviews</a>
               <a href="/contact"><Mail size={16} /> Contact</a>
               <button 
                 className="wholesale-btn" 
@@ -1893,6 +1894,9 @@ export const Navbar = () => {
                 </button>
                 <a href="/blogs" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
                   <span className="nav-icon">▤</span> Blogs
+                </a>
+                <a href="/reviews" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
+                  <span className="nav-icon">⭐</span> Reviews
                 </a>
                 <a href="/contact" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
                   <span className="nav-icon">✉</span> Contact

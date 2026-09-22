@@ -241,6 +241,7 @@ export const Footer = React.memo(() => {
                 { to: "/products", label: "Products" },
                 { to: "/about", label: "About" },
                 { to: "/blogs", label: "Blog" },
+                { to: "/reviews", label: "Reviews" },
                 { to: "/contact", label: "Contact" },
                 { to: "/conditionofuse", label: "Condition of Use" },
                 { to: "/return-policy", label: "Shipping & Return" },

@@ -16,6 +16,7 @@ import OrderDetails from "./components/Profilepage/OrderDetails";
 import TrackingDetail from "./components/Profilepage/TrackShipmentDetails";
 import Aboutpage from "./Pages/AboutPage";
 import Contactpage from "./Pages/ContactPage";
+import ReviewsPage from "./Pages/ReviewsPage";
 import Blog from "./Pages/auth/Blog.jsx";
 import BlogDetail from "./Pages/BlogDetail.jsx";
 
@@ -152,6 +153,7 @@ function App() {
             <Route path="/order-success" exact element={<OrderSuccess />} />
             <Route path="/tracking" element={<TrackingDetail />} />
             <Route path="/about" element={<Aboutpage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/blogs" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/bengal-reviews" element={<BengalReview />} />

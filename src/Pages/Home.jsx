@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Home.scss';
-import { Home, Info, ShoppingBag, FileText, Mail, Building2, MessageSquare } from 'lucide-react';
+import { Home, Info, ShoppingBag, FileText, Mail, Building2, MessageSquare, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Footer } from '../components/common/Footer/Footer';
 import { Navbar } from '../components/common/Navbar/Navbar';
 
@@ -47,6 +47,8 @@ export const HomePage = () => {
   const [email, setEmail] = useState('');
   const [showAllDepts, setShowAllDepts] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [showChamberReviews, setShowChamberReviews] = useState(false);
+  const [currentReviewSlide, setCurrentReviewSlide] = useState(0);
 
   // Fetch categories for departments (works with or without login)
   useEffect(() => {
@@ -115,6 +117,97 @@ export const HomePage = () => {
         'Empty Bottles', 
         'Literature'
       ];
+
+  // Top 5 best reviews for the chamber section
+  const topReviews = [
+    {
+      name: "Irene Blackson",
+      platform: "Google",
+      date: "Aug 4th, 2023",
+      rating: 5,
+      text: "My favorite destination for health-focused products and advice in Prince Frederick is Ray's Healthy Living Store.\n\nMy doctor ended up giving me a foot brace after I broke my ankle, and it was a struggle to move around the house. Out of desperation, I sought out Ray.\n\nHe gave me various supplements that ended up speeding my recovery greatly, and in less than 3 weeks I was out and walking without my foot brace.",
+      initial: "I"
+    },
+    {
+      name: "James Mbah",
+      platform: "Google",
+      date: "Apr 28th, 2024",
+      rating: 5,
+      text: "Rays Maximum Cardio is by far the best dietary supplement I have come across. You immediately feel the difference and the shift within once you begin to apply use.\n\nThis product lives up to everything it states from energy, strength, mental clarity, stamina, immunity & muscle growth!\n\nRays Maximum Cardio has truly helped to make me feel 10-15 yrs younger and even surpass physical limitations that were once a barrier for myself.",
+      initial: "J"
+    },
+    {
+      name: "Crystal Goldring",
+      platform: "Google",
+      date: "Mar 22nd, 2024",
+      rating: 5,
+      text: "This place is so awesome and available! It is extremely important now to care for your inner self.\n\nOur immunity, organs and mental health need all what a daily diet can provide. I enjoy my visits immensely.\n\nI can definitively say, you will not find a business today like Rays. I recommend anyone to just visit, you will leave with a wealth of knowledge.",
+      initial: "C"
+    },
+    {
+      name: "Belinda Barber",
+      platform: "Google",
+      date: "Feb 6th, 2024",
+      rating: 5,
+      text: "I absolutely love that Rays Healthy Living is located in my backyard (Prince Frederick). The store always has what I need and if not, the owner Mr. Ray will order for me.\n\nHis prices are reasonable and offers discounts. His knowledgeable and will gives samples without you making a purchase.\n\nRay genuinely cares about the health of the community.",
+      initial: "B"
+    },
+    {
+      name: "Rana Latin",
+      platform: "Google",
+      date: "Jan 1st, 2024",
+      rating: 5,
+      text: "I LOVE going into Rays - Healthy Living, its always time well spent. I am learning how to care for myself and my family.\n\nMy health is wealth goes without saying. I am extremely blessed every time I go in the store.\n\nIf you haven't been to his store (Located in Prince Frederick) Run don't walk, you won't be disappointed. Trust me!",
+      initial: "R"
+    }
+  ];
+
+  // Auto-slide functionality for chamber reviews
+  useEffect(() => {
+    if (showChamberReviews) {
+      const slideInterval = setInterval(() => {
+        setCurrentReviewSlide((prev) => (prev + 1) % topReviews.length);
+      }, 5000); // Change slide every 5 seconds
+      return () => clearInterval(slideInterval);
+    }
+  }, [showChamberReviews, topReviews.length]);
+
+  // Chamber reviews functions
+  const toggleChamberReviews = () => {
+    setShowChamberReviews(!showChamberReviews);
+    if (!showChamberReviews) {
+      setCurrentReviewSlide(0);
+    }
+  };
+
+  const nextReviewSlide = () => {
+    const newSlide = (currentReviewSlide + 1) % topReviews.length;
+    console.log('Next slide:', newSlide);
+    setCurrentReviewSlide(newSlide);
+  };
+
+  const prevReviewSlide = () => {
+    const newSlide = (currentReviewSlide - 1 + topReviews.length) % topReviews.length;
+    console.log('Previous slide:', newSlide);
+    setCurrentReviewSlide(newSlide);
+  };
+
+  const goToReviewSlide = (index) => {
+    console.log('Go to slide:', index);
+    setCurrentReviewSlide(index);
+  };
+
+  const renderStars = (rating) => {
+    return [...Array(5)].map((_, index) => (
+      <Star 
+        key={index} 
+        size={16} 
+        className={index < rating ? 'star-filled' : 'star-empty'}
+        fill={index < rating ? '#FFB800' : 'none'}
+        style={{color: index < rating ? '#FFB800' : '#d1d5db'}}
+      />
+    ));
+  };
 
   const categoryIcons = ['Herbs', 'Vitamins', 'Bulk Herbs', 'Teas', 'Oils', 'Incense'];
 
@@ -524,8 +617,93 @@ We believe healthy living starts with better choices. That is why we focus on pr
             <b>5.0</b>
             <small>5 Local 5-star Reviews</small>
           </div>
-          <a className="chamber-link" href="#about">View Chamber Reviews</a>
+          <button className="chamber-link" onClick={toggleChamberReviews}>
+            {showChamberReviews ? 'Hide Chamber Reviews' : 'View Chamber Reviews'}
+          </button>
         </div>
+
+        {/* Chamber Reviews Section - Shows when toggled */}
+        {showChamberReviews && (
+          <div className="chamber-reviews-section">
+            <div className="chamber-reviews-container">
+              <div className="section-header">
+                <div className="check-icon">✓</div>
+                <h3 className="section-title">Chamber of Commerce - Top 5 Reviews</h3>
+                <span style={{color: 'white', marginLeft: '10px', fontSize: '14px'}}>
+                  ({currentReviewSlide + 1}/5)
+                </span>
+              </div>
+
+              <div className="reviews-carousel">
+                <button className="carousel-btn prev" onClick={prevReviewSlide}>
+                  <ChevronLeft size={20} />
+                </button>
+
+                <div className="carousel-container">
+                  <div 
+                    className="carousel-track"
+                    style={{ transform: `translateX(-${currentReviewSlide * 20}%)` }}
+                  >
+                    {topReviews.map((review, index) => (
+                      <div key={index} className="review-slide">
+                        <div className="review-card">
+                          <div className="review-header">
+                            <div className="rating">
+                              {renderStars(review.rating)}
+                            </div>
+                            <span className="review-date">{review.date}</span>
+                          </div>
+                          
+                          <div className="review-content">
+                            <p className="review-text">{review.text}</p>
+                          </div>
+
+                          <div className="reviewer-info">
+                            <div className="avatar">
+                              {review.initial}
+                            </div>
+                            <div className="reviewer-details">
+                              <h4 className="reviewer-name">{review.name}</h4>
+                              <div className="reviewer-meta">
+                                <span className="platform">{review.platform}</span>
+                                <span className="verified">✓ VERIFIED</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="carousel-btn next" onClick={nextReviewSlide}>
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+
+              {/* Carousel Indicators */}
+              <div className="carousel-indicators">
+                {topReviews.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`indicator ${currentReviewSlide === index ? 'active' : ''}`}
+                    onClick={() => goToReviewSlide(index)}
+                  />
+                ))}
+              </div>
+
+              {/* View All Reviews Button */}
+              <div className="view-all-section">
+                <button 
+                  className="view-all-btn"
+                  onClick={() => navigate('/reviews')}
+                >
+                  View all reviews
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* COMPLIANCE SECTION */}
