@@ -1102,13 +1102,6 @@ export const ProductLists = () => {
                     </div>
                   )}
 
-                  {selectedVariant?.manufacturerUpc && (
-                    <div className="info-item">
-                      <label>Mfr UPC:</label>
-                      <span>{selectedVariant.manufacturerUpc}</span>
-                    </div>
-                  )}
-
                   {selectedVariant?.itemNumber && (
                     <div className="info-item">
                       <label>Item #:</label>
