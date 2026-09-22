@@ -1699,7 +1699,6 @@ export const Navbar = () => {
                 <BookOpen size={16} /> Catalog
               </button>
               <a href="/blogs"><FileText size={16} /> Blogs</a>
-              <a href="/reviews"><MessageSquare size={16} /> Reviews</a>
               <a href="/contact"><Mail size={16} /> Contact</a>
               <button 
                 className="wholesale-btn" 
