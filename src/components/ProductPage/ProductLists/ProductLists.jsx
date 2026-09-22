@@ -1023,238 +1023,266 @@ export const ProductLists = () => {
       </div>
 
       {/* Product Details Modal */}
-      {showModal && selectedProduct && (() => {
-        const variants = selectedProduct.variants || [];
-        const selectedVariant = variants[selectedVariantIdx] || variants[0] || null;
-        const activePrice = selectedVariant?.price ?? selectedProduct.buyPrice ?? 0;
-        const multiVariant = variants.length > 1;
-
-        return (
-        <div className="modal-overlay" onClick={closeProductDetails}>
-          <div className="product-details-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Product Details</h2>
-              <button className="close-modal-btn" onClick={closeProductDetails}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="modal-content">
-              <div className="product-image-section">
-                <img
-                  src={`/${(Math.floor(Math.random() * 7) + 1)}.png`}
-                  alt={selectedProduct.name || 'Product'}
-                  className="modal-product-image"
-                  onError={(e) => { e.target.src = '/1.png'; }}
-                />
-                <div className="image-actions">
-                  <button
-                    onClick={() => addToWishlist(selectedProduct)}
-                    disabled={addingToWishlist[selectedProduct._id]}
-                    className={`modal-wishlist-btn ${wishlistItems.includes(selectedProduct._id) ? 'active' : ''}`}
-                  >
-                    <svg fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                    {wishlistItems.includes(selectedProduct._id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="product-details-section">
-                <div className="product-header">
-                  <h3 className="modal-product-name">{selectedProduct.rhlProductTitle || selectedProduct.name}</h3>
-                  {selectedProduct.rhlProductTitle && (
-                    <p className="modal-manufacturer-name">{selectedProduct.name}</p>
-                  )}
-                  {selectedProduct.rhlId && (
-                    <span className="modal-rhl-id">RHL#{selectedProduct.rhlId}</span>
-                  )}
-                  <div className="stock-status-modal">
-                    {selectedProduct.status === 'inactive' || selectedProduct.status === 'discontinued' ? (
-                      <span className="stock-badge out-of-stock">Unavailable</span>
-                    ) : (
-                      <span className="stock-badge in-stock">In Stock ( available)</span>
-                    )}
-                  </div>
-                  {selectedProduct.category && (
-                    <div className="modal-metadata">
-                      <span className="modal-badge category">{selectedProduct.category}</span>
-                      {selectedProduct.type && <span className="modal-badge type">{selectedProduct.type}</span>}
-                    </div>
-                  )}
-                </div>
-
-                <div className="product-info-grid">
-                  {selectedProduct.rhlId && (
-                    <div className="info-item">
-                      <label>RHL ID:</label>
-                      <span>{selectedProduct.rhlId}</span>
-                    </div>
-                  )}
-
-                  {selectedVariant?.rhlUpc && (
-                    <div className="info-item">
-                      <label>RHL UPC:</label>
-                      <span>{selectedVariant.rhlUpc}</span>
-                    </div>
-                  )}
-
-                  {selectedVariant?.itemNumber && (
-                    <div className="info-item">
-                      <label>Item #:</label>
-                      <span>{selectedVariant.itemNumber}</span>
-                    </div>
-                  )}
-
-                  {/* Bin Location */}
-                  <div className="info-item">
-                    <label>Bin Location:</label>
-                    <span>
-                      {selectedVariant?.binLocation
-                        ? selectedVariant.binLocation
-                        : <span className="bin-pending">Not yet assigned</span>
-                      }
-                    </span>
-                  </div>
-
-                  <div className="info-item">
-                    <label>Category:</label>
-                    <span>{selectedProduct.category || "General"}</span>
-                  </div>
-
-                  {selectedProduct.description && (
-                    <div className="info-item full-width">
-                      <label>Description:</label>
-                      <span>{selectedProduct.description}</span>
-                    </div>
-                  )}
-
-                  {selectedProduct.ingredients && (
-                    <div className="info-item full-width">
-                      <label>Ingredients:</label>
-                      <span className="ingredients-text">{selectedProduct.ingredients}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Size / Variant Selector ── */}
-                {multiVariant ? (
-                  <div className="variant-selector">
-                    <label className="variant-label">Size:</label>
-                    <div className="variant-pills">
-                      {variants.map((v, i) => (
-                        <button
-                          type="button"
-                          key={v.itemNumber || i}
-                          className={`variant-pill ${i === selectedVariantIdx ? 'active' : ''}`}
-                          onClick={() => setSelectedVariantIdx(i)}
-                        >
-                          {v.size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : variants.length === 1 ? (
-                  <div className="variant-single">
-                    <span className="variant-label">Size:</span>
-                    <span className="variant-single-value">{variants[0].size}</span>
-                  </div>
-                ) : null}
-
-                <div className="pricing-section">
-                  <div className="price-display">
-                    <label>Unit Price:</label>
-                    <span className="modal-price">${activePrice.toFixed(2)}</span>
-                  </div>
-                  <div className="moq-info">
-                    <label>Minimum Order Quantity:</label>
-                    <span>{moq} units</span>
-                  </div>
-                </div>
-
-                <div className="quantity-section">
-                  <label>Select Quantity:</label>
-                  <div className="modal-quantity-controls">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        decrementQuantity(selectedProduct._id);
-                      }}
-                      disabled={getQuantity(selectedProduct._id) <= moq}
-                      className="modal-quantity-btn decrease"
-                    >
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
-                      </svg>
-                    </button>
-                    <span className="modal-quantity-display">{getQuantity(selectedProduct._id)}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        incrementQuantity(selectedProduct._id, selectedProduct.stock || 99999);
-                      }}
-                      className="modal-quantity-btn increase"
-                    >
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div className="subtotal-display">
-                    <label>Subtotal:</label>
-                    <span className="modal-subtotal">
-                      ${(activePrice * getQuantity(selectedProduct._id)).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Subscribe to Save */}
-                <SubscriptionOption
-                  product={selectedProduct}
-                  quantity={getQuantity(selectedProduct._id)}
-                  basePrice={activePrice}
-                  onSubscriptionChange={(data) => setModalSubscription(data)}
-                />
-
-                <div className="modal-actions">
-                  <button
-                    onClick={() => {
-                      addToCart(selectedProduct, selectedVariant);
-                      closeProductDetails();
-                    }}
-                    disabled={addingToCart[selectedProduct._id]}
-                    className="modal-add-to-cart"
-                  >
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h1m0 0h4a1 1 0 001-1m-6 0V13m0 10V13m0 0h6" />
-                    </svg>
-                    {addingToCart[selectedProduct._id]
-                      ? "Adding..."
-                      : modalSubscription.isSubscription
-                      ? "SUBSCRIBE & SAVE"
-                      : "ADD TO CART"}
-                  </button>
-
-                  <button className="modal-close-btn" onClick={closeProductDetails}>
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        );
-      })()}
+      {showModal && selectedProduct && (
+        <ProductDetailsModal
+          product={selectedProduct}
+          variantIdx={selectedVariantIdx}
+          onClose={closeProductDetails}
+          onVariantChange={setSelectedVariantIdx}
+          quantity={getQuantity(selectedProduct._id)}
+          onIncrement={() => incrementQuantity(selectedProduct._id, selectedProduct.stock || 99999)}
+          onDecrement={() => decrementQuantity(selectedProduct._id)}
+          onAddToCart={(variant) => {
+            addToCart(selectedProduct, variant);
+            closeProductDetails();
+          }}
+          onWishlistToggle={() => addToWishlist(selectedProduct)}
+          isInWishlist={wishlistItems.includes(selectedProduct._id)}
+          isAddingToCart={addingToCart[selectedProduct._id]}
+          isAddingToWishlist={addingToWishlist[selectedProduct._id]}
+          moq={moq}
+          modalSubscription={modalSubscription}
+          onSubscriptionChange={setModalSubscription}
+        />
+      )}
     </div>
   );
 };
 
-export default ProductLists;
+// ProductDetailsModal Component
+const ProductDetailsModal = ({
+  product,
+  variantIdx,
+  onClose,
+  onVariantChange,
+  quantity,
+  onIncrement,
+  onDecrement,
+  onAddToCart,
+  onWishlistToggle,
+  isInWishlist,
+  isAddingToCart,
+  isAddingToWishlist,
+  moq,
+  modalSubscription,
+  onSubscriptionChange
+}) => {
+  const variants = product.variants || [];
+  const selectedVariant = variants[variantIdx] || variants[0] || null;
+  const activePrice = selectedVariant?.price ?? product.buyPrice ?? 0;
+  const multiVariant = variants.length > 1;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="product-details-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Product Details</h2>
+          <button className="close-modal-btn" onClick={onClose}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="modal-content">
+          <div className="product-image-section">
+            <img
+              src={`/${(Math.floor(Math.random() * 7) + 1)}.png`}
+              alt={product.name || 'Product'}
+              className="modal-product-image"
+              onError={(e) => { e.target.src = '/1.png'; }}
+            />
+            <div className="image-actions">
+              <button
+                onClick={onWishlistToggle}
+                disabled={isAddingToWishlist}
+                className={`modal-wishlist-btn ${isInWishlist ? 'active' : ''}`}
+              >
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+              </button>
+            </div>
+          </div>
+
+          <div className="product-details-section">
+            <div className="product-header">
+              <h3 className="modal-product-name">{product.rhlProductTitle || product.name}</h3>
+              {product.rhlProductTitle && (
+                <p className="modal-manufacturer-name">{product.name}</p>
+              )}
+              {product.rhlId && (
+                <span className="modal-rhl-id">RHL#{product.rhlId}</span>
+              )}
+              <div className="stock-status-modal">
+                {product.status === 'inactive' || product.status === 'discontinued' ? (
+                  <span className="stock-badge out-of-stock">Unavailable</span>
+                ) : (
+                  <span className="stock-badge in-stock">In Stock ( available)</span>
+                )}
+              </div>
+              {product.category && (
+                <div className="modal-metadata">
+                  <span className="modal-badge category">{product.category}</span>
+                  {product.type && <span className="modal-badge type">{product.type}</span>}
+                </div>
+              )}
+            </div>
+
+            <div className="product-info-grid">
+              {product.rhlId && (
+                <div className="info-item">
+                  <label>RHL ID:</label>
+                  <span>{product.rhlId}</span>
+                </div>
+              )}
+
+              {selectedVariant?.rhlUpc && (
+                <div className="info-item">
+                  <label>RHL UPC:</label>
+                  <span>{selectedVariant.rhlUpc}</span>
+                </div>
+              )}
+
+              {/* Bin Location */}
+              <div className="info-item">
+                <label>Bin Location:</label>
+                <span>
+                  {selectedVariant?.binLocation
+                    ? selectedVariant.binLocation
+                    : <span className="bin-pending">Not yet assigned</span>
+                  }
+                </span>
+              </div>
+
+              <div className="info-item">
+                <label>Category:</label>
+                <span>{product.category || "General"}</span>
+              </div>
+
+              {product.description && (
+                <div className="info-item full-width">
+                  <label>Description:</label>
+                  <span>{product.description}</span>
+                </div>
+              )}
+
+              {product.ingredients && (
+                <div className="info-item full-width">
+                  <label>Ingredients:</label>
+                  <span className="ingredients-text">{product.ingredients}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Size / Variant Selector */}
+            {multiVariant ? (
+              <div className="variant-selector">
+                <label className="variant-label">Size:</label>
+                <div className="variant-pills">
+                  {variants.map((v, i) => (
+                    <button
+                      type="button"
+                      key={v.itemNumber || i}
+                      className={`variant-pill ${i === variantIdx ? 'active' : ''}`}
+                      onClick={() => onVariantChange(i)}
+                    >
+                      {v.size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : variants.length === 1 ? (
+              <div className="variant-single">
+                <span className="variant-label">Size:</span>
+                <span className="variant-single-value">{variants[0].size}</span>
+              </div>
+            ) : null}
+
+            <div className="pricing-section">
+              <div className="price-display">
+                <label>Unit Price:</label>
+                <span className="modal-price">${activePrice.toFixed(2)}</span>
+              </div>
+              <div className="moq-info">
+                <label>Minimum Order Quantity:</label>
+                <span>{moq} units</span>
+              </div>
+            </div>
+
+            <div className="quantity-section">
+              <label>Select Quantity:</label>
+              <div className="modal-quantity-controls">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDecrement();
+                  }}
+                  disabled={quantity <= moq}
+                  className="modal-quantity-btn decrease"
+                >
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
+                  </svg>
+                </button>
+                <span className="modal-quantity-display">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onIncrement();
+                  }}
+                  className="modal-quantity-btn increase"
+                >
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="subtotal-display">
+                <label>Subtotal:</label>
+                <span className="modal-subtotal">
+                  ${(activePrice * quantity).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Subscribe to Save */}
+            <SubscriptionOption
+              product={product}
+              quantity={quantity}
+              basePrice={activePrice}
+              onSubscriptionChange={onSubscriptionChange}
+            />
+
+            <div className="modal-actions">
+              <button
+                onClick={() => onAddToCart(selectedVariant)}
+                disabled={isAddingToCart}
+                className="modal-add-to-cart"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3H3m4 10v6a1 1 0 001 1h1m0 0h4a1 1 0 001-1m-6 0V13m0 10V13m0 0h6" />
+                </svg>
+                {isAddingToCart
+                  ? "Adding..."
+                  : modalSubscription.isSubscription
+                  ? "SUBSCRIBE & SAVE"
+                  : "ADD TO CART"}
+              </button>
+
+              <button className="modal-close-btn" onClick={onClose}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

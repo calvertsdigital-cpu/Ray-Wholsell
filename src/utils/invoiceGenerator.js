@@ -125,13 +125,92 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
     : order.items;
 
   // Prepare table data with proper formatting (avoid currency symbol issues)
-  const tableData = itemsToDisplay.map((item, index) => [
-    (index + 1).toString(),
-    item.name || item.product?.name || 'Product',
-    item.quantity.toString(),
-    `$${(item.price || 0).toFixed(2)}`,
-    `$${((item.price || 0) * item.quantity).toFixed(2)}`
-  ]);
+  const tableData = itemsToDisplay.map((item, index) => {
+    // DEBUG: Log the item data structure
+    console.log('🔍 Invoice Item Debug:', {
+      itemIndex: index,
+      itemName: item.name,
+      itemSize: item.size,
+      hasProduct: !!item.product,
+      productType: typeof item.product,
+      productId: item.product?._id || item.product,
+      productKeys: item.product ? Object.keys(item.product) : [],
+      rhlProductTitle: item.product?.rhlProductTitle,
+      rhlId: item.product?.rhlId,
+      hasVariants: !!item.product?.variants,
+      variantsLength: item.product?.variants?.length || 0
+    });
+    
+    // Get product details
+    const product = item.product;
+    
+    // If product is just an ID string, we need to fetch it
+    if (typeof product === 'string') {
+      console.warn('⚠️ Product is just an ID, not populated:', product);
+      // Use item data as fallback
+      const description = `${item.name}\nRHL ID: N/A | RHL UPC: N/A | Size: ${item.size || 'Standard'}`;
+      return [
+        (index + 1).toString(),
+        description,
+        item.quantity.toString(),
+        `$${(item.price || 0).toFixed(2)}`,
+        `$${((item.price || 0) * item.quantity).toFixed(2)}`
+      ];
+    }
+    
+    const productName = product?.rhlProductTitle || item.name || product?.name || 'Product';
+    const rhlId = product?.rhlId || 'N/A';
+    
+    // Try to find the matching variant
+    let matchedVariant = null;
+    let size = item.size || 'Standard'; // Start with item.size if available
+    
+    if (product?.variants && product.variants.length > 0) {
+      // First, try to match by variantId if available
+      if (item.variantId) {
+        matchedVariant = product.variants.find(v => v._id && v._id.toString() === item.variantId.toString());
+        console.log(`  Trying to match variant by ID: ${item.variantId}`, matchedVariant ? '✅ Found' : '❌ Not found');
+      }
+      
+      // If no match by ID, try matching by size if we have it
+      if (!matchedVariant && item.size) {
+        matchedVariant = product.variants.find(v => v.size === item.size);
+        console.log(`  Trying to match variant by size: ${item.size}`, matchedVariant ? '✅ Found' : '❌ Not found');
+      }
+      
+      // If still no match, try matching by price (price should match)
+      if (!matchedVariant) {
+        matchedVariant = product.variants.find(v => Math.abs(v.price - item.price) < 0.01);
+        console.log(`  Trying to match variant by price: $${item.price}`, matchedVariant ? '✅ Found' : '❌ Not found');
+      }
+      
+      // Last resort: use first variant
+      if (!matchedVariant) {
+        matchedVariant = product.variants[0];
+        console.log(`  ⚠️ Using first variant as fallback`);
+      }
+      
+      // Update size from matched variant if we found one
+      if (matchedVariant && matchedVariant.size) {
+        size = matchedVariant.size;
+      }
+    }
+    
+    const rhlUpc = matchedVariant?.rhlUpc || product?.sku || 'N/A';
+    
+    console.log('✅ Final invoice values:', { productName, rhlId, rhlUpc, size });
+    
+    // Create multi-line description with product details
+    const description = `${productName}\nRHL ID: ${rhlId} | RHL UPC: ${rhlUpc} | Size: ${size}`;
+    
+    return [
+      (index + 1).toString(),
+      description,
+      item.quantity.toString(),
+      `$${(item.price || 0).toFixed(2)}`,
+      `$${((item.price || 0) * item.quantity).toFixed(2)}`
+    ];
+  });
   
   // Optimized table column widths for landscape - better distribution
   const tableColumnWidths = {

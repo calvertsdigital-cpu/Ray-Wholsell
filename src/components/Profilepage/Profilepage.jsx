@@ -456,25 +456,49 @@ const MyOrderTab = ({ baseUrl, onOrderSelect, showModal, modalOrderId, setModalO
     }));
   };
 
-  const handleInvoicePreview = (order) => {
+  const handleInvoicePreview = async (order) => {
     try {
-      previewInvoice(order, userData);
+      // Fetch fresh order data with full product details
+      const token = localStorage.getItem('userToken');
+      const response = await axiosInstance.get(`/api/orders/details/${order._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const freshOrder = response.data.order;
+      console.log('🔍 Fresh order data for invoice:', freshOrder);
+      
+      previewInvoice(freshOrder, userData);
       setInvoiceDropdown({});
       toast.success('Invoice opened in new tab');
     } catch (error) {
       console.error('Error generating invoice preview:', error);
-      toast.error('Failed to generate invoice preview');
+      // Fallback to cached order if fetch fails
+      previewInvoice(order, userData);
+      setInvoiceDropdown({});
+      toast.warning('Invoice generated from cached data');
     }
   };
 
-  const handleInvoiceDownload = (order) => {
+  const handleInvoiceDownload = async (order) => {
     try {
-      downloadInvoice(order, userData);
+      // Fetch fresh order data with full product details
+      const token = localStorage.getItem('userToken');
+      const response = await axiosInstance.get(`/api/orders/details/${order._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const freshOrder = response.data.order;
+      console.log('🔍 Fresh order data for download:', freshOrder);
+      
+      downloadInvoice(freshOrder, userData);
       setInvoiceDropdown({});
       toast.success('Invoice downloaded successfully');
     } catch (error) {
       console.error('Error downloading invoice:', error);
-      toast.error('Failed to download invoice');
+      // Fallback to cached order if fetch fails
+      downloadInvoice(order, userData);
+      setInvoiceDropdown({});
+      toast.warning('Invoice downloaded from cached data');
     }
   };
 
