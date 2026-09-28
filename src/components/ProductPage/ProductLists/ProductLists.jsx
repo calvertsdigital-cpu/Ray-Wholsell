@@ -773,6 +773,11 @@ export const ProductLists = () => {
                         {product.type && <span className="badge type-badge">{product.type}</span>}
                       </div>
                       {product.rhlId && <small className="mpc-rhlid">RHL#{product.rhlId}</small>}
+                      {product.variants?.[0]?.rhlUpc && (
+                        <small className="mpc-rhlid" style={{ marginLeft: '8px' }}>
+                          UPC: {product.variants[0].rhlUpc}
+                        </small>
+                      )}
                       <p className="mpc-desc">{product.description}</p>
                       <div className="mpc-row">
                         <span className="mpc-label">Price:</span>
@@ -892,9 +897,13 @@ export const ProductLists = () => {
 
                     {/* RHL UPC */}
                     <td className="col-rhl-upc">
-                      <span className="rhl-upc-code">
-                        {product.variants?.[0]?.rhlUpc || product.lookup_code || product.sku || "N/A"}
-                      </span>
+                      {product.variants?.[0]?.rhlUpc ? (
+                        <span className="rhl-upc-code">
+                          {product.variants[0].rhlUpc}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#9ca3af', fontSize: '11px' }}>—</span>
+                      )}
                     </td>
 
                     {/* Product Title */}
@@ -1196,20 +1205,6 @@ const ProductDetailsModal = ({
                 <div className="info-item">
                   <label>RHL UPC (GS1):</label>
                   <span>{selectedVariant.rhlUpc}</span>
-                </div>
-              )}
-
-              {selectedVariant?.manufacturerUpc && (
-                <div className="info-item">
-                  <label>Manufacturer UPC:</label>
-                  <span>{selectedVariant.manufacturerUpc}</span>
-                </div>
-              )}
-
-              {selectedVariant?.itemNumber && (
-                <div className="info-item">
-                  <label>Reorder Number:</label>
-                  <span>{selectedVariant.itemNumber}</span>
                 </div>
               )}
 
