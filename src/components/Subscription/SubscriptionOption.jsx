@@ -9,15 +9,14 @@ export const SubscriptionOption = ({
 }) => {
   const [isSubscription, setIsSubscription] = useState(false);
   const [frequency, setFrequency] = useState('30days');
-  const [discountTier, setDiscountTier] = useState(0);
 
   // Discount tiers for subscriptions
   const discountTiers = {
-    '7days': 40,   // 40% off
-    '14days': 35,  // 35% off
-    '30days': 30,  // 30% off (most popular)
-    '60days': 25,  // 25% off
-    '90days': 20,  // 20% off
+    '7days': 40,
+    '14days': 35,
+    '30days': 30,
+    '60days': 25,
+    '90days': 20,
   };
 
   const frequencyLabels = {
@@ -28,42 +27,35 @@ export const SubscriptionOption = ({
     '90days': '90 Days',
   };
 
+  // Always derive from current frequency — no stale state
+  const currentDiscount = discountTiers[frequency] ?? 30;
+  const price = Number(basePrice) || 0;
+  const qty = Number(quantity) || 1;
+  const savingsAmount = price * qty * currentDiscount / 100;
+  const discountedPrice = price * (100 - currentDiscount) / 100;
+
   const handleSubscriptionToggle = (e) => {
     const checked = e.target.checked;
     setIsSubscription(checked);
-    
-    if (checked) {
-      setDiscountTier(discountTiers[frequency]);
-      onSubscriptionChange({
-        isSubscription: true,
-        frequency,
-        discountPercentage: discountTiers[frequency],
-        discount: basePrice * quantity * discountTiers[frequency] / 100,
-      });
-    } else {
-      onSubscriptionChange({
-        isSubscription: false,
-        frequency: null,
-        discountPercentage: 0,
-        discount: 0,
-      });
-    }
+    onSubscriptionChange({
+      isSubscription: checked,
+      frequency: checked ? frequency : null,
+      discountPercentage: checked ? currentDiscount : 0,
+      discount: checked ? savingsAmount : 0,
+    });
   };
 
   const handleFrequencyChange = (freq) => {
     setFrequency(freq);
     const newDiscount = discountTiers[freq];
-    setDiscountTier(newDiscount);
-    
+    const newSavings = price * qty * newDiscount / 100;
     onSubscriptionChange({
       isSubscription: true,
       frequency: freq,
       discountPercentage: newDiscount,
-      discount: basePrice * quantity * newDiscount / 100,
+      discount: newSavings,
     });
   };
-
-  const savingsAmount = basePrice * quantity * discountTier / 100;
 
   return (
     <div className="subscription-option">
@@ -84,14 +76,6 @@ export const SubscriptionOption = ({
 
       {isSubscription && (
         <div className="subscription-details">
-          <div className="savings-banner">
-            <p className="savings-text">
-              💰 Save ${savingsAmount.toFixed(2)} ({discountTier}% off)
-            </p>
-            <p className="per-serving">
-              ${(basePrice * (100 - discountTier) / 100).toFixed(2)}/serving
-            </p>
-          </div>
 
           <div className="frequency-selector">
             <label className="frequency-label">Delivery Frequency:</label>
@@ -99,11 +83,11 @@ export const SubscriptionOption = ({
               {Object.entries(frequencyLabels).map(([freq, label]) => (
                 <button
                   key={freq}
+                  type="button"
                   className={`frequency-btn ${frequency === freq ? 'active' : ''}`}
                   onClick={() => handleFrequencyChange(freq)}
                 >
                   <div className="freq-main">{label}</div>
-                  <div className="freq-discount">{discountTiers[freq]}% off</div>
                 </button>
               ))}
             </div>
@@ -112,7 +96,7 @@ export const SubscriptionOption = ({
           <div className="subscription-benefits">
             <h4>Subscription Benefits:</h4>
             <ul>
-              <li>✓ {discountTier}% off today + additional discounts on future deliveries</li>
+              <li>✓ Save on every delivery</li>
               <li>✓ Free shipping on orders $35+</li>
               <li>✓ Edit, pause, skip or cancel any time</li>
               <li>✓ Flexible delivery schedules</li>
@@ -120,15 +104,13 @@ export const SubscriptionOption = ({
           </div>
 
           <div className="frequency-dropdown">
-            <select 
-              value={frequency} 
+            <select
+              value={frequency}
               onChange={(e) => handleFrequencyChange(e.target.value)}
               className="frequency-select-mobile"
             >
               {Object.entries(frequencyLabels).map(([freq, label]) => (
-                <option key={freq} value={freq}>
-                  {label} - Save {discountTiers[freq]}%
-                </option>
+                <option key={freq} value={freq}>{label}</option>
               ))}
             </select>
           </div>
@@ -138,7 +120,7 @@ export const SubscriptionOption = ({
       {!isSubscription && (
         <div className="one-time-purchase">
           <p className="one-time-label">One-time purchase</p>
-          <p className="one-time-price">${basePrice.toFixed(2)}</p>
+          <p className="one-time-price">${price.toFixed(2)}</p>
         </div>
       )}
     </div>
