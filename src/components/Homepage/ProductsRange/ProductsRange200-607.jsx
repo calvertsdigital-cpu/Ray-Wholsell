@@ -363,40 +363,40 @@ export const ProductsRange200607 = () => {
             }}>
               Products (ID: 200-609)
             </h2>
-            <p style={{
-              color: "#6b7280",
-              fontSize: "14px",
-              margin: "8px 0 0 0"
-            }}>
-              Ordered by Product ID | Complete Wholesale Catalog
-            </p>
           </div>
           <button
-            onClick={() => navigate("/products")}
+            onClick={() => navigate("/")}
             style={{
-              background: "linear-gradient(135deg, #e97717 0%, #e97717 100%)",
-              color: "#fff",
-              padding: "12px 24px",
+              background: "#fff",
+              color: "#1f2937",
+              padding: "12px 28px",
               borderRadius: "8px",
-              border: "none",
+              border: "2.5px solid #1f2937",
               cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "700",
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              fontSize: "15px",
+              fontWeight: "800",
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
               textTransform: "uppercase",
-              letterSpacing: "0.5px"
+              letterSpacing: "1px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
             }}
             onMouseEnter={(e) => {
-              e.target.style.transform = "translateY(-2px)";
-              e.target.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
+              e.currentTarget.style.background = "#1f2937";
+              e.currentTarget.style.color = "#fff";
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 18px rgba(0,0,0,0.18)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0px)";
-              e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+              e.currentTarget.style.background = "#fff";
+              e.currentTarget.style.color = "#1f2937";
+              e.currentTarget.style.transform = "translateY(0px)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.10)";
             }}
           >
-            View All Products
+            ← RETURN
           </button>
         </div>
 

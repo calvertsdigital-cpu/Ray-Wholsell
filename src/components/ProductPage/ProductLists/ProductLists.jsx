@@ -85,11 +85,19 @@ export const ProductLists = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
 
-  // Filter + sort state
+  // Filter states
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("default");
+
+  // Initialize filters from URL params
+  useEffect(() => {
+    if (categoryId) {
+      // If arriving from department link, auto-select that category
+      setSelectedCategories([categoryId]);
+    }
+  }, [categoryId]);
 
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -231,11 +239,12 @@ export const ProductLists = () => {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // 1. Category filter
+    // 1. Category filter (case-insensitive so URL param always matches DB strings)
     if (selectedCategories.length > 0) {
-      result = result.filter(p =>
-        selectedCategories.includes(p.category?.trim())
-      );
+      result = result.filter(p => {
+        const catName = (typeof p.category === 'object' ? p.category?.name : p.category) || '';
+        return selectedCategories.some(sel => sel.toLowerCase() === catName.trim().toLowerCase());
+      });
     }
 
     // 2. Price range filter (use first variant price or buyPrice)
@@ -340,7 +349,7 @@ export const ProductLists = () => {
         
         if (token) {
           console.log('🔄 Authenticated mode: Adding to backend cart');
-          console.log('📦 Product:', product.name, 'Size:', activeVariant?.size, 'Item#:', activeVariant?.itemNumber, 'Quantity:', quantity);
+          console.log('📦 Product:', product.name, 'Size:', activeVariant?.size, 'Reorder#:', activeVariant?.itemNumber, 'Quantity:', quantity);
           
           try {
             await axiosInstance.post("/api/user/add-to-cart", {
@@ -503,7 +512,7 @@ export const ProductLists = () => {
   // Derive unique categories from loaded products for the filter sidebar
   const uniqueCategories = useMemo(() => {
     const cats = products
-      .map(p => p.category?.trim())
+      .map(p => (typeof p.category === 'object' ? p.category?.name : p.category)?.trim())
       .filter(Boolean);
     return [...new Set(cats)].sort();
   }, [products]);
@@ -546,7 +555,7 @@ export const ProductLists = () => {
               <label key={cat} className="filter-option">
                 <input
                   type="checkbox"
-                  checked={selectedCategories.includes(cat)}
+                  checked={selectedCategories.some(sel => sel.toLowerCase() === cat.toLowerCase())}
                   onChange={() => handleCategoryToggle(cat)}
                 />
                 <span className="checkmark"></span>
@@ -785,7 +794,7 @@ export const ProductLists = () => {
               <tr>
                 <th className="col-image">Image</th>
                 <th className="col-product">RHL ID</th>
-                <th className="col-rhl-upc">RHL UPC</th>
+                <th className="col-rhl-upc">RHL UPC (GS1)</th>
                 <th className="col-title">Product Title</th>
                 <th className="col-location">Bin Location</th>
                 <th className="col-price">Price</th>
@@ -1133,15 +1142,29 @@ const ProductDetailsModal = ({
             <div className="product-info-grid">
               {product.rhlId && (
                 <div className="info-item">
-                  <label>RHL ID:</label>
+                  <label>Product ID:</label>
                   <span>{product.rhlId}</span>
                 </div>
               )}
 
               {selectedVariant?.rhlUpc && (
                 <div className="info-item">
-                  <label>RHL UPC:</label>
+                  <label>RHL UPC (GS1):</label>
                   <span>{selectedVariant.rhlUpc}</span>
+                </div>
+              )}
+
+              {selectedVariant?.manufacturerUpc && (
+                <div className="info-item">
+                  <label>Manufacturer UPC:</label>
+                  <span>{selectedVariant.manufacturerUpc}</span>
+                </div>
+              )}
+
+              {selectedVariant?.itemNumber && (
+                <div className="info-item">
+                  <label>Reorder Number:</label>
+                  <span>{selectedVariant.itemNumber}</span>
                 </div>
               )}
 

@@ -5,6 +5,7 @@ import './Home.scss';
 import { Home, Info, ShoppingBag, FileText, Mail, Building2, MessageSquare, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Footer } from '../components/common/Footer/Footer';
 import { Navbar } from '../components/common/Navbar/Navbar';
+import { BackToTop } from '../components/common/BackToTop/BackToTop';
 
 // Import images
 import HeroImg from '../assets/images/bg/new_hero_bg.jpg';
@@ -63,31 +64,53 @@ export const HomePage = () => {
 
         const data = Array.isArray(response.data) ? response.data : [];
         
-        // Define the 10 departments we want to show
+        // Define the 14 departments — names must match DB category strings exactly
         const departmentNames = [
-          'Single Herbal Liquid Extracts', 
-          'Herbal Formula Liquid Extracts', 
-          'CBD', 
-          'Kids Formulas', 
-          'Carrier Oils', 
-          'Essential Oils', 
-          'Herbal Oils', 
-          'Herbal Powders', 
-          'Empty Bottles', 
-          'Literature'
+          'FRESH GROUND VEGGIE CAPSULES',
+          'LIQUID VEGGIE CAPSULES',
+          'STEVIA  (Alcohol Free)',
+          'HERBAL FORMULA LIQUID EXTRACTS (Alcohol & Alcohol-Free)',
+          'CBD',
+          'VITAMINS & MINERALS  (Alcohol Free)',
+          'CHILDRENS VITAMINS',
+          'SINGLE HERBAL LIQUID EXTRACTS (Alcohol & Alcohol-Free)',
+          'CARRIER OIL',
+          'ESSENTIAL OILS',
+          'HERBAL OILS (alcohol-free)',
+          'HERBAL POWDERS',
+          'EMPTY BOTTLES',
+          'LITERATURE',
         ];
         
-        // Filter to only show the 10 departments in order
-        const filteredCategories = departmentNames
-          .map(name => data.find(cat => cat.name === name))
-          .filter(cat => cat !== undefined);
+        // Try to match with API data, but use our list as source of truth
+        const filteredCategories = departmentNames.map(name => {
+          const found = data.find(cat => cat.name === name);
+          // If found in API, use it; otherwise create a placeholder
+          return found || { name: name, _id: name };
+        });
         
         setCategories(filteredCategories);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching categories:', err);
-        // Fallback to default departments if API fails
-        setCategories([]);
+        // Use exact DB category strings if API fails
+        const departmentNames = [
+          'FRESH GROUND VEGGIE CAPSULES',
+          'LIQUID VEGGIE CAPSULES',
+          'STEVIA  (Alcohol Free)',
+          'HERBAL FORMULA LIQUID EXTRACTS (Alcohol & Alcohol-Free)',
+          'CBD',
+          'VITAMINS & MINERALS  (Alcohol Free)',
+          'CHILDRENS VITAMINS',
+          'SINGLE HERBAL LIQUID EXTRACTS (Alcohol & Alcohol-Free)',
+          'CARRIER OIL',
+          'ESSENTIAL OILS',
+          'HERBAL OILS (alcohol-free)',
+          'HERBAL POWDERS',
+          'EMPTY BOTTLES',
+          'LITERATURE',
+        ];
+        setCategories(departmentNames.map(name => ({ name: name, _id: name })));
         setLoading(false);
       }
     };
@@ -106,16 +129,20 @@ export const HomePage = () => {
   const departments = categories.length > 0 
     ? categories.map(c => c.name)
     : [
-        'Single Herbal Liquid Extracts', 
-        'Herbal Formula Liquid Extracts', 
-        'CBD', 
-        'Kids Formulas', 
-        'Carrier Oils', 
-        'Essential Oils', 
-        'Herbal Oils', 
-        'Herbal Powders', 
-        'Empty Bottles', 
-        'Literature'
+        'FRESH GROUND VEGGIE CAPSULES',
+        'LIQUID VEGGIE CAPSULES',
+        'STEVIA  (Alcohol Free)',
+        'HERBAL FORMULA LIQUID EXTRACTS (Alcohol & Alcohol-Free)',
+        'CBD',
+        'VITAMINS & MINERALS  (Alcohol Free)',
+        'CHILDRENS VITAMINS',
+        'SINGLE HERBAL LIQUID EXTRACTS (Alcohol & Alcohol-Free)',
+        'CARRIER OIL',
+        'ESSENTIAL OILS',
+        'HERBAL OILS (alcohol-free)',
+        'HERBAL POWDERS',
+        'EMPTY BOTTLES',
+        'LITERATURE',
       ];
 
   // Top 5 best reviews for the chamber section
@@ -306,15 +333,6 @@ export const HomePage = () => {
         id="top" 
         style={{
           backgroundImage: `url(${heroSlides[heroIndex].image})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-          transition: 'background-image 1s ease-in-out',
-          minHeight: '600px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingLeft: '60px'
         }}
       >
         <div className="hero-overlay" />
@@ -356,18 +374,18 @@ export const HomePage = () => {
           </button>
         </div>
 
-        {/* default: 5 cards, expanded: max 15 */}
+        {/* default: fit on one line, expanded: all 14 */}
         <div className={`dept-cards-row ${showAllDepts ? 'dept-expanded' : ''}`}>
-          {(showAllDepts ? departments.slice(0, 15) : departments.slice(0, 5)).map((dept, idx) => {
+          {(showAllDepts ? departments.slice(0, 14) : departments.slice(0, 4)).map((dept, idx) => {
             return (
               <button
                 key={idx}
                 className="dept-card"
-                onClick={() => navigate('/products')}
-                title={`Browse ${dept} products`}
+                onClick={() => navigate(`/products?category=${encodeURIComponent(dept.name || dept)}`)}
+                title={`Browse ${dept.name || dept} products`}
               >
                 <span className="dept-card-icon">🌿</span>
-                <span className="dept-card-name">{dept}</span>
+                <span className="dept-card-name">{dept.name || dept}</span>
                 <span className="dept-card-arrow">→</span>
               </button>
             );
@@ -733,6 +751,9 @@ We believe healthy living starts with better choices. That is why we focus on pr
 
       {/* FOOTER */}
       <Footer />
+
+      {/* BACK TO TOP BUTTON */}
+      <BackToTop />
     </main>
   );
 };

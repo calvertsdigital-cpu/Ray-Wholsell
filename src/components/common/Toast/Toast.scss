@@ -1,0 +1,265 @@
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+  }
+
+  @media (max-width: 480px) {
+    bottom: 16px;
+    width: calc(100% - 24px);
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 14px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  min-width: 300px;
+  max-width: 450px;
+  pointer-events: all;
+  animation: toast-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: pan-y;
+  user-select: none;
+
+  @media (max-width: 768px) {
+    min-width: 100%;
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  &.toast-exit {
+    animation: toast-exit 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  font-weight: 500;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin: -4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #333;
+  }
+
+  &:active {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  &:focus {
+    outline: 2px solid rgba(0, 0, 0, 0.2);
+    outline-offset: 1px;
+  }
+
+  // Larger tap target on mobile
+  @media (max-width: 768px) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+// Toast types
+.toast-success {
+  border-left: 4px solid #10b981;
+
+  .toast-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+  }
+}
+
+.toast-error {
+  border-left: 4px solid #ef4444;
+
+  .toast-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+}
+
+.toast-warning {
+  border-left: 4px solid #f59e0b;
+
+  .toast-icon {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+  }
+}
+
+.toast-info {
+  border-left: 4px solid #3b82f6;
+
+  .toast-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+  }
+}
+
+// Animations
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+// Mobile specific animations (from bottom)
+@media (max-width: 768px) {
+  @keyframes toast-enter {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 100%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  @keyframes toast-exit {
+    from {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate(-50%, 100%);
+    }
+  }
+
+  .toast-container {
+    transform: translateX(-50%);
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .toast {
+    background: #2a2a2a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .toast-message {
+    color: #e5e5e5;
+  }
+
+  .toast-close {
+    color: #999;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e5e5e5;
+    }
+
+    &:active {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+
+// Accessibility - Respect reduced motion preference
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: toast-enter-simple 0.2s ease;
+
+    &.toast-exit {
+      animation: toast-exit-simple 0.2s ease;
+    }
+  }
+
+  @keyframes toast-enter-simple {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes toast-exit-simple {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+// Print - hide toasts
+@media print {
+  .toast-container {
+    display: none;
+  }
+}

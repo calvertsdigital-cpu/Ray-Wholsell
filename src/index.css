@@ -190,3 +190,270 @@ textarea:focus {
     --color-light-gray: #2a2a2a;
   }
 }
+
+
+/* ============================================ */
+/* GLOBAL MOBILE RESPONSIVE UTILITIES */
+/* ============================================ */
+
+/* Mobile Breakpoints */
+:root {
+  --mobile-sm: 480px;
+  --mobile-md: 768px;
+  --tablet: 968px;
+  --desktop: 1280px;
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  button, a, input[type="button"], input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: clamp(28px, 7vw, 40px) !important;
+  }
+  
+  h2 {
+    font-size: clamp(24px, 6vw, 32px) !important;
+  }
+  
+  h3 {
+    font-size: clamp(20px, 5vw, 24px) !important;
+  }
+  
+  h4 {
+    font-size: clamp(16px, 4vw, 20px) !important;
+  }
+  
+  p, li, span {
+    font-size: clamp(14px, 3.5vw, 16px) !important;
+  }
+}
+
+/* Mobile container utilities */
+@media (max-width: 768px) {
+  .container, .wrap {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Hide elements on mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Show only on mobile */
+.show-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .show-mobile {
+    display: block !important;
+  }
+  
+  .show-mobile-flex {
+    display: flex !important;
+  }
+  
+  .show-mobile-grid {
+    display: grid !important;
+  }
+}
+
+/* Mobile spacing utilities */
+@media (max-width: 768px) {
+  .mobile-mt-1 { margin-top: 0.5rem !important; }
+  .mobile-mt-2 { margin-top: 1rem !important; }
+  .mobile-mt-3 { margin-top: 1.5rem !important; }
+  .mobile-mt-4 { margin-top: 2rem !important; }
+  
+  .mobile-mb-1 { margin-bottom: 0.5rem !important; }
+  .mobile-mb-2 { margin-bottom: 1rem !important; }
+  .mobile-mb-3 { margin-bottom: 1.5rem !important; }
+  .mobile-mb-4 { margin-bottom: 2rem !important; }
+  
+  .mobile-p-1 { padding: 0.5rem !important; }
+  .mobile-p-2 { padding: 1rem !important; }
+  .mobile-p-3 { padding: 1.5rem !important; }
+  .mobile-p-4 { padding: 2rem !important; }
+}
+
+/* Mobile text alignment */
+@media (max-width: 768px) {
+  .mobile-text-center { text-align: center !important; }
+  .mobile-text-left { text-align: left !important; }
+  .mobile-text-right { text-align: right !important; }
+}
+
+/* Mobile flexbox utilities */
+@media (max-width: 768px) {
+  .mobile-flex-col { flex-direction: column !important; }
+  .mobile-flex-row { flex-direction: row !important; }
+  .mobile-justify-center { justify-content: center !important; }
+  .mobile-items-center { align-items: center !important; }
+  .mobile-gap-1 { gap: 0.5rem !important; }
+  .mobile-gap-2 { gap: 1rem !important; }
+  .mobile-gap-3 { gap: 1.5rem !important; }
+}
+
+/* Mobile grid utilities */
+@media (max-width: 768px) {
+  .mobile-grid-1 { grid-template-columns: 1fr !important; }
+  .mobile-grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* Mobile width utilities */
+@media (max-width: 768px) {
+  .mobile-w-full { width: 100% !important; }
+  .mobile-w-auto { width: auto !important; }
+}
+
+/* Smooth scrolling for mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  *:hover {
+    /* Reset hover styles on touch devices */
+    transform: none !important;
+  }
+  
+  button:hover, a:hover {
+    opacity: 1 !important;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Mobile scrollbar styling */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+/* Mobile focus states */
+@media (max-width: 768px) {
+  *:focus-visible {
+    outline: 2px solid #77a13d;
+    outline-offset: 2px;
+  }
+}
+
+/* Prevent text size adjustment on orientation change */
+@media (max-width: 768px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+}
+
+/* Mobile-friendly buttons */
+@media (max-width: 768px) {
+  button, .button, .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 15px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+}
+
+/* Mobile forms */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Mobile modals */
+@media (max-width: 768px) {
+  .modal, .dialog {
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    margin: 5vh auto !important;
+  }
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Mobile-optimized animations */
+@media (max-width: 768px) {
+  * {
+    animation-duration: 0.3s !important;
+    transition-duration: 0.3s !important;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

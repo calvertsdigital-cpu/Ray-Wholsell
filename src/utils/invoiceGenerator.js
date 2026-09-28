@@ -131,9 +131,11 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
       itemIndex: index,
       itemName: item.name,
       itemSize: item.size,
+      itemRhlId: item.rhlId,
+      itemRhlUpc: item.rhlUpc,
       hasProduct: !!item.product,
       productType: typeof item.product,
-      productId: item.product?._id || item.product,
+      productId: item.product?._id || item.productId || item.product,
       productKeys: item.product ? Object.keys(item.product) : [],
       rhlProductTitle: item.product?.rhlProductTitle,
       rhlId: item.product?.rhlId,
@@ -141,67 +143,52 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
       variantsLength: item.product?.variants?.length || 0
     });
     
-    // Get product details
-    const product = item.product;
-    
-    // If product is just an ID string, we need to fetch it
-    if (typeof product === 'string') {
-      console.warn('⚠️ Product is just an ID, not populated:', product);
-      // Use item data as fallback
-      const description = `${item.name}\nRHL ID: N/A | RHL UPC: N/A | Size: ${item.size || 'Standard'}`;
-      return [
-        (index + 1).toString(),
-        description,
-        item.quantity.toString(),
-        `$${(item.price || 0).toFixed(2)}`,
-        `$${((item.price || 0) * item.quantity).toFixed(2)}`
-      ];
-    }
-    
-    const productName = product?.rhlProductTitle || item.name || product?.name || 'Product';
-    const rhlId = product?.rhlId || 'N/A';
-    
-    // Try to find the matching variant
-    let matchedVariant = null;
-    let size = item.size || 'Standard'; // Start with item.size if available
-    
-    if (product?.variants && product.variants.length > 0) {
-      // First, try to match by variantId if available
+    // ── Confirmed items store rhlId/size/rhlUpc flat on the item itself ──
+    // ── Original items have a populated item.product object ──────────────
+    const product = (typeof item.product === 'object' && item.product !== null) ? item.product : null;
+
+    // Product name: prefer item.name (always saved), then rhlProductTitle from product
+    const productName = item.name || product?.rhlProductTitle || product?.name || 'Product';
+
+    // RHL ID: flat field first (confirmedItems), then from populated product
+    const rhlId = item.rhlId ?? product?.rhlId ?? 'N/A';
+
+    // Size: flat field first, then resolved from variants
+    let size = item.size || 'Standard';
+    let rhlUpc = item.rhlUpc || null;
+
+    // If we have a populated product object (original items path), resolve variant details
+    if (product?.variants?.length > 0 && !item.rhlId) {
+      // Only run variant resolution when rhlId is NOT already on the item
+      // (i.e. this is an original item, not a confirmedItem)
+      let matchedVariant = null;
       if (item.variantId) {
         matchedVariant = product.variants.find(v => v._id && v._id.toString() === item.variantId.toString());
         console.log(`  Trying to match variant by ID: ${item.variantId}`, matchedVariant ? '✅ Found' : '❌ Not found');
       }
-      
-      // If no match by ID, try matching by size if we have it
       if (!matchedVariant && item.size) {
         matchedVariant = product.variants.find(v => v.size === item.size);
         console.log(`  Trying to match variant by size: ${item.size}`, matchedVariant ? '✅ Found' : '❌ Not found');
       }
-      
-      // If still no match, try matching by price (price should match)
       if (!matchedVariant) {
         matchedVariant = product.variants.find(v => Math.abs(v.price - item.price) < 0.01);
         console.log(`  Trying to match variant by price: $${item.price}`, matchedVariant ? '✅ Found' : '❌ Not found');
       }
-      
-      // Last resort: use first variant
       if (!matchedVariant) {
         matchedVariant = product.variants[0];
         console.log(`  ⚠️ Using first variant as fallback`);
       }
-      
-      // Update size from matched variant if we found one
-      if (matchedVariant && matchedVariant.size) {
-        size = matchedVariant.size;
+      if (matchedVariant) {
+        size = matchedVariant.size || size;
+        rhlUpc = matchedVariant.rhlUpc || rhlUpc;
       }
     }
-    
-    const rhlUpc = matchedVariant?.rhlUpc || product?.sku || 'N/A';
-    
-    console.log('✅ Final invoice values:', { productName, rhlId, rhlUpc, size });
+
+    const upcDisplay = rhlUpc || 'N/A';
+    console.log('✅ Final invoice values:', { productName, rhlId, upcDisplay, size });
     
     // Create multi-line description with product details
-    const description = `${productName}\nRHL ID: ${rhlId} | RHL UPC: ${rhlUpc} | Size: ${size}`;
+    const description = `${productName}\nRHL ID: ${rhlId} | GS1 UPC: ${upcDisplay} | Size: ${size}`;
     
     return [
       (index + 1).toString(),
@@ -348,17 +335,18 @@ export const generateInvoice = (order, userData = {}, action = 'download') => {
   if (action === 'download') {
     doc.save(`Invoice-${invoiceNumber}.pdf`);
   } else if (action === 'view') {
-    // Open in new tab for preview
-    const pdfDataUri = doc.output('datauristring');
-    const newWindow = window.open();
-    newWindow.document.write(`
-      <iframe 
-        width='100%' 
-        height='100%' 
-        src='${pdfDataUri}'
-        style='border: none;'>
-      </iframe>
-    `);
+    // Use Blob URL — works without popup permission and avoids data-URI length limits
+    const pdfBlob = doc.output('blob');
+    const blobUrl = URL.createObjectURL(pdfBlob);
+    const newTab = window.open(blobUrl, '_blank');
+    if (!newTab) {
+      // Popup was blocked — fall back to direct download so the user is never stuck
+      doc.save(`Invoice-${invoiceNumber}.pdf`);
+      console.warn('⚠️ Popup blocked — invoice downloaded instead of previewed.');
+    } else {
+      // Revoke the object URL after a short delay to free memory
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    }
   }
   
   return doc;

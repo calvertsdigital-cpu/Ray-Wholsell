@@ -1,0 +1,120 @@
+.back-to-top {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  background: #7d9f48;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+  animation: slide-in 0.3s ease-out;
+
+  &:hover {
+    background: #6a8a3d;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateY(-2px);
+  }
+
+  &:focus {
+    outline: 3px solid rgba(125, 159, 72, 0.4);
+    outline-offset: 2px;
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Mobile responsive
+@media (max-width: 768px) {
+  .back-to-top {
+    bottom: 70px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .back-to-top {
+    bottom: 60px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .back-to-top {
+    background: #5a7a35;
+    
+    &:hover {
+      background: #4a6a25;
+    }
+  }
+}
+
+// Accessibility - Respect reduced motion preference
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top {
+    animation: none;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      transform: none;
+    }
+
+    svg {
+      transition: none;
+    }
+
+    &:hover svg {
+      transform: none;
+    }
+  }
+}
+
+// Print - hide button
+@media print {
+  .back-to-top {
+    display: none;
+  }
+}
