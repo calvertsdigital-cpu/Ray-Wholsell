@@ -60,12 +60,8 @@ const useCategoriesAPI = (BASE_URL) => {
 };
 
 export const Footer = React.memo(() => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const BASE_URL = import.meta.env.VITE_BASE_URL ;
-  const { fetchWithCancel } = useCategoriesAPI(BASE_URL);
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   // const getToken = useCallback(() => {
   //   const token = localStorage.getItem("userToken");
@@ -76,44 +72,26 @@ export const Footer = React.memo(() => {
   //   return token;
   // }, []);
 
-  const fetchCategories = useCallback(async () => {
-    // const token = getToken();
-    // if (!token) return;
+  // Top 10 departments by product count — all confirmed to have products in the DB
+  const FOOTER_CATEGORIES = [
+    'FRESH GROUND VEGGIE CAPSULES',   // 36 products
+    'ESSENTIAL OILS',                  // 41 products
+    'SINGLE HERBAL LIQUID EXTRACTS (Alcohol & Alcohol-Free)', // 18 products
+    'HERBAL FORMULA LIQUID EXTRACTS (Alcohol & Alcohol-Free)', // 18 products
+    'IMMUNE SUPPORT',                  // 18 products
+    'INTESTINAL SUPPORT',              // 14 products
+    'DETOX - LIVER CLENSES',           // 13 products
+    'CHILDRENS VITAMINS',              // 8 products
+    'CBD',                             // 7 products
+    'STEVIA  (Alcohol Free)',          // 7 products
+  ];
 
-    try {
-      setError("");
-      setLoading(true);
-      const response = await fetchWithCancel(`${BASE_URL}/api/user/categories`);
-      if (!response) return;
+  // No API call — use static list directly
+  const categories = FOOTER_CATEGORIES;
 
-      const data = Array.isArray(response.data) ? response.data : [];
-      const sortedCategories = data.sort((a, b) => a.name.localeCompare(b.name));
-      setCategories(sortedCategories.slice(0, 12));
-      if (data.length === 0) {
-        setError("No categories found.");
-      }
-    } catch (err) {
-      console.error("Error fetching categories:", err.response?.data, "Status:", err.response?.status);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        localStorage.removeItem("userToken");
-        setError("Please log in to view categories");
-        navigate("/login");
-      } else {
-        setError(err.response?.data?.message || "Failed to load categories. Please try again.");
-      }
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [BASE_URL, fetchWithCancel, navigate]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  // Split categories into two groups of 6
-  const firstColumnCategories = categories.slice(0, 6);
-  const secondColumnCategories = categories.slice(6, 12);
+  // Split categories into two groups of 6 (unused — kept for reference)
+  // const firstColumnCategories = categories.slice(0, 6);
+  // const secondColumnCategories = categories.slice(6, 12);
 
   const handleScrollToTop = () => {
     window.scrollTo({
@@ -269,25 +247,17 @@ export const Footer = React.memo(() => {
             <h3 className="mainFont 2xl:text-[1.5dvw] xl:text-[1.5dvw] lg:text-[1.5dvw] md:portrait:text-[1.5dvw] md:landscape:text-[1.5dvw] text-[7dvw] text-white font-[500] my-1.5">
               Departments
             </h3>
-            {loading ? (
-              <p className="text-white text-[4dvw] 2xl:text-[1.2dvw] xl:text-[1.2dvw] lg:text-[1.2dvw] md:portrait:text-[1.2dvw] md:landscape:text-[1.2dvw]">
-                Loading Departments...
-              </p>
-            ) : error ? (
-              <p className="text-red-400 text-[4dvw] 2xl:text-[1.2dvw] xl:text-[1.2dvw] lg:text-[1.2dvw] md:portrait:text-[1.2dvw] md:landscape:text-[1.2dvw]">
-                {error}
-              </p>
-            ) : (
+            {(
               <ul className="flex flex-col text-white gap-2 px-2 text-[4dvw] 2xl:text-[1.2dvw] xl:text-[1.2dvw] lg:text-[1.2dvw] md:portrait:text-[1.2dvw] md:landscape:text-[1.2dvw]">
-                {categories.map((category) => (
+                {categories.map((cat) => (
                   <motion.li
-                    key={category._id}
+                    key={cat}
                     whileHover={{ scale: 1.05, x: 5 }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
                   >
-                    <a href={`/products?category=${category._id}`}>
-                      {category.name}
+                    <a href={`/products?category=${encodeURIComponent(cat)}`}>
+                      {cat}
                     </a>
                   </motion.li>
                 ))}

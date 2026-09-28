@@ -25,6 +25,8 @@ import {
   Building2,
   MessageSquare,
   BookOpen,
+  Star,
+  Store,
 } from "lucide-react";
 import { Avatar } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
@@ -1868,19 +1870,19 @@ export const Navbar = () => {
                     setIsMobileMenuOpen(false); 
                   }}
                 >
-                  <span className="nav-icon">▥</span> Retail
+                  <Store size={16} className="nav-icon" /> Retail
                 </button>
 
                 <div className="mobile-menu-divider"></div>
 
                 <a href="/" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="nav-icon">⌂</span> Home
+                  <Home size={16} className="nav-icon" /> Home
                 </a>
                 <a href="/about" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="nav-icon">ⓘ</span> About
+                  <Info size={16} className="nav-icon" /> About
                 </a>
                 <a href="/products" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="nav-icon">▣</span> Products
+                  <ShoppingBag size={16} className="nav-icon" /> Products
                 </a>
                 <button 
                   className="mobile-menu-utility"
@@ -1889,22 +1891,22 @@ export const Navbar = () => {
                     setIsMobileMenuOpen(false); 
                   }}
                 >
-                  <span className="nav-icon">📋</span> Catalog
+                  <BookOpen size={16} className="nav-icon" /> Catalog
                 </button>
                 <a href="/blogs" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="nav-icon">▤</span> Blogs
+                  <FileText size={16} className="nav-icon" /> Blogs
                 </a>
                 <a href="/reviews" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="nav-icon">⭐</span> Reviews
+                  <Star size={16} className="nav-icon" /> Reviews
                 </a>
                 <a href="/contact" className="mobile-menu-utility" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="nav-icon">✉</span> Contact
+                  <Mail size={16} className="nav-icon" /> Contact
                 </a>
                 <button 
                   className="mobile-menu-utility" 
                   onClick={() => { navigate("/feedback"); setIsMobileMenuOpen(false); }}
                 >
-                  <span className="nav-icon">▢</span> Feedback
+                  <MessageSquare size={16} className="nav-icon" /> Feedback
                 </button>
               </div>
             </div>

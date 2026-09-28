@@ -4,7 +4,7 @@ import axios from "axios";
 import axiosInstance from "../../../utils/axiosInstance";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
-import { CheckCircle, AlertCircle, X } from "lucide-react";
+import { CheckCircle, AlertCircle, X, SlidersHorizontal } from "lucide-react";
 import { SubscriptionOption } from "../../Subscription/SubscriptionOption";
 import "./ProductLists.scss";
 
@@ -90,6 +90,7 @@ export const ProductLists = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -537,14 +538,31 @@ export const ProductLists = () => {
   return (
     <div className="products-page-container">
       <Toast message={toast.message} type={toast.type} show={toast.show} onClose={hideToast} />
+
+      {/* Mobile filter backdrop */}
+      <div
+        className={`filters-backdrop ${mobileFiltersOpen ? 'active' : ''}`}
+        onClick={() => setMobileFiltersOpen(false)}
+      />
       
       {/* Filters Sidebar */}
-      <div className="filters-sidebar">
+      <div className={`filters-sidebar ${mobileFiltersOpen ? 'filters-open' : ''}`}>
         <div className="filters-header">
           <h3>Filters</h3>
-          <button className="clear-filters-btn" onClick={handleClearFilters}>
-            Show All
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button className="clear-filters-btn" onClick={handleClearFilters}>
+              Show All
+            </button>
+            {/* Close button — only visible on mobile */}
+            <button
+              className="close-filters"
+              onClick={() => setMobileFiltersOpen(false)}
+              style={{ display: 'none' }}
+              aria-label="Close filters"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Category Filters — built from real product data */}
@@ -635,6 +653,33 @@ export const ProductLists = () => {
       </div>
 
       <div className="main-content">
+        {/* Mobile Filters Button */}
+        <button
+          className="mobile-filter-toggle"
+          onClick={() => setMobileFiltersOpen(true)}
+          aria-label="Open filters"
+        >
+          <SlidersHorizontal size={16} />
+          Filters
+          {(selectedCategories.length > 0 || minPrice || maxPrice || sortBy !== "default") && (
+            <span style={{
+              background: '#e97717',
+              color: '#fff',
+              borderRadius: '50%',
+              width: '20px',
+              height: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              fontWeight: '700',
+              marginLeft: '4px',
+            }}>
+              {selectedCategories.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (sortBy !== "default" ? 1 : 0)}
+            </span>
+          )}
+        </button>
+
         {/* Search Section */}
         <div className="search-section">
           <div className="search-input-container">

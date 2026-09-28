@@ -2380,3 +2380,110 @@
     }
   }
 }
+
+
+// ── Mobile filter drawer ──────────────────────────────────────────────────────
+
+// Filters toggle button: hidden on desktop
+.mobile-filter-toggle {
+  display: none;
+}
+
+// Backdrop
+.filters-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 100000;
+  &.active { display: block; }
+}
+
+@media (max-width: 768px) {
+
+  // Show full-width Filters button
+  .mobile-filter-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #77a13d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 14px;
+    transition: background 0.2s;
+    &:hover { background: #6b9235; }
+  }
+
+  // Drawer: full-height slide-in from left
+  // Use `!important` everywhere to beat the 1024px rules
+  .filters-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 85% !important;
+    max-width: 340px !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+    transform: translateX(-110%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 100001 !important;
+    background: linear-gradient(180deg, #77a13d 0%, #4e7a20 100%) !important;
+    box-shadow: 6px 0 30px rgba(0,0,0,0.4) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 0 !important;
+    // Escape any parent clipping
+    margin: 0 !important;
+    border-radius: 0 !important;
+
+    &.filters-open {
+      transform: translateX(0) !important;
+    }
+
+    // Sticky header row
+    .filters-header {
+      position: sticky !important;
+      top: 0 !important;
+      background: rgba(0,0,0,0.25) !important;
+      z-index: 10 !important;
+      padding: 16px 16px 14px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      border-bottom: 1px solid rgba(255,255,255,0.25) !important;
+
+      h3 {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+        margin: 0 !important;
+      }
+
+      .close-filters {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 34px !important;
+        height: 34px !important;
+        background: rgba(255,255,255,0.2) !important;
+        border: none !important;
+        color: #fff !important;
+        cursor: pointer !important;
+        border-radius: 6px !important;
+        transition: background 0.2s !important;
+        &:hover { background: rgba(255,255,255,0.35) !important; }
+      }
+    }
+
+    .filter-section {
+      padding: 16px !important;
+    }
+  }
+}
