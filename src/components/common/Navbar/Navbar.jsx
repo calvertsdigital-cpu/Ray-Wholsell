@@ -1702,12 +1702,6 @@ export const Navbar = () => {
               </button>
               <a href="/blogs"><FileText size={16} /> Blogs</a>
               <a href="/contact"><Mail size={16} /> Contact</a>
-              <button 
-                className="wholesale-btn" 
-                onClick={() => window.open(import.meta.env.VITE_RETAIL_URL, "_blank")}
-              >
-                <Building2 size={16} /> Retail
-              </button>
               <button onClick={() => navigate("/feedback")}>
                 <MessageSquare size={16} /> Feedback
               </button>
@@ -1862,16 +1856,6 @@ export const Navbar = () => {
                     <X size={24} />
                   </button>
                 </div>
-
-                <button 
-                  className="mobile-menu-retail" 
-                  onClick={() => { 
-                    window.open(import.meta.env.VITE_RETAIL_URL, "_blank"); 
-                    setIsMobileMenuOpen(false); 
-                  }}
-                >
-                  <Store size={16} className="nav-icon" /> Retail
-                </button>
 
                 <div className="mobile-menu-divider"></div>
 
